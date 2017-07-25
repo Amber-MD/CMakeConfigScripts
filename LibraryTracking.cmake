@@ -19,7 +19,7 @@ set(USED_LIB_NAME "") # contains the library names as supplied to the linker.
 
 # Like using_external_library, but accepts multiple paths.
 macro(using_external_libraries)	
-	foreach(LIBRARY_PATH ${USING_EXTERNAL_UNPARSED_ARGUMENTS})
+	foreach(LIBRARY_PATH ${ARGN})
 		using_external_library(${LIBRARY_PATH})
 	endforeach()
 endmacro(using_external_libraries)

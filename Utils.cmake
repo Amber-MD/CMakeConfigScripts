@@ -95,7 +95,14 @@ macro(is_static_library LIBRARY OUTPUT_VARIABLE)
 	# This is frustratingly platform-specific logic, but we have to do it
 	get_filename_component(LIB_NAME ${LIBRARY} NAME)
 
-	if(TARGET_SUPPORTS_IMPORT_LIBRARIES AND ${LIB_NAME} MATCHES ".*${CMAKE_IMPORT_LIBRARY_SUFFIX}") 	#special exception for import libraries, which are seen as shared but are actually static
+	set(IS_IMPORT_LIBRARY FALSE)
+	if(TARGET_SUPPORTS_IMPORT_LIBRARIES)
+		if(${LIB_NAME} MATCHES ".*${CMAKE_IMPORT_LIBRARY_SUFFIX}")
+			set(IS_IMPORT_LIBRARY TRUE)
+		endif()
+	endif()
+	
+	if(IS_IMPORT_LIBRARY) 	#special exception for import libraries, which are seen as shared but are actually static
 		set(${OUTPUT_VARIABLE} TRUE)
 	elseif(${LIB_NAME} MATCHES ".*${CMAKE_SHARED_LIBRARY_SUFFIX}")
 		set(${OUTPUT_VARIABLE} FALSE)

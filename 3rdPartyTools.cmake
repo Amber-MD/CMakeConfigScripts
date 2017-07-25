@@ -452,8 +452,9 @@ endif()
 #------------------------------------------------------------------------------
 #  bzip2
 #------------------------------------------------------------------------------
-if(NEED_bzip2)
+if(NEED_libbz2)
 	find_package(BZip2)
+	
 	
 	if(BZIP2_FOUND)
 		set_3rdparty(libbz2 EXTERNAL)
@@ -1031,7 +1032,7 @@ if(mpi4py_EXTERNAL)
 	if(NOT MPI4PY_FOUND)
 		message(FATAL_ERROR "mpi4py was set to be sourced externally, but the mpi4py package was not found.")
 	endif()
-else()
+elseif(mpi4py_INTERNAL)
 	list(APPEND 3RDPARTY_SUBDIRS mpi4py-2.0.0)
 endif()
 

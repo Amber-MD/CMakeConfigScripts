@@ -16,11 +16,11 @@ include(FindPackageHandleStandardArgs)
 include(LibFindMacros)
 
 # See if LOG4CXX_ROOT is not already set in CMake
-IF (NOT LOG4CXX_ROOT)
+IF (NOT DEFINED LOG4CXX_ROOT)
     # See if LOG4CXX_ROOT is set in process environment
-    IF ( NOT $ENV{LOG4CXX_ROOT} STREQUAL "" )
+    IF ( DEFINED ENV{LOG4CXX_ROOT})
         SET (LOG4CXX_ROOT "$ENV{LOG4CXX_ROOT}")
-	MESSAGE(STATUS "Detected LOG4CXX_ROOT set to '${LOG4CXX_ROOT}'")
+		MESSAGE(STATUS "Detected LOG4CXX_ROOT set to '${LOG4CXX_ROOT}'")
     ENDIF ()
 ENDIF ()
 
@@ -31,14 +31,23 @@ IF (LOG4CXX_ROOT)
 else()
 	# Use pkg-config to get hints about paths
 	libfind_pkg_check_modules(LOG4CXX_PKGCONF log4cxx)
-	set(LOG4CXX_INCLUDE_HINTS ${LOG4CXX_PKGCONF_INCLUDE_DIRS})
-    set(LOG4CXX_LIBRARY_HINTS ${LOG4CXX_PKGCONF_LIBRARY_DIRS})
+	
+	if(DEFINED LOG4CXX_PKGCONF_INCLUDE_DIRS)
+		set(LOG4CXX_INCLUDE_HINTS ${LOG4CXX_PKGCONF_INCLUDE_DIRS})
+	else()
+		set(LOG4CXX_INCLUDE_HINTS "")
+	endif()
+	
+	if(DEFINED LOG4CXX_PKGCONF_LIBRARY_DIRS)
+    	set(LOG4CXX_LIBRARY_HINTS ${LOG4CXX_PKGCONF_LIBRARY_DIRS})
+	else()
+		set(LOG4CXX_LIBRARY_HINTS "")
+	endif()
 endif()
 
 # Find headers and libraries
 find_path(LOG4CXX_INCLUDE_DIR NAMES log4cxx/log4cxx.h HINTS ${LOG4CXX_INCLUDE_HINTS})
 find_library(LOG4CXX_LIBRARY NAMES log4cxx HINTS ${LOG4CXX_LIBRARY_HINTS})
-find_library(LOG4CXXD_LIBRARY NAMES log4cxx${CMAKE_DEBUG_POSTFIX} HINTS ${LOG4CXX_LIBRARY_HINTS})
 
 # Set LOG4CXX_FOUND honoring the QUIET and REQUIRED arguments
 find_package_handle_standard_args(LOG4CXX DEFAULT_MSG LOG4CXX_LIBRARY LOG4CXX_INCLUDE_DIR)

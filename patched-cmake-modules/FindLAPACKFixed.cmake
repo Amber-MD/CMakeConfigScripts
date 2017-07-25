@@ -54,7 +54,10 @@ endif()
 include(CMakePushCheckState)
 
 cmake_push_check_state()
-set(CMAKE_REQUIRED_QUIET ${LAPACK_FIND_QUIETLY})
+
+if(DEFINED LAPACK_FIND_QUIETLY)
+	set(CMAKE_REQUIRED_QUIET ${LAPACK_FIND_QUIETLY})
+endif()
 
 set(LAPACK_FOUND FALSE)
 set(LAPACK95_FOUND FALSE)
@@ -155,14 +158,7 @@ endif()
 
 
 if(BLAS_FOUND)
-  set(LAPACK_LINKER_FLAGS ${BLAS_LINKER_FLAGS})
-  if (NOT $ENV{BLA_VENDOR} STREQUAL "")
-    set(BLA_VENDOR $ENV{BLA_VENDOR})
-  else ()
-    if(NOT BLA_VENDOR)
-      set(BLA_VENDOR "All")
-    endif()
-  endif ()
+set(LAPACK_LINKER_FLAGS ${BLAS_LINKER_FLAGS})
 
 if (BLA_VENDOR STREQUAL "Goto" OR BLA_VENDOR STREQUAL "All")
  if(NOT LAPACK_LIBRARIES)

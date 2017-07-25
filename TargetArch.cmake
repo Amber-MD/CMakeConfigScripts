@@ -53,7 +53,7 @@ set(archdetect_c_code "
 # will be treated as invalid architectures since they are no longer supported by Apple
 
 function(target_architecture output_var)
-    if(APPLE AND CMAKE_OSX_ARCHITECTURES)
+    if(APPLE AND DEFINED CMAKE_OSX_ARCHITECTURES)
         # On OS X we use CMAKE_OSX_ARCHITECTURES *if* it was set
         # First let's normalize the order of the values
 
@@ -109,13 +109,19 @@ function(target_architecture output_var)
         # #error preprocessor directives... but by exploiting the preprocessor in this
         # way, we can detect the correct target architecture even when cross-compiling,
         # since the program itself never needs to be run (only the compiler/preprocessor)
+        
+        if(DEFINED CMAKE_OSX_ARCHITECTURES)
+        	set(TA_CMAKE_FLAGS CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES})
+        else()
+        	set(TA_CMAKE_FLAGS "")
+    	endif()
         try_run(
             run_result_unused
             compile_result_unused
             "${CMAKE_BINARY_DIR}"
             "${CMAKE_BINARY_DIR}/arch.c"
             COMPILE_OUTPUT_VARIABLE ARCH
-            CMAKE_FLAGS CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
+            CMAKE_FLAGS ${TA_CMAKE_FLAGS}
         )
 
         # Parse the architecture name from the compiler output

@@ -78,7 +78,7 @@ elif [ -n \"$DASH_SOURCE\" ]; then
 elif [ -n \"$ZSH_VERSION\" ]; then
     setopt function_argzero
     this_script=\"$0\"
-elif eval '[[ -n ${.sh.file} ]]' 2>/dev/null; then
+elif eval '[[ -n \${.sh.file} ]]' 2>/dev/null; then
     eval 'this_script=\${.sh.file}'
 else
     echo 1>&2 \"Unsupported shell. Please use bash, dash, ksh93 or zsh.\"

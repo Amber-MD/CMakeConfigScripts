@@ -3,7 +3,9 @@
 
 # if the target doesn't support import libraries, CMAKE_IMPORT_LIBRARY_SUFFIX is set to an empty string, which is a problem for us.
 # we can only do this test after the enable_language() statement
-if("${CMAKE_IMPORT_LIBRARY_SUFFIX}" STREQUAL "")
+if(NOT DEFINED CMAKE_IMPORT_LIBRARY_SUFFIX)
+	set(TARGET_SUPPORTS_IMPORT_LIBRARIES FALSE)
+elseif("${CMAKE_IMPORT_LIBRARY_SUFFIX}" STREQUAL "")
 	set(TARGET_SUPPORTS_IMPORT_LIBRARIES FALSE)
 else()
 	set(TARGET_SUPPORTS_IMPORT_LIBRARIES TRUE)

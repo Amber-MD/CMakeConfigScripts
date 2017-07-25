@@ -42,7 +42,19 @@
 include(CMakePushCheckState)
 
 cmake_push_check_state()
-set(CMAKE_REQUIRED_QUIET ${BLAS_FIND_QUIETLY})
+
+if(DEFINED ENV{BLA_VENDOR})
+  set(BLA_VENDOR_DEFAULT $ENV{BLA_VENDOR})
+else()
+  set(BLA_VENDOR_DEFAULT "All")
+endif ()
+
+set(BLA_VENDOR ${BLA_VENDOR_DEFAULT} CACHE STRING "BLAS vendor to use for BLAS and Lapack.  Valid values: All, Goto, OpenBLAS, ATLAS, PhiPACK, CXML, DXML, SunPerf, SCSL, SGIMATH, IBMESSL, ACML, ACML_MP, ACML_GPU, Apple, NAS, Generic")
+validate_configuration_enum(BLA_VENDOR  All Goto OpenBLAS ATLAS PhiPACK CXML DXML SunPerf SCSL SGIMATH IBMESSL ACML ACML_MP ACML_GPU Apple NAS Generic)
+
+if(DEFINED BLAS_FIND_QUIETLY)
+	set(CMAKE_REQUIRED_QUIET ${BLAS_FIND_QUIETLY})
+endif()
 
 set(_blas_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
 
@@ -133,13 +145,6 @@ endmacro()
 set(BLAS_LINKER_FLAGS)
 set(BLAS_LIBRARIES)
 set(BLAS95_LIBRARIES)
-if (NOT $ENV{BLA_VENDOR} STREQUAL "")
-  set(BLA_VENDOR $ENV{BLA_VENDOR})
-else ()
-  if(NOT BLA_VENDOR)
-    set(BLA_VENDOR "All")
-  endif()
-endif ()
 
 if (BLA_VENDOR STREQUAL "Goto" OR BLA_VENDOR STREQUAL "All")
  if(NOT BLAS_LIBRARIES)
@@ -374,7 +379,7 @@ if (BLA_VENDOR MATCHES "ACML" OR BLA_VENDOR STREQUAL "All")
     break()
    endif()
   endforeach()
- else()
+ elseif(DEFINED _ACML_LIB_DIRS)
   foreach( BLAS_ACML_LIB_DIRS ${_ACML_LIB_DIRS} )
    check_fortran_libraries (
      BLAS_LIBRARIES

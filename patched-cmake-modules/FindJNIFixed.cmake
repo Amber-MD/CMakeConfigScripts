@@ -1,4 +1,4 @@
-# AMBER: added Ubuntu Oracle java install directories to search path
+# AMBER: added Ubuntu Oracle java install directories to search path, fixed undefined variable errors
 
 # Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 # file Copyright.txt or https://cmake.org/licensing for details.
@@ -212,7 +212,20 @@ JAVA_APPEND_LIBRARY_DIRECTORIES(JAVA_AWT_INCLUDE_DIRECTORIES
   /usr/lib64/jvm/java/include
   )
 
-foreach(JAVA_PROG "${JAVA_RUNTIME}" "${JAVA_COMPILE}" "${JAVA_ARCHIVE}")
+set(JAVA_PROGS_TO_CHECK "")
+
+# add each program to the list if it's defined
+if(DEFINED JAVA_RUNTIME)
+	list(APPEND JAVA_PROGS_TO_CHECK ${JAVA_RUNTIME})
+endif()
+if(DEFINED JAVA_COMPILE)
+	list(APPEND JAVA_PROGS_TO_CHECK ${JAVA_COMPILE})
+endif()
+if(DEFINED JAVA_ARCHIVE)
+	list(APPEND JAVA_PROGS_TO_CHECK ${JAVA_ARCHIVE})
+endif()
+
+foreach(JAVA_PROG ${JAVA_PROGS_TO_CHECK})
   get_filename_component(jpath "${JAVA_PROG}" PATH)
   foreach(JAVA_INC_PATH ../include ../java/include ../share/java/include)
     if(EXISTS ${jpath}/${JAVA_INC_PATH})
