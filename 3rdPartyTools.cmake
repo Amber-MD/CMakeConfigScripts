@@ -32,31 +32,30 @@ mpi4py
 perlmol)
 
 set(3RDPARTY_TOOL_USES
-"for fundamental linear algebra calculations"
-"for fundamental linear algebra calculations"
-"for fundamental linear algebra calculations" 
-"for compiling Amber's yacc parsers"
-"used as a preprocessor for the NAB compiler"
-"used as a support library on systems that do not have C99 complex.h support"
-"for creating trajectory data files"
-"for creating trajectory data files from Fortran"
-"used by cpptraj for parallel trajectory output"
-"used to do Fourier transforms very quickly"
-"used for the console functionality of gleap and cpptraj"
-"used for high-precision linear algebra calculations"
-"used by Sander to run certain QM routines on the GPU"
-"used by Sander as an alternate Poisson-Boltzmann equation solver"
-"used by Sander as an alternate user interface"
-"for various compression and decompression tasks"
-"for bzip2 compression in cpptraj"
-"used by gleap and MTK++ as a support library"
-"used as an alternate MD backend for Sander"
-"for fundamental math routines if they are not contained in the C library"
-"for XML handling in MTK++"
-"for logging in MTK++"
-"alternate implementation of lapack and blas that is tuned for speed"
-"MPI support library for MMPBSA.py"
-"chemistry library used by FEW")
+"for fundamental linear algebra calculations"                                     
+"for fundamental linear algebra calculations"                                     
+"for fundamental linear algebra calculations"                                     
+"for compiling Amber's yacc parsers"                                              
+"used as a preprocessor for the NAB compiler"                                     
+"used as a support library on systems that do not have C99 complex.h support"     
+"for creating trajectory data files"                                              
+"for creating trajectory data files from Fortran"                                 
+"used by cpptraj for parallel trajectory output"                                  
+"used to do Fourier transforms very quickly"                                      
+"used for the console functionality of gleap and cpptraj"                         
+"used for high-precision linear algebra calculations"                             
+"used by Sander to run certain QM routines on the GPU"                            
+"used by Sander as an alternate Poisson-Boltzmann equation solver"                
+"used by Sander as an alternate user interface"                                   
+"for various compression and decompression tasks"                                 
+"for bzip2 compression in cpptraj"                                                
+"used as an alternate MD backend for Sander"                                      
+"for fundamental math routines if they are not contained in the C library"        
+"for XML handling in MTK++"                                                       
+"for logging in MTK++"                                                            
+"alternate implementation of lapack and blas that is tuned for speed"             
+"MPI support library for MMPBSA.py"                                               
+"chemistry library used by FEW")                                                  
 
 # Logic to disable tools
 set(3RDPARTY_SUBDIRS "")
@@ -206,10 +205,8 @@ endif()
 
 if(NEED_mkl)
 
-	test(MIXING_COMPILERS NOT ((${CMAKE_C_COMPILER_ID} STREQUAL ${CMAKE_CXX_COMPILER_ID}) AND (${CMAKE_C_COMPILER_ID} STREQUAL ${CMAKE_Fortran_COMPILER_ID})))
-	
 	# We assume that most 3rd party compilers (like clang) attempt compatibility with GNU's OpenMP ABI
-	test(MKL_USE_GNU_COMPAT MIXING_COMPILERS OR NOT (${CMAKE_C_COMPILER_ID} STREQUAL Intel OR ${CMAKE_C_COMPILER_ID} STREQUAL MSVC))
+	test(MKL_USE_GNU_COMPAT NOT ("${CMAKE_C_COMPILER_ID}" STREQUAL Intel OR "${CMAKE_C_COMPILER_ID}" STREQUAL MSVC))
 	set(MKL_MULTI_THREADED ${OPENMP})
 	
 	# Static MKL is not supported at this time.

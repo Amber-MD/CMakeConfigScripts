@@ -38,6 +38,8 @@ option(OPTIMIZE "Whether to build code with compiler flags for optimization." TR
 option(UNUSED_WARNINGS "Enable warnings about unused variables.  Really clutters up the build output." TRUE)
 option(UNINITIALIZED_WARNINGS "Enable warnings about uninitialized variables.  Kind of clutters up the build output, but these need to be fixed." TRUE)
 
+option(DOUBLE_PRECISION "Build Amber's Fortran programs with double precision math." TRUE)
+
 #-------------------------------------------------------------------------------
 #  Set default flags
 #-------------------------------------------------------------------------------

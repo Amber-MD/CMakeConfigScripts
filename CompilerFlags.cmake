@@ -21,7 +21,7 @@ endif()
 #gcc
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-if(${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 	add_flags(C -Wall -Wno-unused-function -Wno-unknown-pragmas)
 
 	# On Windows undefined symbols in shared libraries produce errors.
@@ -57,7 +57,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
 		add_flags(C -fplugin=${DRAGONEGG})
 	endif()
 endif()
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
 	add_flags(CXX -Wall -Wno-unused-function -Wno-unknown-pragmas)
 
@@ -99,7 +99,7 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 		add_flags(CXX -fplugin=${DRAGONEGG})
 	endif()
 endif()
-if(${CMAKE_Fortran_COMPILER_ID} STREQUAL "GNU")
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
 
 	add_flags(Fortran -Wall -Wno-tabs -Wno-unused-function -ffree-line-length-none -Wno-unused-dummy-argument ${NO_UNDEFINED_FLAG})
 		
@@ -145,7 +145,7 @@ endif()
 #clang
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
 	add_flags(C -Wall -Wno-unused-function ${NO_UNDEFINED_FLAG})
 	
 	list(APPEND OPT_CFLAGS "-mtune=native")
@@ -160,7 +160,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
 	endif()
 		
 endif()
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 	add_flags(CXX -Wall -Wno-unused-function ${NO_UNDEFINED_FLAG})
 	
 	list(APPEND OPT_CXXFLAGS "-mtune=native")
@@ -177,14 +177,14 @@ endif()
 #msvc
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-if(${CMAKE_C_COMPILER_ID} STREQUAL "MSVC")
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
 	add_flags(C /D_CRT_SECURE_NO_WARNINGS)
 	
 	set(OPT_CFLAGS "/Ox")
 	
 	set(CMAKE_C_FLAGS_DEBUG "/Zi")
 endif()
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	add_flags(CXX /D_CRT_SECURE_NO_WARNINGS)
 	
 	set(OPT_CXXFLAGS "/Ox")
@@ -195,7 +195,7 @@ endif()
 #intel
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-if(${CMAKE_C_COMPILER_ID} STREQUAL "Intel")
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
 	set(CMAKE_C_FLAGS_DEBUG "-g -debug all")
 	
 	set(OPT_CFLAGS -ip -O3)
@@ -226,7 +226,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Intel")
 	endif()
 endif()
 
-if(${CMAKE_Fortran_COMPILER_ID} STREQUAL "Intel")
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
 
 	if(WIN32)
 		add_flags(Fortran /D_CRT_SECURE_NO_WARNINGS)
@@ -259,7 +259,7 @@ if(${CMAKE_Fortran_COMPILER_ID} STREQUAL "Intel")
 	endif()
 endif()
 
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
 	set(CMAKE_CXX_FLAGS_DEBUG "-g -debug all")
 	
 	set(OPT_CXXFLAGS -O3)
@@ -267,15 +267,15 @@ endif()
 
 # PGI
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-if(${CMAKE_C_COMPILER_ID} STREQUAL "PGI")
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "PGI")
 	set(OPT_CFLAGS -O2)
 endif()
 
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "PGI")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
 	set(OPT_CXXFLAGS -O2)
 endif()
 
-if(${CMAKE_Fortran_COMPILER_ID} STREQUAL "PGI")
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "PGI")
 	set(OPT_FFLAGS -fast -O3)
 	set(NO_OPT_FFLAGS -O1)
 	
@@ -287,13 +287,13 @@ endif()
 
 # Cray
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-if(${CMAKE_C_COMPILER_ID} STREQUAL "Cray")
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray")
 endif()
 
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Cray")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")
 endif()
 
-if(${CMAKE_Fortran_COMPILER_ID} STREQUAL "Cray")
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Cray")
 endif()
 
 #-------------------------------------------------------------------------------
@@ -312,8 +312,6 @@ endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	add_definitions(-DWIN32)
 endif()
-
-option(DOUBLE_PRECISION "Build Amber's Fortran programs with double precision math." TRUE)
 
 if(NOT DOUBLE_PRECISION)
 	add_definitions(-D_REAL_) #This is read by dprec.fh, where it determines the type of precision to use
