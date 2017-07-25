@@ -2,6 +2,10 @@
 option(OPENMP "Use OpenMP for shared-memory parallelization." FALSE)
 
 if(OPENMP)
+	if(DRAGONEGG)
+		message(FATAL_ERROR "OpenMP is not compatible with Dragonegg.  Disable one or the other to build.")
+	endif()
+	
 	find_package(OpenMPFixed)
 
 	if(DEFINED OPENMP_FOUND AND NOT OPENMP_FOUND)

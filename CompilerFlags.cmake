@@ -1,145 +1,18 @@
-#File which figures out the compiler flags.
+# File which figures out the compiler flags to use based on the vendor and version of each compiler
 #Note: must be included after OpenMPConfig and MPIConfig
-
-# Set up options which affect compiler flags.
-#------------------------------------------------------------------------------------------
-
-#Configuration for Intel's MIC processors.
-
-option(MIC "Build pmemd for Intel Many Integrated Core processors (Xeon Phi and Knight's Landing)." FALSE)
-set(MIC_TYPE "PHI" CACHE STRING "Type of MIC to build.  Options: PHI, PHI_OFFLOAD, KNIGHTS_LANDING, KNIGHTS_LANDING_SPDP.  Only does anything if MIC is enabled.")
-validate_configuration_enum(MIC_TYPE PHI PHI_OFFLOAD KNIGHTS_LANDING KNIGHTS_LANDING_SPDP)
-
-#NOTE: in the configure script, MIC_PHI is called mic, and MIC_KL is called mic2
-set(MIC_PHI FALSE)
-set(MIC_KL FALSE)
-
-if(MIC AND ${MIC_TYPE} MATCHES "PHI.*")
-	set(MIC_PHI TRUE)
-elseif(MIC)
-	set(MIC_KL FALSE)
-endif()
-
-#Dragonegg option
-set(DRAGONEGG "" CACHE PATH "Path to the the Dragonegg gcc to LLVM bridge. Set to empty string to disable.  If specified, it will be applied to any GCC compilers in use (gcc, g++, and gfortran).")
-
- # Check dragonegg
-if(DRAGONEGG)
-	if(NOT EXISTS ${DRAGONEGG})
-		message(FATAL_ERROR "Dragonegg enabled, but the Dragonegg path ${DRAGONEGG} does not point to a file.")    
-    endif()
-	
-	if(OPENMP)
-		message(FATAL_ERROR "OpenMP is not compatible with Dragonegg.  Disable one or the other to build.")
-	endif()
-endif()
-
-#shared vs static option
-option(STATIC "If true, build static libraries and freestanding (except for data files) executables. Otherwise, compile common code into shared libraries and link them to programs.
-	The runtime path is set properly now, so unless you move the installation AND don't source amber.sh you won't have to mess with LD_LIBRARY PATH" FALSE)
-
-if(STATIC)
-	set(SHARED FALSE)
-else()
-	set(SHARED TRUE)
-endif()		
-
-option(LARGE_FILE_SUPPORT "Build C code with large file support" TRUE)
-
-#set default library type appropriately
-set(BUILD_SHARED_LIBS ${SHARED})
-
-# NOTE: The correct way to handle optimization is to use generator expressions based on the current configuration.
-# However, sometimes I need to use set_property(SOURCE PROPERTY COMPILE_FLAGS) to set compile flags for individual source files.
-# This property didn't support generator expressions until CMake 3.8. Grrrrr.
-# So, we use CMAKE_<LANG>_FLAGS_DEBUG for per-config debugging flags, but use a separate optimization switch.
-option(OPTIMIZE "Whether to build code with compiler flags for optimization." TRUE)
-
-option(UNUSED_WARNINGS "Enable warnings about unused variables.  Really clutters up the build output." TRUE)
-option(UNINITIALIZED_WARNINGS "Enable warnings about uninitialized variables.  Kind of clutters up the build output, but these need to be fixed." TRUE)
 
 #-------------------------------------------------------------------------------
 #  Handle CMake fortran compiler version issue
 #  See https://cmake.org/Bug/view.php?id=15372
 #-------------------------------------------------------------------------------
 	
-get_property(ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
-
-if("${ENABLED_LANGUAGES}" MATCHES "Fortran" AND "${CMAKE_Fortran_COMPILER_VERSION}" STREQUAL "")
+if(CMAKE_FORTRAN_COMPILER_LOADED AND "${CMAKE_Fortran_COMPILER_VERSION}" STREQUAL "")
 
 	set(CMAKE_Fortran_COMPILER_VERSION ${CMAKE_C_COMPILER_VERSION} CACHE STRING "Fortran compiler version.  May not be autodetected correctly on older CMake versions, fix this if it's wrong." FORCE)
 	message(FATAL_ERROR "Your CMake is too old to properly detect the Fortran compiler version.  It is assumed to be the same as your C compiler version, ${CMAKE_C_COMPILER_VERSION}. If this is not correct, pass -DCMAKE_Fortran_COMPILER_VERSION=<correct version> to cmake.  If it is correct,just run the configuration again.")
 	
 endif()
 	
-
-#-------------------------------------------------------------------------------
-#  Set default flags
-#-------------------------------------------------------------------------------
-
-#let's try to enforce a reasonable standard here
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_CXX_STANDARD 11)
-
-set(NO_OPT_FFLAGS -O0)
-set(NO_OPT_CFLAGS -O0)
-set(NO_OPT_CXXFLAGS -O0)
-
-set(OPT_FFLAGS -O3)
-set(OPT_CFLAGS -O3)
-set(OPT_CXXFLAGS -O3)
-
-set(CMAKE_C_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_Fortran_FLAGS_DEBUG "-g")
-
-#blank cmake's default optimization flags, we can't use these because not everything should be built optimized.
-set(CMAKE_C_FLAGS_RELEASE "")
-set(CMAKE_CXX_FLAGS_RELEASE "")
-set(CMAKE_Fortran_FLAGS_RELEASE "")
-
-#a macro to make things a little cleaner
-#NOTE: we can't use add_compile_options because that will apply to all languages
-macro(add_flags LANGUAGE) # FLAGS...
-	foreach(FLAG ${ARGN})
-		set(CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS} ${FLAG}")
-	endforeach()
-endmacro(add_flags)
-
-#------------------------------------------------------------------------------
-#  Now that we have our compiler, detect target architecture.
-#  This is kind of a hack, but it works.
-#  See TargetArch.cmake (from https://github.com/axr/solar-cmake) for details.  
-#------------------------------------------------------------------------------
-target_architecture(TARGET_ARCH)
-
-if(${TARGET_ARCH} STREQUAL unknown)
-	message(FATAL_ERROR "Could not detect target architecture from compiler.  Does the compiler work?")
-endif()   
-
-
-#initialize SSE based on TARGET_ARCH
-list_contains(SSE_SUPPORTED ${TARGET_ARCH} x86_64 ia64 i386)
-set(SSE ${SSE_SUPPORTED} CACHE BOOL "Optimize for the SSE family of vectorizations.")
-set(SSE_TYPES "" CACHE STRING "CPU types for which auto-dispatch code will be produced (Intel compilers version 11 and higher). Known valid
-	options are SSE2, SSE3, SSSE3, SSE4.1 and SSE4.2. Multiple options (comma separated) are permitted.")
-
-# Figure out no-undefined flag
-if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
-	set(NO_UNDEFINED_FLAG "-Wl,-undefined,error")
-elseif((${CMAKE_SYSTEM_NAME} STREQUAL Linux) OR MINGW)
-	set(NO_UNDEFINED_FLAG "-Wl,--no-undefined")
-else()
-	set(NO_UNDEFINED_FLAG "")
-endif()
-
-
-#-------------------------------------------------------------------------------
-# Set up a couple of convenience variables to make checking the target OS less verbose
-#-------------------------------------------------------------------------------
-test(TARGET_OSX "${CMAKE_SYSTEM_NAME}" STREQUAL Darwin)
-test(TARGET_WINDOWS "${CMAKE_SYSTEM_NAME}" STREQUAL Windows)
-test(TARGET_LINUX "${CMAKE_SYSTEM_NAME}" STREQUAL Linux)
 
 #-------------------------------------------------------------------------------
 #  Now, the If Statements of Doom...
@@ -324,10 +197,6 @@ endif()
 
 if(${CMAKE_C_COMPILER_ID} STREQUAL "Intel")
 	set(CMAKE_C_FLAGS_DEBUG "-g -debug all")
-
-	if(MIC_PHI AND  ${CMAKE_C_COMPILER_VERSION} VERSION_LESS 12)
-		message(FATAL_ERROR "Building for Xeon Phi requires Intel Compiler Suite v12 or later.")
-	endif()
 	
 	set(OPT_CFLAGS -ip -O3)
 		
@@ -339,7 +208,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Intel")
     #  SSE_TYPES specification needs to be given in place of xHost not in addition to.
     #  This observed behavior is not what is reported by the Intel man pages. BPK
 	
-	if(SSE AND NOT MIC_PHI)
+	if(SSE)
 		# BPK removed section that modified O1 or O2 to be O3 if optimize was set to yes.
       	# We already begin with the O3 setting so it wasn't needed.
         # For both coptflags and foptflags, use the appropriate settings
@@ -367,14 +236,10 @@ if(${CMAKE_Fortran_COMPILER_ID} STREQUAL "Intel")
 		set(CMAKE_Fortran_FLAGS_DEBUG "/Zi")
 	else()
 		set(CMAKE_Fortran_FLAGS_DEBUG "-g -debug all")
-
-		if(MIC_PHI AND  ${CMAKE_Fortran_COMPILER_VERSION} VERSION_LESS 12)
-			message(FATAL_ERROR "Building for Xeon Phi requires Intel Compiler Suite v12 or later.")
-		endif()
 		
 		set(OPT_FFLAGS -ip -O3)
 			
-		if(SSE AND NOT MIC_PHI)
+		if(SSE)
 
 			if(${CMAKE_Fortran_COMPILER_VERSION} VERSION_GREATER 11 OR ${CMAKE_Fortran_COMPILER_VERSION} VERSION_EQUAL 11)
 				if(NOT "${SSE_TYPES}" STREQUAL "")
@@ -396,10 +261,6 @@ endif()
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
 	set(CMAKE_CXX_FLAGS_DEBUG "-g -debug all")
-
-	if(MIC_PHI AND ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS 12)
-		message(FATAL_ERROR "Building for Xeon Phi requires Intel Compiler Suite v12 or later.")
-	endif()
 	
 	set(OPT_CXXFLAGS -O3)
 endif()

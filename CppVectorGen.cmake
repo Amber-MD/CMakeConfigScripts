@@ -1,4 +1,5 @@
 # Utility script for converting data in a CMake list to C++ source code
+# must be included after CompilationOptions because it checks for a C++11 header
 # works without c++11 initalizer lists
 
 #VECTORTYPE example: "std::string"

@@ -1,6 +1,23 @@
 #File which sets special compiler flags for PMEMD
 #Often little configuration things are done in the subdir CMakeLists, but since the logic is so complicated I wanted to do this here in the root folder
 
+
+#Configuration for Intel's MIC processors.
+
+option(MIC "Build for Intel Many Integrated Core processors (Xeon Phi and Knight's Landing)." FALSE)
+set(MIC_TYPE "PHI" CACHE STRING "Type of MIC to build.  Options: PHI, PHI_OFFLOAD, KNIGHTS_LANDING, KNIGHTS_LANDING_SPDP.  Only does anything if MIC is enabled.")
+validate_configuration_enum(MIC_TYPE PHI PHI_OFFLOAD KNIGHTS_LANDING KNIGHTS_LANDING_SPDP)
+
+#NOTE: in the configure script, MIC_PHI is called mic, and MIC_KL is called mic2
+set(MIC_PHI FALSE)
+set(MIC_KL FALSE)
+
+if(MIC AND ${MIC_TYPE} MATCHES "PHI.*")
+	set(MIC_PHI TRUE)
+elseif(MIC)
+	set(MIC_KL FALSE)
+endif()
+
 #-------------------------------------------------------------------------------
 #  Set default flags.  
 #-------------------------------------------------------------------------------
@@ -33,6 +50,10 @@ set(PMEMD_DEFAULT_PRECISION SPFP)
 #-------------------------------------------------------------------------------
 
 if(${CMAKE_C_COMPILER_ID} STREQUAL "Intel")
+
+	if(MIC_PHI AND  ${CMAKE_C_COMPILER_ID} VERSION_LESS 12)
+		message(FATAL_ERROR "Building for Xeon Phi requires Intel Compiler Suite v12 or later.")
+	endif()
 
     # RCW Removed 10/5/2010 - Causes issues building in parallel since -fast always implies -static.
     #pmemd_foptflags='-fast'
@@ -139,7 +160,10 @@ endif()
 
 #this tree mirrors the C tree very closely, with only minor differences
 if(${CMAKE_Fortran_COMPILER_ID} STREQUAL "Intel")
-      
+	if(MIC_PHI AND  ${CMAKE_Fortran_COMPILER_VERSION} VERSION_LESS 12)
+		message(FATAL_ERROR "Building for Xeon Phi requires Intel Compiler Suite v12 or later.")
+	endif()
+	
 	if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
 	
 		set(PMEMD_FFLAGS -O3 -mdynamic-no-pic -no-prec-div)
@@ -227,6 +251,11 @@ endif()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Configure EMIL CXXFLAGS
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+	
+	if(MIC_PHI AND ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS 12)
+		message(FATAL_ERROR "Building for Xeon Phi requires Intel Compiler Suite v12 or later.")
+	endif()
+
 	if(MIC)
 		list(APPEND EMIL_MIC_FLAGS -mmic)
 		
