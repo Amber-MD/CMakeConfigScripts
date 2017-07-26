@@ -189,7 +189,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	
 	set(OPT_CXXFLAGS "/Ox")
 	
-	set(CMAKE_C_FLAGS_DEBUG "/Zi")
+	set(CMAKE_CXX_FLAGS_DEBUG "/Zi")
 endif()
 
 #intel

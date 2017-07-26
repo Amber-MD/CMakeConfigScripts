@@ -15,7 +15,7 @@
 # This module defines the following variables:
 #
 #   MKL_FOUND            : True if MKL_INCLUDE_DIR are found
-#   MKL_INCLUDE_DIR      : where to find mkl.h, etc.
+#   MKL_INCLUDE_DIR      : where to find mkl.h, etc (can be a multi-element list)
 #   MKL_INCLUDE_DIRS     : alias for MKL_INCLUDE_DIR
 #   MKL_LIBRARIES        : the libraries to link against for your configuration when using C or C++.
 #	MKL_FORTRAN_LIBRARIES: the libraries to link against when any Fortran code is being linked
@@ -224,4 +224,4 @@ else()
 	endif()
 endif()
 
-find_package_handle_standard_args(MKL DEFAULT_MSG MKL_INCLUDE_DIR ${MKL_NEEDED_LIBNAMES})
+find_package_handle_standard_args(MKL DEFAULT_MSG ${MKL_NEEDED_LIBNAMES})

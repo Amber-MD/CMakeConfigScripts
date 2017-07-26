@@ -80,8 +80,10 @@ macro(set_3rdparty TOOL STATUS)
 			if(INSIDE_AMBER)
 				# getting here means there's been a programming error
 				message(FATAL_ERROR "3rd party program ${TOOL} is not bundled and cannot be built inside Amber.")
+			elseif("${REQUIRED_3RDPARTY_TOOLS}" MATCHES ${TOOL})
+				message(FATAL_ERROR "3rd party program ${TOOL} is required, but was not found.")
 			else()
-				# it's a submodule, so it's OK that the tool is not bundled
+				# it's a submodule, and it's not required, so it's OK that the tool is not bundled
 				set(${TOOL}_DISABLED TRUE)
 				set(${TOOL}_ENABLED FALSE)
 				
@@ -90,7 +92,7 @@ macro(set_3rdparty TOOL STATUS)
 	
 	else()
 		list_contains(TOOL_REQUIRED ${TOOL} ${REQUIRED_3RDPARTY_TOOLS})
-		
+				
 		if(TOOL_REQUIRED)
 			message(FATAL_ERROR "3rd party program ${TOOL} is required to build Amber, but it is disabled.")
 		endif()
@@ -239,7 +241,7 @@ if(NEED_fftw)
 		set_3rdparty(fftw DISABLED)
 	else()
 		find_package(FFTW)
-	
+		
 		if(MPI)
 			find_package(FFTW_MPI)
 			if(NOT FFTW_MPI_FOUND)
@@ -263,8 +265,8 @@ endif()
 if(NEED_netcdf OR NEED_netcdf-fortran)
 	
 	#tell it to find the Fortran interfaces
-	set(NETCDF_F77 TRUE)
-	set(NETCDF_F90 TRUE)
+	set(NETCDF_F77 ${NEED_netcdf-fortran})
+	set(NETCDF_F90 ${NEED_netcdf-fortran})
 	
 	find_package(NetCDF)
 	
@@ -729,6 +731,11 @@ endif()
 #------------------------------------------------------------------------------
 
 if(fftw_EXTERNAL)
+	
+	if(NOT FFTW_FOUND)
+		message(FATAL_ERROR "Could not find FFTW, but it was set so be sourced externally!")
+	endif()
+
 	# Import the system fftw as a library
 	import_library(fftw ${FFTW_LIBRARIES} ${FFTW_INCLUDES})
 	using_external_library(${FFTW_LIBRARIES})
