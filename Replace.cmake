@@ -1,5 +1,5 @@
 
-include(${CMAKE_SOURCE_DIR}/cmake/Replace-function.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/Replace-function.cmake)
 
 #creates a custom command for creating OUTPUTFILE by running one or more replaces on INPUTFILE
 #the caller is responsible for making something depend on outputfile so that it it generated
