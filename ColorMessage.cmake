@@ -18,10 +18,6 @@ test(COLOR_MSG_SUPPORTED (NOT WIN32))
 
 option(COLOR_CMAKE_MESSAGES "Colorize output from the configuration script.  This comes out all wrong if you use the GUI, so make sure to set this to false if you do." ${COLOR_MSG_SUPPORTED})
 
-if(COLOR_CMAKE_MESSAGES)
-	message("If this is all you can see, then you need to turn off COLOR_CMAKE_MESSAGES")
-endif()
-
 # AMBER: we put this stuff out here.  Yes, it pollutes the global namespace, but it also saves having to recalculate this each invocation
 # (which is what the original function did)
 string (ASCII 27 _escape)

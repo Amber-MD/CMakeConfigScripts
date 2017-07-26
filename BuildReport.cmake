@@ -1,6 +1,10 @@
 # Prints the build report 
 
 function(print_build_report)
+	if(COLOR_CMAKE_MESSAGES)
+		message("If you can't see the following build report, then you need to turn off COLOR_CMAKE_MESSAGES")
+	endif()
+
 	colormsg(HIBLUE "**************************************************************************")
 	colormsg("                             " _WHITE_ "Build Report")
     colormsg("                         " _HIMAG_ "3rd Party Libraries")
