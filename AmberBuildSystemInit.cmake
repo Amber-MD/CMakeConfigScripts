@@ -4,8 +4,9 @@
 if(NOT DEFINED FIRST_RUN)
 
 	# create a cache variable which is shadowed by a local variable
-	set(FIRST_RUN TRUE)
 	set(FIRST_RUN FALSE CACHE INTERNAL "Variable to track if it is currently the first time the build system is run" FORCE)
+	set(FIRST_RUN TRUE)
+
 endif()
 
 # configure module path
