@@ -56,7 +56,11 @@ else()
 endif()
 
 # names of subdirectories in the lib folder
-set(MKL_ARCHITECTURES ia32 intel64 em64t)
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+	set(MKL_ARCHITECTURES intel64 em64t)
+else()
+	set(MKL_ARCHITECTURES ia32)
+endif()
 
 set(MKL_LIB_PATHS "")
 set(MKL_OMP_LIB_PATHS "")# paths to look for the Intel OpenMP runtime library in
@@ -83,7 +87,7 @@ else()
     # NOTE: right now it's hardcoded to use the 32-bit compatibility versions of certain libraries (lp64 instead of ilp64)
     
     if(WIN32)
-        set(MKL_INTERFACE_LIBNAMES mkl_intel_c mkl_intel_c_lp64)
+        set(MKL_INTERFACE_LIBNAMES mkl_intel mkl_intel_lp64 mkl_intel_c mkl_intel_c_lp64)
     else()
         set(MKL_INTERFACE_LIBNAMES mkl_intel mkl_intel_lp64)
     endif()
@@ -177,7 +181,9 @@ else()
     
     # Library names to pass to FPHSA
     set(MKL_NEEDED_LIBNAMES MKL_INTERFACE_LIBRARY ${MKL_FORTRAN_INTERFACE_LIBRARY} ${MKL_THREADING_LIBRARY} MKL_CORE_LIBRARY)
-  
+	
+	# fix MKL_INTERFACE_LIBRARY appearing twice if the fortran interface library is the same as the normal one
+	list(REMOVE_DUPLICATES MKL_NEEDED_LIBNAMES)
     
     set(CMAKE_FIND_LIBRARY_SUFFIXES ${_MKL_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES})
     
