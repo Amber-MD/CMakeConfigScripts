@@ -97,9 +97,18 @@ function(target_architecture output_var)
             list(APPEND ARCH ppc64)
         endif()
     else()
-        file(WRITE "${CMAKE_BINARY_DIR}/arch.c" "${archdetect_c_code}")
-
-        enable_language(C)
+    	# figure out extension for the source file
+		if(CMAKE_C_COMPILER_LOADED)
+			set(TA_EXTENSION "c")
+		elseif(CMAKE_CXX_COMPILER_LOADED)
+			set(TA_EXTENSION "cpp")
+		elseif(CMAKE_FORTRAN_COMPILER_LOADED)
+			set(TA_EXTENSION "F90")
+		else()
+			message(FATAL_ERROR "You must enable a C, CXX, or Fortran compiler to use TargetArch.cmake")
+		endif()
+		
+        file(WRITE "${CMAKE_BINARY_DIR}/arch.${TA_EXTENSION}" "${archdetect_c_code}")
 
         # Detect the architecture in a rather creative way...
         # This compiles a small C program which is a series of ifdefs that selects a
@@ -119,7 +128,7 @@ function(target_architecture output_var)
             run_result_unused
             compile_result_unused
             "${CMAKE_BINARY_DIR}"
-            "${CMAKE_BINARY_DIR}/arch.c"
+            "${CMAKE_BINARY_DIR}/arch.${TA_EXTENSION}"
             COMPILE_OUTPUT_VARIABLE ARCH
             CMAKE_FLAGS ${TA_CMAKE_FLAGS}
         )

@@ -14,6 +14,11 @@ if(CMAKE_FORTRAN_COMPILER_LOADED AND "${CMAKE_Fortran_COMPILER_VERSION}" STREQUA
 endif()
 	
 
+# create linker flags
+# On Windows undefined symbols in shared libraries produce errors.
+# This makes them do that on Linux too.
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${NO_UNDEFINED_FLAG}")
+
 #-------------------------------------------------------------------------------
 #  Now, the If Statements of Doom...
 #-------------------------------------------------------------------------------
@@ -23,10 +28,6 @@ endif()
 
 if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 	add_flags(C -Wall -Wno-unused-function -Wno-unknown-pragmas)
-
-	# On Windows undefined symbols in shared libraries produce errors.
-	# This makes them do that on Linux too.
-	add_flags(C ${NO_UNDEFINED_FLAG})
 	
 	if(NOT UNUSED_WARNINGS)
 		add_flags(C -Wno-unused-variable -Wno-unused-but-set-variable)
@@ -68,8 +69,6 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 		add_flags(CXX -Wno-unused-local-typedefs)
 	endif()
 	
-	add_flags(CXX ${NO_UNDEFINED_FLAG}) # This gets enforced on Windows by the linker, so we enforce it everywhere to catch errors when they are introduced
-	
 	if(NOT UNUSED_WARNINGS)
 		add_flags(CXX -Wno-unused-variable -Wno-unused-but-set-variable)
 	endif()
@@ -101,7 +100,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
 
-	add_flags(Fortran -Wall -Wno-tabs -Wno-unused-function -ffree-line-length-none -Wno-unused-dummy-argument ${NO_UNDEFINED_FLAG})
+	add_flags(Fortran -Wall -Wno-tabs -Wno-unused-function -ffree-line-length-none -Wno-unused-dummy-argument)
 		
 	if(NOT UNUSED_WARNINGS)
 		add_flags(Fortran -Wno-unused-variable)
@@ -111,7 +110,7 @@ if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
 		add_flags(Fortran -Wno-maybe-uninitialized)
 	endif()	
 		
-	if(${CMAKE_C_COMPILER_VERSION} VERSION_GREATER 4.1)
+	if("${CMAKE_Fortran_COMPILER_VERSION}" VERSION_GREATER 4.1)
 		if(SSE)
 			if(TARGET_ARCH STREQUAL x86_64)
           		#-mfpmath=sse is default for x86_64, no need to specific it
@@ -146,7 +145,7 @@ endif()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
-	add_flags(C -Wall -Wno-unused-function ${NO_UNDEFINED_FLAG})
+	add_flags(C -Wall -Wno-unused-function)
 	
 	list(APPEND OPT_CFLAGS "-mtune=native")
 	
@@ -161,7 +160,7 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
 		
 endif()
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-	add_flags(CXX -Wall -Wno-unused-function ${NO_UNDEFINED_FLAG})
+	add_flags(CXX -Wall -Wno-unused-function)
 	
 	list(APPEND OPT_CXXFLAGS "-mtune=native")
 	

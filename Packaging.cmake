@@ -20,8 +20,8 @@ set(CPACK_PACKAGE_VENDOR "The Amber Developers")
 
 set(CPACK_PACKAGE_VERSION_MAJOR ${${PROJECT_NAME}_MAJOR_VERSION})
 set(CPACK_PACKAGE_VERSION_MINOR ${${PROJECT_NAME}_MINOR_VERSION})
-set(CPACK_PACKAGE_VERSION_TWEAK ${${PROJECT_NAME}_TWEAK_VERSION})
-set(CPACK_PACKAGE_VERSION_PATCH 0)
+set(CPACK_PACKAGE_VERSION_PATCH ${${PROJECT_NAME}_PATCH_VERSION})
+set(CPACK_PACKAGE_VERSION_TWEAK 0)
 
 #set(CPACK_PACKAGE_ICON ${CMAKE_SOURCE_DIR}/amber_logo.bmp)
 
@@ -167,12 +167,20 @@ else()
 	set(CPACK_DEBIAN_PACKAGE_DEPENDS ${DEB_PACKAGE_DEPENDENCIES})
 	set(CPACK_DEBIAN_PACKAGE_SECTION "science")
 	
+	set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+	
 	#RPM package
 	set(CPACK_RPM_PACKAGE_RELEASE 1)
 	set(CPACK_RPM_PACKAGE_GROUP "Applications/Productivity")
 	set(RPM_PACKAGE_DEPENDENCIES  "" CACHE STRING "Requirements string for the RPM package.  Must be written by the packager according to how they built amber.
 	 Example: \"python >= 2.7.0, lapack, blas\"")
 	set(CPACK_RPM_PACKAGE_REQUIRES ${RPM_PACKAGE_DEPENDENCIES})
+	
+	# tell CPack to autocreate the package names following distro standards
+	# these don't work prior to CMake 3.6, so when those versions are used the package will get named according to PACKAGE_NAME
+	set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+	set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
+
 		
 endif()
 
@@ -248,6 +256,8 @@ function(print_packaging_report)
 		colormsg("If any libraries are missing, please list them in the variable EXTRA_LIBS_TO_BUNDLE")
 	elseif(${PACK_TYPE_CATEGORY} STREQUAL linux-package)
 		colormsg("This is a Linux package, so dependencies will be automatically calculated for the current distro you are building on.")
+		colormsg("")
+		colormsg("${PROJECT_NAME} will be installed by the package to: " HIBLUE "${CMAKE_INSTALL_PREFIX}")
 	endif()
 colormsg(HIGREEN "**************************************************************************")
 	

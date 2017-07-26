@@ -82,18 +82,16 @@ function(print_build_report)
 	colormsg("                             " _HIMAG_ "Compilers:")
 	
 	# print compiler messages for only the languages that are enabled
-	# (thanks to https://stackoverflow.com/questions/32389273/detect-project-language-in-cmake)
-	get_property(ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
-	
-	if("${ENABLED_LANGUAGES}" MATCHES "C")
+
+	if(NOT "${CMAKE_C_COMPILER_ID}" STREQUAL "")
 	colormsg(CYAN "        C:" YELLOW "${CMAKE_C_COMPILER_ID} ${CMAKE_C_COMPILER_VERSION}" HIRED "(${CMAKE_C_COMPILER})")
 	endif()
 	
-	if("${ENABLED_LANGUAGES}" MATCHES "CXX")
+	if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "")
 	colormsg(CYAN "      CXX:" YELLOW "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}" HIRED "(${CMAKE_CXX_COMPILER})")
 	endif()
 	
-	if("${ENABLED_LANGUAGES}" MATCHES "Fortran")
+	if(NOT "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "")
 	colormsg(CYAN "  Fortran:" YELLOW "${CMAKE_Fortran_COMPILER_ID} ${CMAKE_Fortran_COMPILER_VERSION}" HIRED "(${CMAKE_Fortran_COMPILER})")
 	endif()
 		
