@@ -159,8 +159,8 @@ endif()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #this tree mirrors the C tree very closely, with only minor differences
-if(${CMAKE_Fortran_COMPILER_ID} STREQUAL "Intel")
-	if(MIC_PHI AND  ${CMAKE_Fortran_COMPILER_VERSION} VERSION_LESS 12)
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
+	if(MIC_PHI AND  "${CMAKE_Fortran_COMPILER_VERSION}" VERSION_LESS 12)
 		message(FATAL_ERROR "Building for Xeon Phi requires Intel Compiler Suite v12 or later.")
 	endif()
 	
@@ -178,7 +178,7 @@ if(${CMAKE_Fortran_COMPILER_ID} STREQUAL "Intel")
       	endif()
       	
       
-		if(${CMAKE_Fortran_COMPILER_VERSION} VERSION_GREATER 11 OR ${CMAKE_Fortran_COMPILER_VERSION} VERSION_EQUAL 11)
+		if("${CMAKE_Fortran_COMPILER_VERSION}" VERSION_GREATER 11 OR ${CMAKE_Fortran_COMPILER_VERSION} VERSION_EQUAL 11)
 			list(APPEND PMEMD_FFLAGS -xHost)
 		endif()
 	else()
@@ -190,7 +190,7 @@ if(${CMAKE_Fortran_COMPILER_ID} STREQUAL "Intel")
 			
 		elseif(NOT MIC_PHI)
 		
-			if(${CMAKE_Fortran_COMPILER_VERSION} VERSION_GREATER 11 OR ${CMAKE_Fortran_COMPILER_VERSION} VERSION_EQUAL 11)
+			if("${CMAKE_Fortran_COMPILER_VERSION}" VERSION_GREATER 11 OR ${CMAKE_Fortran_COMPILER_VERSION} VERSION_EQUAL 11)
 			
 				if(SSE)
 					if(NOT "${SSE_TYPES}" STREQUAL "")
@@ -215,7 +215,7 @@ if(${CMAKE_Fortran_COMPILER_ID} STREQUAL "Intel")
 	elseif(MIC_KL)
 		if(INTELMPI AND OPENMP)
 			list(APPEND PMEMD_F_DEFINITIONS MIC2)
-			if(${CMAKE_Fortran_COMPILER_VERSION} VERSION_GREATER 12 AND ${CMAKE_Fortran_COMPILER_VERSION} VERSION_LESS 16)
+			if("${CMAKE_Fortran_COMPILER_VERSION}" VERSION_GREATER 12 AND ${CMAKE_Fortran_COMPILER_VERSION} VERSION_LESS 16)
 				list(APPEND PMEMD_FFLAGS -openmp-simd)
 			else()
 				list(APPEND PMEMD_FFLAGS -qopenmp-simd)
@@ -239,7 +239,7 @@ if(${CMAKE_Fortran_COMPILER_ID} STREQUAL "Intel")
 		list(APPEND PMEMD_F_DEFINITIONS MIC_offload)
 		list(APPEND PMEMD_FFLAGS -opt-streaming-cache-evict=0 -fimf-domain-exclusion=15 -align array64byte)
 	endif()	
-elseif(${CMAKE_Fortran_COMPILER} STREQUAL PGI)
+elseif("${CMAKE_Fortran_COMPILER_ID}" STREQUAL PGI)
 	set(PMEMD_FFLAGS -O4 -fastsse -Munroll -Mnoframe -Mscalarsse -Mvect=sse -Mcache_align)
 else()
 	#use regular compiler flags
@@ -250,7 +250,7 @@ endif()
 #C++
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Configure EMIL CXXFLAGS
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
 	
 	if(MIC_PHI AND ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS 12)
 		message(FATAL_ERROR "Building for Xeon Phi requires Intel Compiler Suite v12 or later.")
@@ -266,7 +266,7 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
 	endif()
 endif()
 	
-if(${CMAKE_Fortran_COMPILER_ID} STREQUAL "GNU" AND ${CMAKE_Fortran_COMPILER_VERSION} VERSION_EQUAL 5)	
+if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU" AND "${CMAKE_Fortran_COMPILER_VERSION}" VERSION_EQUAL 5)	
 	# compile pmemd prmtop_dat at lower optimization for buggy gnu 5.x: see bug 303.
 	set(PMEMD_GNU_BUG_303 TRUE) 
 else()

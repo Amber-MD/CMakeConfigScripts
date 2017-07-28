@@ -30,20 +30,20 @@ else()
 	endif()
 	
 	test(BUILD_PYTHON_DEFAULT HAS_PYTHON AND PYTHON_VERSION_OK)
-		
-	if(BUILD_PYTHON)
-		if(NOT HAS_PYTHON)
-			message(FATAL_ERROR "You requested to build the python packages, but the Python interpereter was not found.")
-		endif()
-		if(NOT PYTHON_VERSION_OK)
-			message(FATAL_ERROR "You requested to build the python packages, but the Python interpereter is an unsupported version (${PYTHON_VERSION}).  Please set PYTHON_EXECUTABLE to point to a python interpreter of the correct version, or disable BUILD_PYTHON.")
-		endif()
-	else()
-		message(STATUS "Skipping build of Python packages.")
-	endif()
 endif()
 
 option(BUILD_PYTHON "Whether to build the Python programs and libraries." ${BUILD_PYTHON_DEFAULT})
+
+if(BUILD_PYTHON)
+	if(NOT HAS_PYTHON)
+		message(FATAL_ERROR "You requested to build the python packages, but the Python interpereter was not found.")
+	endif()
+	if(NOT PYTHON_VERSION_OK)
+		message(FATAL_ERROR "You requested to build the python packages, but the Python interpereter is an unsupported version (${PYTHON_VERSION}).  Please set PYTHON_EXECUTABLE to point to a python interpreter of the correct version, or disable BUILD_PYTHON.")
+	endif()
+else()
+	message(STATUS "Skipping build of Python packages.")
+endif()
 
 #-------------------------------------------------------------------------------
 #  See where we want to install our Python packages (and make sure it's legal)

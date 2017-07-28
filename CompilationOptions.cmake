@@ -80,7 +80,7 @@ endmacro(add_flags)
 #------------------------------------------------------------------------------
 target_architecture(TARGET_ARCH)
 
-if(${TARGET_ARCH} STREQUAL unknown)
+if("${TARGET_ARCH}" STREQUAL unknown OR "${TARGET_ARCH}" STREQUAL "")
 	message(FATAL_ERROR "Could not detect target architecture from compiler.  Does the compiler work?")
 endif()   
 
