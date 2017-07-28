@@ -53,7 +53,7 @@ set(archdetect_c_code "
 # will be treated as invalid architectures since they are no longer supported by Apple
 
 function(target_architecture output_var)
-    if(APPLE AND DEFINED CMAKE_OSX_ARCHITECTURES)
+    if((APPLE AND DEFINED CMAKE_OSX_ARCHITECTURES) AND NOT "${CMAKE_OSX_ARCHITECTURES}" STREQUAL "")
         # On OS X we use CMAKE_OSX_ARCHITECTURES *if* it was set
         # First let's normalize the order of the values
 
