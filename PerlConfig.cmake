@@ -7,14 +7,14 @@ if(WIN32)
 	#On Windows, MakeMaker makefiles require nmake or dmake.  Weird, I know.
 	find_program(PERL_MAKE NAMES dmake DOC "Make program to use for building perl programs.  Must be dmake.  GNU make does not work.  Yes, I know that's idiotic, complain to the people who make Module::Install")
 else()
-	set(PERL_MAKE ${MAKE_COMMAND})
+	find_program(PERL_MAKE NAMES make DOC "Make program to use for building perl programs.  Should be GNU Make.")
 endif()
 
 test(BUILD_PERL_DEFAULT PERL_FOUND)
 
 option(BUILD_PERL "Build the tools which use Perl." ${BUILD_PERL_DEFAULT})
 
-if("${PERL_MAKE}")
+if(PERL_MAKE)
 	set(HAVE_PERL_MAKE TRUE)
 else()
 	set(HAVE_PERL_MAKE FALSE)

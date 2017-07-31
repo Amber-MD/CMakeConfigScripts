@@ -44,7 +44,7 @@ function(print_build_report)
 	
 	message("")
     colormsg("                              " _HIMAG_ "Features:")
-	# we only want to print these of the corresponding build files have been included
+	# we only want to print these if the corresponding build files have been included
 	if(DEFINED MPI)
 	color_print_bool("MPI parallelization:   " ${MPI})
 	endif()
@@ -61,6 +61,14 @@ function(print_build_report)
 	
 	if(DEFINED BUILD_GUI)
 	color_print_bool("Build GUI Interfaces:  " ${BUILD_GUI})
+	endif()
+	
+	if(DEFINED BUILD_PYTHON)
+	color_print_bool("Build Python Programs: " ${BUILD_PYTHON})
+	endif()
+	
+	if(DEFINED BUILD_PERL)
+	color_print_bool("Build Perl Programs:   " ${BUILD_PERL})
 	endif()
 	
 	colormsg("Build configuration:   " HIBLUE "${CMAKE_BUILD_TYPE}")

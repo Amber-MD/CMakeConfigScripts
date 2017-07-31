@@ -6,7 +6,7 @@
 #  See https://cmake.org/Bug/view.php?id=15372
 #-------------------------------------------------------------------------------
 	
-if(CMAKE_FORTRAN_COMPILER_LOADED AND "${CMAKE_Fortran_COMPILER_VERSION}" STREQUAL "")
+if(CMAKE_Fortran_COMPILER_LOADED AND "${CMAKE_Fortran_COMPILER_VERSION}" STREQUAL "")
 
 	set(CMAKE_Fortran_COMPILER_VERSION ${CMAKE_C_COMPILER_VERSION} CACHE STRING "Fortran compiler version.  May not be autodetected correctly on older CMake versions, fix this if it's wrong." FORCE)
 	message(FATAL_ERROR "Your CMake is too old to properly detect the Fortran compiler version.  It is assumed to be the same as your C compiler version, ${CMAKE_C_COMPILER_VERSION}. If this is not correct, pass -DCMAKE_Fortran_COMPILER_VERSION=<correct version> to cmake.  If it is correct,just run the configuration again.")
@@ -34,7 +34,7 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 	endif()
 	
 	if(NOT UNINITIALIZED_WARNINGS)
-		add_flags(C -Wno-maybe-uninitialized)
+		add_flags(C -Wno-uninitialized -Wno-maybe-uninitialized)
 	endif()
 	
 	if(${CMAKE_C_COMPILER_VERSION} VERSION_GREATER 4.1)
@@ -74,7 +74,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	endif()
 	
 	if(NOT UNINITIALIZED_WARNINGS)
-		add_flags(CXX -Wno-maybe-uninitialized)
+		add_flags(CXX -Wno-uninitialized -Wno-maybe-uninitialized)
 	endif()
 	
 	if(${CMAKE_CXX_COMPILER_VERSION} VERSION_GREATER 4.1)
@@ -125,7 +125,7 @@ if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
 	# gcc 4.1.2 does not support putting allocatable arrays in a Fortran type...
     # so unfortunately file-less prmtop support in the sander API will not work
     # in this case.
-    if(${CMAKE_Fortran_COMPILER_VERSION} VERSION_LESS 4.2)
+    if("${CMAKE_Fortran_COMPILER_VERSION}" VERSION_LESS 4.2)
         add_definitions(-DNO_ALLOCATABLES_IN_TYPE)
     endif()
     
@@ -154,6 +154,10 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
 		set(CMAKE_C_COMPILER_TARGET ${TARGET_TRIPLE})
 	endif()  
 	
+	if(NOT UNINITIALIZED_WARNINGS)
+		add_flags(C -Wno-sometimes-uninitialized)
+	endif()
+	
 	if(OPENMP AND (${CMAKE_C_COMPILER_VERSION} VERSION_LESS 3.7))
 		message(FATAL_ERROR "Clang versions earlier than 3.7 do not support OpenMP!  Disable it or change compilers!")
 	endif()
@@ -164,8 +168,12 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 	
 	list(APPEND OPT_CXXFLAGS "-mtune=native")
 	
-	if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+	if(CROSSCOMPILE)
 		set(CMAKE_CXX_COMPILER_TARGET ${TARGET_TRIPLE})
+	endif()
+	
+	if(NOT UNINITIALIZED_WARNINGS)
+		add_flags(C -Wno-sometimes-uninitialized)
 	endif()
 	
 	if(OPENMP AND (${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS 3.7))
@@ -240,7 +248,7 @@ if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
 			
 		if(SSE)
 
-			if(${CMAKE_Fortran_COMPILER_VERSION} VERSION_GREATER 11 OR ${CMAKE_Fortran_COMPILER_VERSION} VERSION_EQUAL 11)
+			if("${CMAKE_Fortran_COMPILER_VERSION}" VERSION_GREATER 11 OR ${CMAKE_Fortran_COMPILER_VERSION} VERSION_EQUAL 11)
 				if(NOT "${SSE_TYPES}" STREQUAL "")
 					list(APPEND OPT_FFLAGS "-ax${SSE_TYPES}")
 				elseif(NOT MPI)

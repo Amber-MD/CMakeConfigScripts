@@ -160,8 +160,8 @@ if(STATIC)
 	disable_tools("Python programs cannot link to static libraries" pysander pytraj)
 endif()
 
-if(mpi4py_DISABLED)
-	disable_tool(mmpbsa_py "mmpbsa_py requires mpi4py")
+if(MPI AND mpi4py_DISABLED)
+	disable_tool(mmpbsa_py "mmpbsa_py requires mpi4py when MPI is enabled")
 endif()
 
 
