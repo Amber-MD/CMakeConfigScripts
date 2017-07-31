@@ -18,7 +18,7 @@ function(check_python_package PACKAGENAME OUTPUT_VAR)
 			message("Checking for Python package ${PACKAGENAME} -- not found")
 		endif()
 		 
-		set(${OUTPUT_VAR} ${HAVE_PACKAGE} CACHE BOOL "Whether the Python package ${PACKAGENAME} was found")
+		set(${OUTPUT_VAR} ${HAVE_PACKAGE} CACHE BOOL "Whether the Python package ${PACKAGENAME} was found" FORCE)
 		mark_as_advanced(${OUTPUT_VAR})
 		
 	endif()

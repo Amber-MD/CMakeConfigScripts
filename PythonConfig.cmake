@@ -113,7 +113,16 @@ if(BUILD_PYTHON)
 		verify_python_package(numpy)
 		verify_python_package(scipy)
 		verify_python_package(matplotlib)
-		verify_python_package(Tkinter)
+		
+		# apparantly tkinter is not capitalized in some environments (???????)
+		check_python_package(tkinter HAVE_TKINTER)
+		check_python_package(Tkinter HAVE_TKINTER)
+		
+		if(NOT HAVE_TKINTER)
+			message(FATAL_ERROR "Could not find the Python Tkinter package.  You must install tk through your package manager (python-tk on Ubuntu, tk on Arch),\
+ and the tkinter Python package will get installed.  If you cannot get Tkinter, disable BUILD_PYTHON to skip building Python packages.")
+		endif()
+		
 
 		if(NOT AMBER_RELEASE)
 			verify_python_package(cython)
