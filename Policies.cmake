@@ -5,12 +5,12 @@ endif()
 
 if(POLICY CMP0025)
 	#report OS X version of Clang as regular clang instead of "AppleClang"
-	cmake_policy(SET CMP0025 OLD)
+	cmake_policy(SET CMP0025 NEW)
 endif()
 
 if(POLICY CMP0026)
 	#enable deprecated LOCATION property.  Used for pytraj build workaround.
-	cmake_policy(SET CMP0026 OLD)
+	cmake_policy(SET CMP0026 NEW)
 endif()
 
 if(POLICY CMP0056)
