@@ -212,6 +212,10 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL PGI)
 	disable_tool(mtkpp "Not compatible with the PGI C++ compiler.")
 endif()
 
+if(MINGW)
+	disable_tool(pytraj "pytraj is not currently supported with MinGW. It must be built with MSVC.")
+endif() 
+
 # --------------------------------------------------------------------
 # Disable certain sets of programs due to the build type
 # --------------------------------------------------------------------

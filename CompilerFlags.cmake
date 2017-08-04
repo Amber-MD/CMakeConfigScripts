@@ -144,7 +144,7 @@ endif()
 #clang
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
+if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
 	add_flags(C -Wall -Wno-unused-function)
 	
 	list(APPEND OPT_CFLAGS "-mtune=native")
@@ -163,7 +163,7 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
 	endif()
 		
 endif()
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
 	add_flags(CXX -Wall -Wno-unused-function)
 	
 	list(APPEND OPT_CXXFLAGS "-mtune=native")
