@@ -564,8 +564,8 @@ if(NEED_perlmol)
 	
 	if(BUILD_PERL)
 		find_package(PerlModules COMPONENTS Chemistry::Mol)
-		
-		if(PERLMODULES_CHEMISTRY_MOL_FOUND)
+				
+		if(EXISTS "${PERLMODULES_CHEMISTRY_MOL_MODULE}")
 			set_3rdparty(perlmol EXTERNAL)
 		else()
 			if(HAVE_PERL_MAKE)
@@ -1046,7 +1046,7 @@ endif()
 #------------------------------------------------------------------------------
 
 if(perlmol_EXTERNAL)
-	 if(NOT PERLMODULES_CHEMISTRY_MOL_FOUND)
+	 if(NOT EXISTS "${PERLMODULES_CHEMISTRY_MOL_MODULE}")
 		message(FATAL_ERROR "The Chemistry::Mol perl package was set to be sourced externally, but it was not found.")
 	endif()
 elseif(perlmol_INTERNAL)
