@@ -112,7 +112,11 @@ function(print_build_report)
 		message("")
 		colormsg("                            " _HIMAG_ "Building Tools:")
 	
+		# NOTE: we can't sort this until after the subdirs have been added because they need to get added in dependency order 
+		string(TOLOWER "${AMBER_TOOLS}" AMBER_TOOLS) # list(SORT) sorts capital letters first, so we need to make everything lowercase
+		list(SORT AMBER_TOOLS)
 		list_to_space_seperated(BUILDING_TOOLS ${AMBER_TOOLS})
+		
 		message("${BUILDING_TOOLS}")
 		message("")
 		colormsg("                          " _HIMAG_ "NOT Building Tools:")
