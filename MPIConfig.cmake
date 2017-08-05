@@ -11,7 +11,9 @@ if(MPI)
 Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG}_LIBRARIES to point to your MPI.")
 		endif()
 	
-		message(STATUS "MPI ${LANG} Compiler: ${MPI_${LANG}_COMPILER}")
+		if(FIRST_RUN)
+			message(STATUS "MPI ${LANG} Compiler: ${MPI_${LANG}_COMPILER}")
+		endif()
 	endforeach()
 	
 	message("If these are not the correct MPI wrappers, then set MPI_<language>_COMPILER to the correct wrapper and reconfigure.")
@@ -51,7 +53,7 @@ endif()
 
 
 #Link MPI to a target.  Does nothing if MPI is disabled.
-#the LANGUAGE arg is the linker language of the target, ususally the language making up the largest percentage of source files.
+#the LANGUAGE arg is the language of the compiler used to link the target, ususally the language making up the largest percentage of source files.
 #This macro will set that to be the used linker language, so you'll find out if you guessed wrong!
 
 #NOTE: this will not overwrite the LINK_FLAGS property of the target.  Make sure nothing else does!

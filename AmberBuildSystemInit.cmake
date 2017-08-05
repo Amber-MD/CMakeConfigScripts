@@ -9,6 +9,12 @@ if(NOT DEFINED FIRST_RUN)
 
 endif()
 
+# print CMake version at the start so we can use it to diagnose issues even if the configure fails
+message(STATUS "Starting configuration of ${PROJECT_NAME} version ${${PROJECT_NAME}_VERSION}...")
+message(STATUS "CMake Version: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
+
+
+
 # configure module path
 # --------------------------------------------------------------------
 
