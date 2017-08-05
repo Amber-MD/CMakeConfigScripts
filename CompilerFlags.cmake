@@ -1,5 +1,5 @@
 # File which figures out the compiler flags to use based on the vendor and version of each compiler
-#Note: must be included after OpenMPConfig and MPIConfig
+#Note: must be included after OpenMPConfig, MPIConfig, and PythonConfig
 
 #-------------------------------------------------------------------------------
 #  Handle CMake fortran compiler version issue
@@ -173,8 +173,15 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STR
 	endif()
 	
 	if(NOT UNINITIALIZED_WARNINGS)
-		add_flags(C -Wno-sometimes-uninitialized)
+		add_flags(CXX -Wno-sometimes-uninitialized)
 	endif()
+	
+	if(TARGET_OSX AND DEFINED BUILD_PYTHON)
+		# on OS X, Python will link pytraj's extension modules to libstdc++, so cpptraj needs to use the same standard library
+		if(BUILD_PYTHON)
+			add_flags(CXX -stdlib=libstdc++)
+		endif()
+	endif()	
 	
 	if(OPENMP AND (${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS 3.7))
 		message(FATAL_ERROR "Clang versions earlier than 3.7 do not support OpenMP!  Disable it or change compilers!")
