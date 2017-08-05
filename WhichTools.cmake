@@ -22,7 +22,7 @@ addles
 sander
 nmr_aux
 nmode
-ptraj
+gleap
 
 #	antechamber:
 antechamber
@@ -77,11 +77,7 @@ quick
 nfe-umbrella-slice
 
 #   leap
-gleap
 leap
-
-#	chamber
-chamber
 
 #   python programs
 parmed
@@ -94,6 +90,14 @@ pymdgx
 #  sort of a 2nd party program -- not written by us, but not a dependency either.
 mtkpp)
 
+if(NOT AMBER_RELEASE)
+	# these tools are in the git version of amber, but not in the released source
+	list(APPEND AMBER_TOOLS 
+		chamber
+		ptraj
+		gleap)
+endif()
+
 # save an unaltered copy for disable_all_tools_except()
 set(ALL_TOOLS ${AMBER_TOOLS})
 
@@ -102,14 +106,21 @@ set(REMOVED_TOOL_REASONS "")
 
 #Macro which disables a tool 
 macro(disable_tool TOOL REASON)
+	
+	list(FIND AMBER_TOOLS ${TOOL} STILL_IN_TOOLS)
 	list(FIND REMOVED_TOOLS ${TOOL} ALREADY_REMOVED)
+	
 	
 	if(ALREADY_REMOVED EQUAL -1) #If we've already removed the tool, don't do anything
 		
-		list(REMOVE_ITEM AMBER_TOOLS ${TOOL})
-		
-		list(APPEND REMOVED_TOOLS ${TOOL})
-		list(APPEND REMOVED_TOOL_REASONS ${REASON})
+		# if the tool is present in neither list, then it means it's a tool that isn't included in the release build and was disabled
+		if(NOT STILL_IN_TOOLS EQUAL -1)
+			
+			list(REMOVE_ITEM AMBER_TOOLS ${TOOL})
+			
+			list(APPEND REMOVED_TOOLS ${TOOL})
+			list(APPEND REMOVED_TOOL_REASONS ${REASON})
+		endif()
 	endif()
 endmacro(disable_tool)
 
