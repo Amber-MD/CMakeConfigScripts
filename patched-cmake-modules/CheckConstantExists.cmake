@@ -68,7 +68,6 @@ macro(_CHECK_CONSTANT_EXISTS SOURCEFILE CONSTANT FILES VARIABLE)
 		endforeach()
 		
 		set(CMAKE_CONFIGURABLE_FILE_CONTENT "${CMAKE_CONFIGURABLE_FILE_CONTENT}
-"
 int main(int argc, char** argv)
 {
 	(void)argv;
