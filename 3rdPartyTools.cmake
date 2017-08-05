@@ -661,7 +661,7 @@ endif()
 #------------------------------------------------------------------------------
 if(ucpp_EXTERNAL)
 	import_executable(ucpp ${UCPP_LOCATION})
-else()
+elseif(ucpp_INTERNAL)
 	list(APPEND 3RDPARTY_SUBDIRS ucpp-1.3)
 endif()
 
@@ -670,7 +670,7 @@ endif()
 #------------------------------------------------------------------------------
 if(byacc_EXTERNAL)
 	import_executable(byacc ${UCPP_LOCATION})	
-else()
+elseif(byacc_INTERNAL)
 	list(APPEND 3RDPARTY_SUBDIRS byacc)
 endif()
 
@@ -786,7 +786,7 @@ if(netcdf_EXTERNAL)
 	# Import the system netcdf as a library
 	import_library(netcdf ${NETCDF_LIBRARIES_C} ${NETCDF_INCLUDES})
 	using_external_library(${NETCDF_LIBRARIES_C})
-else()
+elseif(netcdf_INTERNAL)
 
 	#TODO on Cray systems a static netcdf may be required
 
@@ -827,7 +827,7 @@ end program testf"
 
 	# This is really for symmetry with the other MOD_DIRs more than anything.
 	set(NETCDF_FORTRAN_MOD_DIR ${NETCDF_INCLUDES})
-else()
+elseif(netcdf-fortran_INTERNAL)
 
 	#TODO on Cray systems a static netcdf may be required
 
@@ -860,7 +860,7 @@ endif()
 # BLAS
 if(blas_INTERNAL)
 	list(APPEND 3RDPARTY_SUBDIRS blas)
-	elseif(blas_EXTERNAL)
+elseif(blas_EXTERNAL)
 	import_libraries(blas LIBRARIES "${BLAS_LIBRARIES}")
 	using_external_libraries(${BLAS_LIBRARIES})
 endif()
@@ -868,7 +868,7 @@ endif()
 #  LAPACK
 if(lapack_INTERNAL)
 	list(APPEND 3RDPARTY_SUBDIRS lapack)
-elseif(blas_EXTERNAL)
+elseif(lapack_EXTERNAL)
 	import_libraries(lapack LIBRARIES "${LAPACK_LIBRARIES}")
 	using_external_libraries(${LAPACK_LIBRARIES})
 endif()
