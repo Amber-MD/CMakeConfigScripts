@@ -33,7 +33,7 @@ function(download_and_use_miniconda)
 	
 	# set up miniconda interpreter to be installed
 	install(CODE "message(\"Copying miniconda runtime... (this can take a few minutes)\")
-	file(COPY ${MINICONDA_INSTALL_DIR}/ DESTINATION \${CMAKE_INSTALL_PREFIX}/miniconda)")
+	file(COPY ${MINICONDA_INSTALL_DIR}/ DESTINATION \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/miniconda)")
 	
 	# we don't do this because it prints a bajillion filenames to the console
 	# install(DIRECTORY ${MINICONDA_INSTALL_DIR}/ DESTINATION miniconda USE_SOURCE_PERMISSIONS)

@@ -61,9 +61,9 @@ set(PYTHON_INSTALL_VALID_VALUES LOCAL HOME GLOBAL)
 # I have NO IDEA why
 # so we have to execute this bit of code in every Python program's cmake_install.cmake to create CMAKE_INSTALL_PREFIX_BS
 if(WIN32)
-	set(FIX_BACKSLASHES_CMD [==[string(REPLACE "/" "\\" CMAKE_INSTALL_PREFIX_BS "${CMAKE_INSTALL_PREFIX}/")]==])
+	set(FIX_BACKSLASHES_CMD [==[string(REPLACE "/" "\\" CMAKE_INSTALL_PREFIX_BS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/")]==])
 else()
-	set(FIX_BACKSLASHES_CMD [==[set(CMAKE_INSTALL_PREFIX_BS "${CMAKE_INSTALL_PREFIX}/")]==])
+	set(FIX_BACKSLASHES_CMD [==[set(CMAKE_INSTALL_PREFIX_BS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/")]==])
 endif()
 
 if(BUILD_PYTHON)

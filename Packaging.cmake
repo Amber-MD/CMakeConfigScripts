@@ -155,32 +155,43 @@ else()
 	set(CPACK_PACKAGE_DEFAULT_LOCATION ${CMAKE_INSTALL_PREFIX})
 	
 	#Debian package
-	if(${TARGET_ARCH} STREQUAL "x86_64")
-		set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE amd64)
-	else()
-		set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${TARGET_ARCH})
+	if(${PACKAGE_TYPE} STREQUAL DEB)
+		if(${TARGET_ARCH} STREQUAL "x86_64")
+			set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE amd64)
+		else()
+			set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${TARGET_ARCH})
+		endif()
+	
+		set(DEB_PACKAGE_DEPENDENCIES "" CACHE STRING "Dependencies string for the debian package.  Must be written by the packager according to how they built amber.
+		 Example: \"libarpack2 (>= 3.0.2-3), liblapack3gf (>= 3.3.1-1), libblas3gf (>= 1.2.20110419-2ubuntu1), libreadline6 (>= 6.3-4ubuntu2)\"")
+		
+		set(CPACK_DEBIAN_PACKAGE_DEPENDS ${DEB_PACKAGE_DEPENDENCIES})
+		set(CPACK_DEBIAN_PACKAGE_SECTION "science")		
+		set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+		
+		# CMake bug #14332 causes our created debian package to become corrupt if we don't have the following line
+		# (https://gitlab.kitware.com/cmake/cmake/issues/14332)
+		# However, for this to work it needs CMake >= 3.7
+		set(CPACK_DEBIAN_ARCHIVE_TYPE "gnutar")
+		
+		if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_LESS 3.7)
+			message(FATAL_ERROR "Building DEB packages requires CMake >= 3.7 due to CMake bug #14332.  Either change PACKAGE_TYPE to something else (e.g. TBZ2), or \
+upgrade CMake.  Sorry, I know this is a pain, but there's no other fix.")
+		endif()
+		
+		
+	elseif(${PACKAGE_TYPE} STREQUAL RPM)	
+		#RPM package
+		set(CPACK_RPM_PACKAGE_RELEASE 1)
+		set(CPACK_RPM_PACKAGE_GROUP "Applications/Productivity")
+		set(RPM_PACKAGE_DEPENDENCIES  "" CACHE STRING "Requirements string for the RPM package.  Must be written by the packager according to how they built amber.
+		 Example: \"python >= 2.7.0, lapack, blas\"")
+		set(CPACK_RPM_PACKAGE_REQUIRES ${RPM_PACKAGE_DEPENDENCIES})
+		
+		# tell CPack to autocreate the package names following distro standards
+		# these don't work prior to CMake 3.6, so when those versions are used the package will get named according to PACKAGE_NAME
+		set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
 	endif()
-
-	set(DEB_PACKAGE_DEPENDENCIES "" CACHE STRING "Dependencies string for the debian package.  Must be written by the packager according to how they built amber.
-	 Example: \"libarpack2 (>= 3.0.2-3), liblapack3gf (>= 3.3.1-1), libblas3gf (>= 1.2.20110419-2ubuntu1), libreadline6 (>= 6.3-4ubuntu2)\"")
-	
-	set(CPACK_DEBIAN_PACKAGE_DEPENDS ${DEB_PACKAGE_DEPENDENCIES})
-	set(CPACK_DEBIAN_PACKAGE_SECTION "science")
-	
-	set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-	
-	#RPM package
-	set(CPACK_RPM_PACKAGE_RELEASE 1)
-	set(CPACK_RPM_PACKAGE_GROUP "Applications/Productivity")
-	set(RPM_PACKAGE_DEPENDENCIES  "" CACHE STRING "Requirements string for the RPM package.  Must be written by the packager according to how they built amber.
-	 Example: \"python >= 2.7.0, lapack, blas\"")
-	set(CPACK_RPM_PACKAGE_REQUIRES ${RPM_PACKAGE_DEPENDENCIES})
-	
-	# tell CPack to autocreate the package names following distro standards
-	# these don't work prior to CMake 3.6, so when those versions are used the package will get named according to PACKAGE_NAME
-	set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-	set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
-
 		
 endif()
 

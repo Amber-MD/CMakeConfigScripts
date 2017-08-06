@@ -13,10 +13,9 @@ macro(list_to_space_seperated OUTPUT_VAR)# 2nd arg: LIST...
 	endforeach()
 endmacro(list_to_space_seperated)
 
-#causes a symlink between FILE and SYMLINK to be created at install time
+#causes a symlink between FILE and SYMLINK to be created at install time.
+# the paths of FILE and SYMLINK are appended to the install prefix
 #only works on UNIX
-
-#generally used to create shared library version symlinks
 macro(installtime_create_symlink FILE SYMLINK)
 	#cmake -E create_symlink doesn't work on non-UNIX OS's
 	#being able to build automake programs is a good indicator of unix-ness
@@ -25,7 +24,7 @@ macro(installtime_create_symlink FILE SYMLINK)
 		message(FATAL_ERROR "installtime_create_symlink called on a non-UNIX platform")
 	endif()
 	
-	install(CODE "exec_program(${CMAKE_COMMAND} ARGS -E create_symlink ${FILE} ${SYMLINK})")
+	install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${FILE} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${SYMLINK})")
 endmacro(installtime_create_symlink)
 
 #creates a rule to make OUTPUTFILE from the output of running m4 on INPUTFILE
