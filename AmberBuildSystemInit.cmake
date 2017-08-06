@@ -9,11 +9,18 @@ if(NOT DEFINED FIRST_RUN)
 
 endif()
 
-# print CMake version at the start so we can use it to diagnose issues even if the configure fails
+
+# print header
+# --------------------------------------------------------------------
 message(STATUS "Starting configuration of ${PROJECT_NAME} version ${${PROJECT_NAME}_VERSION}...")
+
+# print CMake version at the start so we can use it to diagnose issues even if the configure fails
 message(STATUS "CMake Version: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
 
 
+# fix search path
+# --------------------------------------------------------------------
+list(REMOVE_ITEM CMAKE_SYSTEM_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
 
 # configure module path
 # --------------------------------------------------------------------
