@@ -49,8 +49,6 @@ if(CHECK_UPDATES OR APPLY_UPDATES)
 		endif()
 	else()
 		if(${UPDATE_COMMAND_RESULT} EQUAL 0)
-			# TODO: check the updater output and print a better message based on whether or not it succeeded.  
-			# I need a 
 			colormsg(HIBLUE "Updater done.  If you want to install updates, then set the APPLY_UPDATES variable to true.")
 		else()
 			colormsg(HIBLUE "Failed to check for updates!  If you need to supply additional arguments to the updater you can call the ${CMAKE_SOURCE_DIR}/update_amber script directly.")

@@ -85,15 +85,6 @@ macro(Check_Fortran_Libraries LIBRARIES _prefix _name _flags _list _thread)
 	set(_libraries_work TRUE)
 	set(${LIBRARIES})
 	set(_combined_name)
-	if (NOT _libdir)
-		if (WIN32)
-			set(_libdir ENV LIB)
-		elseif (APPLE)
-			set(_libdir ENV DYLD_LIBRARY_PATH)
-		else ()
-			set(_libdir ENV LD_LIBRARY_PATH)
-		endif ()
-	endif ()
 
 	foreach(_library ${_list})
 		set(_combined_name ${_combined_name}_${_library})
@@ -115,9 +106,7 @@ macro(Check_Fortran_Libraries LIBRARIES _prefix _name _flags _list _thread)
 				endif ()
 			endif ()
 			find_library(${_prefix}_${_library}_LIBRARY
-				NAMES ${_library}
-				PATHS ${_libdir}
-				)
+				NAMES ${_library})
 				
 			#message("DEBUG: ${_prefix}_${_library}_LIBRARY: ${${_prefix}_${_library}_LIBRARY}, PATHS: ${_libdir}, NAMES: ${_library}")
 			mark_as_advanced(${_prefix}_${_library}_LIBRARY)
