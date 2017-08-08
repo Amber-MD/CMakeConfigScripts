@@ -5,7 +5,10 @@
 #VECTORTYPE example: "std::string"
 #VECTORNAME example: "librarynames"
 
-list_contains(SUPPORTS_INITIALIZER_LISTS cxx_generalized_initializers ${CMAKE_CXX_COMPILE_FEATURES})
+# below line generates a false positive with AppleClang 8.1
+#list_contains(SUPPORTS_INITIALIZER_LISTS cxx_generalized_initializers ${CMAKE_CXX_COMPILE_FEATURES})
+# ...so we'll just be paranoid instead
+set(SUPPORTS_INITIALIZER_LISTS FALSE)
 
 macro(format_list_as_vector OUTPUT_VAR QUOTE LIST VECTORNAME VECTORTYPE)
 	
