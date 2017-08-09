@@ -66,6 +66,11 @@ else()
 	set(FIX_BACKSLASHES_CMD [==[set(CMAKE_INSTALL_PREFIX_BS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/")]==])
 endif()
 
+# Amber's Python programs must be installed with the PYTHONPATH set to the install directory
+# pass this arg to cmake -E env to make it so
+set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages\"")
+
+
 if(BUILD_PYTHON)
 	validate_configuration_enum(PYTHON_INSTALL ${PYTHON_INSTALL_VALID_VALUES})
 	
@@ -147,7 +152,9 @@ if(BUILD_PYTHON)
         install(CODE "
         ${FIX_BACKSLASHES_CMD}
         execute_process(
-		    COMMAND \"${PYTHON_EXECUTABLE}\"
+		    COMMAND \"${CMAKE_COMMAND}\" -E env
+		     ${PYTHONPATH_SET_CMD}
+		     \"${PYTHON_EXECUTABLE}\"
 		    ./setup.py build -b \"${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/python-build\"
 		    install -f ${PYTHON_PREFIX_ARG}
 		    \"--install-scripts=\${CMAKE_INSTALL_PREFIX_BS}${BINDIR}\"

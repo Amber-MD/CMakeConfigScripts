@@ -86,6 +86,7 @@ pymsmt
 pysander
 pytraj
 pymdgx
+pdb4amber
 
 #  sort of a 2nd party program -- not written by us, but not a dependency either.
 mtkpp)
