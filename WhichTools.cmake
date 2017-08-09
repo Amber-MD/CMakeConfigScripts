@@ -22,7 +22,6 @@ addles
 sander
 nmr_aux
 nmode
-gleap
 
 #	antechamber:
 antechamber

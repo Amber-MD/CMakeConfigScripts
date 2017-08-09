@@ -327,6 +327,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	add_definitions(-DWIN32)
 endif()
 
+# the mother of all feature-test macros
+# tells the C library to enable all functions which are specified by any standard
+add_definitions(-D_GNU_SOURCE)
+
 if(NOT DOUBLE_PRECISION)
 	add_definitions(-D_REAL_) #This is read by dprec.fh, where it determines the type of precision to use
 endif()
