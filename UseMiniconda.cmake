@@ -182,10 +182,6 @@ function(download_and_use_miniconda)
 		# see https://github.com/python/cpython/pull/880
 		configuretime_file_replace(${MINICONDA_INSTALL_DIR}/include/pyconfig.h ${MINICONDA_INSTALL_DIR}/include/pyconfig.h TO_REPLACE
 			"#define hypot _hypot" REPLACEMENT "//#define hypot _hypot")
-			
-		# remove archaic symbol exporting logic that breaks pytraj
-		configuretime_file_replace(${MINICONDA_INSTALL_DIR}/Lib/distutils/cygwinccompiler.py ${MINICONDA_INSTALL_DIR}/Lib/distutils/cygwinccompiler.py
-        	TO_REPLACE "if ((export_symbols is not None) and" REPLACEMENT "if (False and")
 		
 	endif()
 		
