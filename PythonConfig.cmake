@@ -68,8 +68,12 @@ endif()
 
 # Amber's Python programs must be installed with the PYTHONPATH set to the install directory
 # pass this arg to cmake -E env to make it so
-set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages\"")
-
+# (the python install dir seems to be different on Windows and Linux)
+if(TARGET_WINDOWS)
+	set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/site-packages\"")
+else()
+	set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages\"")
+endif()
 
 if(BUILD_PYTHON)
 	validate_configuration_enum(PYTHON_INSTALL ${PYTHON_INSTALL_VALID_VALUES})

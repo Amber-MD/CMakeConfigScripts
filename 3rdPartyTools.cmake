@@ -876,6 +876,10 @@ endif()
 
 #  ARPACK
 if(arpack_EXTERNAL)
+	if(NOT EXISTS "${ARPACK_LIBRARY}")
+		message(FATAL_ERROR "arpack was set to be sourced externally, but it was not found!")
+	endif()
+	
 	import_library(arpack ${ARPACK_LIBRARY})
 	using_external_library(${ARPACK_LIBRARY})
 
