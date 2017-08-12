@@ -26,7 +26,20 @@ include(FindPackageHandleStandardArgs)
 
 
 if(NOT DEFINED MKL_HOME)
-	set(MKL_HOME $ENV{MKL_HOME} CACHE PATH "Root folder of Math Kernel Library")
+	# try to find in environment variables..
+	if(DEFINED ENV{MKL_HOME})
+		set(MKL_HOME $ENV{MKL_HOME} CACHE PATH "Root folder of Math Kernel Library")
+	elseif(DEFINED ENV{MKL_ROOT})
+		set(MKL_HOME $ENV{MKL_ROOT} CACHE PATH "Root folder of Math Kernel Library")
+	# now try default folders
+	elseif(WIN32 AND EXISTS "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl")
+		set(MKL_HOME "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl" CACHE PATH "Root folder of Math Kernel Library")
+	elseif(EXISTS "/opt/intel/mkl")
+		set(MKL_HOME "/opt/intel/mkl" CACHE PATH "Root folder of Math Kernel Library")
+	else()
+		message(STATUS "Unable to guess MKL_HOME for your system. This could be because it isn't installed. To use MKL, set MKL_HOME to point to your MKL installation location.")
+		set(MKL_HOME "" CACHE PATH "Root folder of Math Kernel Library")
+	endif()
 endif()
 
 # Find include dir
