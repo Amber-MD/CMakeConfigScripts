@@ -224,7 +224,7 @@ function(print_packaging_report)
 		
 		list(GET USED_LIB_LINKTIME_PATH ${LIB_INDEX} LINKTIME_PATH)
 		list(GET USED_LIB_RUNTIME_PATH ${LIB_INDEX} RUNTIME_PATH)
-		if(${RUNTIME_PATH} STREQUAL "<none>" OR ${RUNTIME_PATH} STREQUAL ${LINKTIME_PATH})
+		if("${RUNTIME_PATH}" STREQUAL "<none>" OR "${RUNTIME_PATH}" STREQUAL "${LINKTIME_PATH}")
 			colormsg("${LIBNAME} -" YELLOW "${LINKTIME_PATH}")
 		else()
 			colormsg("${LIBNAME} -" YELLOW "${LINKTIME_PATH} (link time)," MAG "${RUNTIME_PATH} (runtime)")
