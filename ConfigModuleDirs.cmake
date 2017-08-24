@@ -1,4 +1,4 @@
-#Function which (a) sets the module output directory for a target, and (b) includes other module directories
+#Function which (a) sets the module output directory for a target, and (b) includes other module directories.
 #preserves the include directories already set on the target, adding them at the end of the list
 
 #created mainly because the syntax for doing this is WAY too verbose
