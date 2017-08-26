@@ -39,7 +39,7 @@ set(CPACK_STRIP_FILES TRUE)
 # --------------------------------------------------------------------
 # figure out package category
 
-if(${PACKAGE_TYPE} STREQUAL TBZ2 OR ${PACKAGE_TYPE} STREQUAL TBZ2)
+if(${PACKAGE_TYPE} STREQUAL TBZ2 OR ${PACKAGE_TYPE} STREQUAL ZIP)
 	#archives are simple.  No dependencies, no metadata.
 	set(PACK_TYPE_CATEGORY archive)
 elseif(${PACKAGE_TYPE} STREQUAL NSIS)
@@ -227,7 +227,7 @@ function(print_packaging_report)
 		if("${RUNTIME_PATH}" STREQUAL "<none>" OR "${RUNTIME_PATH}" STREQUAL "${LINKTIME_PATH}")
 			colormsg("${LIBNAME} -" YELLOW "${LINKTIME_PATH}")
 		else()
-			colormsg("${LIBNAME} -" YELLOW "${LINKTIME_PATH} (link time)," MAG "${RUNTIME_PATH} (runtime)")
+			colormsg("${LIBNAME} -" YELLOW "${LINKTIME_PATH} (link time), ${RUNTIME_PATH} (runtime)")
 		endif()	
 	endforeach()
 	colormsg(HIGREEN "**************************************************************************")

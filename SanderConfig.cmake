@@ -64,4 +64,4 @@ else()
 	endif()
 endif()
 
-list_to_space_seperated(SANDER_VARIANTS_STRING ${SANDER_VARIANTS})
+list_to_space_separated(SANDER_VARIANTS_STRING ${SANDER_VARIANTS})

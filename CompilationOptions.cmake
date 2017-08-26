@@ -40,38 +40,10 @@ option(UNINITIALIZED_WARNINGS "Enable warnings about uninitialized variables.  K
 
 option(DOUBLE_PRECISION "Build Amber's Fortran programs with double precision math." TRUE)
 
-#-------------------------------------------------------------------------------
-#  Set default flags
-#-------------------------------------------------------------------------------
 
 #let's try to enforce a reasonable standard here
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
-
-set(NO_OPT_FFLAGS -O0)
-set(NO_OPT_CFLAGS -O0)
-set(NO_OPT_CXXFLAGS -O0)
-
-set(OPT_FFLAGS -O3)
-set(OPT_CFLAGS -O3)
-set(OPT_CXXFLAGS -O3)
-
-set(CMAKE_C_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_Fortran_FLAGS_DEBUG "-g")
-
-#blank cmake's default optimization flags, we can't use these because not everything should be built optimized.
-set(CMAKE_C_FLAGS_RELEASE "")
-set(CMAKE_CXX_FLAGS_RELEASE "")
-set(CMAKE_Fortran_FLAGS_RELEASE "")
-
-#a macro to make things a little cleaner
-#NOTE: we can't use add_compile_options because that will apply to all languages
-macro(add_flags LANGUAGE) # FLAGS...
-	foreach(FLAG ${ARGN})
-		set(CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS} ${FLAG}")
-	endforeach()
-endmacro(add_flags)
 
 #------------------------------------------------------------------------------
 #  Now that we have our compiler, detect target architecture.

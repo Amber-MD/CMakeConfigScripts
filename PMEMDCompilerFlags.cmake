@@ -281,8 +281,8 @@ if(NOT OPTIMIZE)
 endif()
 
 # create non-list versions for PROPERTY COMPILE_FLAGS
-list_to_space_seperated(PMEMD_CFLAGS_SPC ${PMEMD_CFLAGS})
-list_to_space_seperated(PMEMD_FFLAGS_SPC ${PMEMD_FFLAGS})
+list_to_space_separated(PMEMD_CFLAGS_SPC ${PMEMD_CFLAGS})
+list_to_space_separated(PMEMD_FFLAGS_SPC ${PMEMD_FFLAGS})
 
 #-------------------------------------------------------------------------------
 #  Common (for now) configuration
