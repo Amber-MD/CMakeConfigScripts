@@ -77,4 +77,3 @@ macro(append_compile_flags NEW_FLAGS) # SOURCE...
 		set_property(SOURCE ${SOURCE_FILE} PROPERTY COMPILE_FLAGS ${NEW_COMPILE_FLAGS})
 	endforeach()
 endmacro(append_compile_flags)
-
