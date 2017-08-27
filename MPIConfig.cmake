@@ -18,7 +18,9 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		endif()
 	endforeach()
 	
-	message("If these are not the correct MPI wrappers, then set MPI_<language>_COMPILER to the correct wrapper and reconfigure.")
+	if(FIRST_RUN)	
+		message("If these are not the correct MPI wrappers, then set MPI_<language>_COMPILER to the correct wrapper and reconfigure.")
+	endif()
 	
 	#Trim leading spaces from the compile flags.  They cause problems with PROPERTY COMPILE_OPTIONS
 	foreach(LANG C CXX Fortran)
@@ -69,11 +71,75 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 			
 	endforeach()
 	
+	
+	# Add MPI support to an object library
+	macro(mpi_object_library TARGET LANGUAGE)
+		target_compile_options(${TARGET} PRIVATE ${MPI_${LANG}_COMPILE_FLAGS})
+		target_compile_definitions(${TARGET} PUBLIC ${MPI_${LANG}_INCLUDE_PATH})
+	endmacro()
+
+	# make a version of the thing passed 
+	# also allows switching out sources if needed
+	# usage: make_mpi_version(<target> <new name> LANGUAGES <language 1> [<language 2...>] [SWAP_SOURCES <source 1...> TO <replacement source 1...>])
+	function(make_mpi_version TARGET NEW_NAME) 
+	
+		# parse arguments
+		# --------------------------------------------------------------------	
+		cmake_parse_arguments(MAKE_MPI "" "" "LANGUAGES;SWAP_SOURCES;TO" ${ARGN})
+	
+		if("${MAKE_MPI_LANGUAGES}" STREQUAL "")
+			message(FATAL_ERROR "Incorrect usage.  At least one LANGUAGE should be provided.")
+		endif()
+		
+		# make sure that both SWAP_SOURCES and TO are provided if either is
+		if(("${MAKE_MPI_SWAP_SOURCES}" STREQUAL "" AND NOT "${MAKE_MPI_TO}" STREQUAL "") OR ((NOT "${MAKE_MPI_SWAP_SOURCES}" STREQUAL "") AND "${MAKE_MPI_TO}" STREQUAL ""))
+			message(FATAL_ERROR "Incorrect usage.  You must provide both SWAP_SOURCES and TO, or neither at all.")
+		endif()
+		
+		
+		if(NOT "${IMP_LIBS_UNPARSED_ARGUMENTS}" STREQUAL "")
+			message(FATAL_ERROR "Incorrect usage.  Extra arguments provided.")
+		endif()
+	
+		
+		# figure out if it's an object library, and if so, use mpi_object_library()		
+		get_property(TARGET_TYPE TARGET ${TARGET} PROPERTY TYPE)
+		
+		if("${TARGET_TYPE}" STREQUAL "OBJECT_LIBRARY")
+			set(IS_OBJECT_LIBRARY TRUE)
+		else()
+			set(IS_OBJECT_LIBRARY FALSE)
+		endif()
+		
+		if("${ARGN}" STREQUAL "")
+			message(FATAL_ERROR "make_mpi_version(): you must specify at least one LANGUAGE") 
+		endif()
+		
+		# make a new one
+		# --------------------------------------------------------------------
+		if("${MAKE_MPI_SWAP_SOURCES}" STREQUAL "")
+			message("copy_target(${TARGET} ${NEW_NAME})") 
+			copy_target(${TARGET} ${NEW_NAME})
+		else()
+			copy_target(${TARGET} ${NEW_NAME} SWAP_SOURCES ${MAKE_MPI_SWAP_SOURCES} TO ${MAKE_MPI_TO})
+		endif()
+		
+		# apply MPI flags
+		# --------------------------------------------------------------------
+		foreach(LANG ${MAKE_MPI_LANGUAGES})
+			# validate arguments
+			if(NOT ("${LANG}" STREQUAL "C" OR "${LANG}" STREQUAL "CXX" OR "${LANG}" STREQUAL "Fortran"))
+				message(FATAL_ERROR "make_mpi_version(): invalid argument: ${LANG} is not a LANGUAGE")
+			endif()
+			
+			if(IS_OBJECT_LIBRARY)
+				mpi_object_library(${NEW_NAME} ${LANG})
+			else()
+				string(TOLOWER ${LANG} LANG_LOWERCASE)
+				target_link_libraries(${NEW_NAME} mpi_${LANG_LOWERCASE})
+			endif()
+			
+		endforeach()
+	endfunction(make_mpi_version)
 endif()
 
-
-# Build an object library with MPI support
-macro(mpi_object_library TARGET LANGUAGE)
-	target_compile_options(${TARGET} PRIVATE ${MPI_${LANG}_COMPILE_FLAGS})
-	target_compile_definitions(${TARGET} PUBLIC ${MPI_${LANG}_INCLUDE_PATH})
-endmacro()

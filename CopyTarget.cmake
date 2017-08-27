@@ -1,3 +1,4 @@
+# Provides the copy_target() function, which is used to make duplicate MPI and OpenMP versions of targets.
 
 # copies the value of a property from one target to another.  Does nothing if the property is not defined on the SOURCE.
 function(copy_property PROPERTY SOURCE DESTINATION)
@@ -12,11 +13,37 @@ function(copy_property PROPERTY SOURCE DESTINATION)
 endfunction(copy_property)
 
 # Copies a target.  Creates a new target with a different name and the same sources and (important) properties.  Doesn't work on aliases or imported libraries.
+# Allows switching out sources if needed.
+# usage: copy_target(<target> <new name> [SWAP_SOURCES <source 1...> TO <replacement source 1...>])
+
 function(copy_target SOURCE DESTINATION)
+
+	# parse arguments
+	# --------------------------------------------------------------------	
+	cmake_parse_arguments(COPY_TARGET "" "" "LANGUAGES;SWAP_SOURCES;TO" ${ARGN})
 	
-	# we have to know the sources for the add_library() command
+	# make sure that both SWAP_SOURCES and TO are provided if either is
+	if(("${COPY_TARGET_SWAP_SOURCES}" STREQUAL "" AND NOT "${COPY_TARGET_TO}" STREQUAL "") OR ((NOT "${COPY_TARGET_SWAP_SOURCES}" STREQUAL "") AND "${COPY_TARGET_TO}" STREQUAL ""))
+		message(FATAL_ERROR "Incorrect usage.  You must provide both SWAP_SOURCES and TO, or neither at all.")
+	endif()
+	
+	# set up source list
+	# --------------------------------------------------------------------
 	get_property(TARGET_SOURCES TARGET ${SOURCE} PROPERTY SOURCES)
 	
+	list(LENGTH COPY_TARGET_SWAP_SOURCES NUM_SOURCES_TO_REPLACE)
+	math(EXPR NUM_SOURCES_TO_REPLACE "${NUM_SOURCES_TO_REPLACE} - 1") # convert from 1 indexed to 0 indexed
+	
+	foreach(INDEX RANGE ${NUM_SOURCES_TO_REPLACE})
+		# get variables
+		list(GET COPY_TARGET_SWAP_SOURCES ${INDEX} SOURCEFILE)
+		list(GET COPY_TARGET_TO ${INDEX} REPLACEMENT)
+		
+		string(REPLACE ${SOURCEFILE} ${REPLACEMENT} TARGET_SOURCES "${TARGET_SOURCES}")
+	endforeach()
+	
+	# create target according to type
+	# --------------------------------------------------------------------
 	get_property(TARGET_TYPE TARGET ${SOURCE} PROPERTY TYPE)
 	
 	if("${TARGET_TYPE}" STREQUAL "SHARED_LIBRARY")
@@ -42,7 +69,7 @@ function(copy_target SOURCE DESTINATION)
 	endif()
 	
 	# copy properties (feel free to add more if some are missing from this list)
-	# this *should* be every target property that isn't obscure (e.g. only used for QT support) or deprecated
+	# this *should* be every target property that isn't obscure (ex: only used for QT support) or deprecated
 	# --------------------------------------------------------------------
 	copy_property(BUILD_WITH_INSTALL_RPATH ${SOURCE} ${DESTINATION})
 	copy_property(C_EXTENSIONS ${SOURCE} ${DESTINATION})

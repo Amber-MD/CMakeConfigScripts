@@ -9,7 +9,7 @@ function(install_libraries) # LIBRARIES...
 	cmake_parse_arguments(
 			INSTALL_LIBS
 			""
-			"SUBDIR"
+			"SUBDIR;COMPONENT"
 			""
 			${ARGN})
 
@@ -200,6 +200,7 @@ function(check_all_symbols HEADER)
 	endforeach()
 endfunction(check_all_symbols)
 
+# print a variable and its value.  Useful for debugging.
 function(printvar VARNAME)
 	message("${VARNAME}: ${${VARNAME}}")
 endfunction(printvar)
