@@ -85,10 +85,15 @@ endmacro(not_empty_string)
 
 #sets OUTPUT_VAR to TRUE if LIST contains ELEMENT
 macro(list_contains OUTPUT ELEMENT) #3rd arg: LIST...
-	if("${ARGN}" MATCHES "${ELEMENT}")
-		set(${OUTPUT} TRUE)
-	else()
+	#change macro argument to variable
+	set(ARGN_LIST ${ARGN})
+	
+	list(FIND ARGN_LIST ${ELEMENT} ELEMENT_INDEX)
+	
+	if(${ELEMENT_INDEX} EQUAL -1)
 		set(${OUTPUT} FALSE)
+	else()
+		set(${OUTPUT} TRUE)
 	endif()
 
 endmacro(list_contains)
@@ -194,3 +199,7 @@ function(check_all_symbols HEADER)
 		
 	endforeach()
 endfunction(check_all_symbols)
+
+function(printvar VARNAME)
+	message("${VARNAME}: ${${VARNAME}}")
+endfunction(printvar)

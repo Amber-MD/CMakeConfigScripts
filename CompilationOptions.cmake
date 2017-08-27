@@ -79,3 +79,14 @@ endif()
 test(TARGET_OSX "${CMAKE_SYSTEM_NAME}" STREQUAL Darwin)
 test(TARGET_WINDOWS "${CMAKE_SYSTEM_NAME}" STREQUAL Windows)
 test(TARGET_LINUX "${CMAKE_SYSTEM_NAME}" STREQUAL Linux)
+
+# --------------------------------------------------------------------
+# Determine if we are mixing different vendors' compilers
+# --------------------------------------------------------------------
+set(MIXING_COMPILERS TRUE)
+if(("${CMAKE_C_COMPILER_ID}" STREQUAL "" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "") OR "${CMAKE_C_COMPILER_ID}" STREQUAL "${CMAKE_CXX_COMPILER_ID}")
+	if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "" OR "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "") OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "${CMAKE_Fortran_COMPILER_ID}")
+		set(MIXING_COMPILERS FALSE)
+	endif()
+endif()
+

@@ -227,6 +227,8 @@ if(MINGW)
 	disable_tool(pytraj "pytraj is not currently supported with MinGW. It must be built with MSVC.")
 endif() 
 
+disable_all_tools_except("Testing reasons" lib emil cpptraj)
+
 # --------------------------------------------------------------------
 # Disable certain sets of programs due to the build type
 # --------------------------------------------------------------------

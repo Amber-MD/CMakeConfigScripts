@@ -27,7 +27,7 @@ endif()
 # utility functions
 # --------------------------------------------------------------------
 
-#Unfortunately, CMake doesn't let you import a library without knowing whether it is shared or static, but there's no easy way to tell.
+#Unfortunately, CMake doesn't let you import a library without knowing whether it is shared or static, and there's no easy way to tell which it is.
 #sets OUTPUT_VARAIBLE to "IMPORT", "SHARED", or "STATIC" depending on the library passed
 function(get_lib_type LIBRARY OUTPUT_VARIABLE)
 
@@ -35,7 +35,6 @@ function(get_lib_type LIBRARY OUTPUT_VARIABLE)
 		message(FATAL_ERROR "get_lib_type(): library ${LIBRARY} does not exist!")
 	endif()
 
-	# This is frustratingly platform-specific logic, but we have to do it
 	get_filename_component(LIB_NAME ${LIBRARY} NAME)
 	
 	# first, check for import libraries
@@ -73,7 +72,6 @@ function(get_lib_type LIBRARY OUTPUT_VARIABLE)
 	endif()
 	
 	# now we can figure the rest out by suffix matching
-	
 	if(${LIB_NAME} MATCHES ".*${CMAKE_SHARED_LIBRARY_SUFFIX}")
 		set(${OUTPUT_VARIABLE} SHARED PARENT_SCOPE)
 	elseif(${LIB_NAME} MATCHES ".*${CMAKE_STATIC_LIBRARY_SUFFIX}")
@@ -81,6 +79,8 @@ function(get_lib_type LIBRARY OUTPUT_VARIABLE)
 	else()
 		message(FATAL_ERROR "Could not determine whether \"${LIBRARY}\" is a static or shared library, it does not have a known suffix.")
 	endif()
+	
+	#printvar(${OUTPUT_VARIABLE})
 endfunction(get_lib_type)
 
 # Like using_external_library, but accepts multiple paths.
@@ -116,9 +116,9 @@ function(using_external_library LIBPATH)
 		
 		#remove the file extension
 	
-		if("${LIB_TYPE}" STREQUAL IMPORT)
+		if("${LIB_TYPE}" STREQUAL "IMPORT")
 			string(REGEX REPLACE "${CMAKE_IMPORT_LIBRARY_SUFFIX}$" "" LIBNAME ${LIBNAME})
-		elseif("${LIB_TYPE}" STREQUAL STATIC)
+		elseif("${LIB_TYPE}" STREQUAL "STATIC")
 			string(REGEX REPLACE "${CMAKE_STATIC_LIBRARY_SUFFIX}\$" "" LIBNAME ${LIBNAME})
 		else()
 			string(REGEX REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}\$" "" LIBNAME ${LIBNAME})
@@ -156,22 +156,24 @@ function(using_external_library LIBPATH)
 		# save the data to the global lists
 		# --------------------------------------------------------------------
 	
-		if("${LIB_TYPE}" STREQUAL IMPORT)
+		if("${LIB_TYPE}" STREQUAL "IMPORT")
 			set(USED_LIB_LINKTIME_PATH ${USED_LIB_LINKTIME_PATH} ${LIBPATH} CACHE INTERNAL "" FORCE)
 			set(USED_LIB_RUNTIME_PATH ${USED_LIB_RUNTIME_PATH} ${DLL_LOCATION_${LIBNAME}} CACHE INTERNAL "" FORCE)
 		
 			message("Recorded DLL/implib combo ${LIBNAME}: import library at ${LIBPATH}, DLL at ${DLL_LOCATION_${LIBNAME}}")
 		
-		elseif("${LIB_TYPE}" STREQUAL STATIC)
+		elseif("${LIB_TYPE}" STREQUAL "STATIC")
 			set(USED_LIB_LINKTIME_PATH ${USED_LIB_LINKTIME_PATH} ${LIBPATH} CACHE INTERNAL "" FORCE)
 			set(USED_LIB_RUNTIME_PATH ${USED_LIB_RUNTIME_PATH} "<none>" CACHE INTERNAL "" FORCE)
 		
 			message("Recorded static library ${LIBNAME} at ${LIBPATH}")
-		else() # Unix shared library
+		elseif("${LIB_TYPE}" STREQUAL "SHARED") 
 			set(USED_LIB_LINKTIME_PATH ${USED_LIB_LINKTIME_PATH} ${LIBPATH} CACHE INTERNAL "" FORCE)
 			set(USED_LIB_RUNTIME_PATH ${USED_LIB_RUNTIME_PATH} ${LIBPATH} CACHE INTERNAL "" FORCE)
 		
 			message("Recorded shared library ${LIBNAME} at ${LIBPATH}")
+		else()
+			message(FATAL_ERROR "Shouldn't get here!")
 		endif()
 	
 		set(USED_LIB_NAME ${USED_LIB_NAME} ${LIBNAME} CACHE INTERNAL "" FORCE)
@@ -190,7 +192,7 @@ function(import_library NAME PATH) #3rd arg: INCLUDE_DIRS
 	#Try to figure out whether it is shared or static.
 	get_lib_type(${PATH} LIB_TYPE)
 
-	if("${LIB_TYPE}" STREQUAL STATIC)
+	if("${LIB_TYPE}" STREQUAL "STATIC")
 		add_library(${NAME} STATIC IMPORTED GLOBAL)
 	else()
 		add_library(${NAME} SHARED IMPORTED GLOBAL)
@@ -204,12 +206,13 @@ function(import_library NAME PATH) #3rd arg: INCLUDE_DIRS
 endfunction(import_library)
 
 # shorthand for adding one library target which corresponds to multiple linkable things
-# "linkable things" can be any of 5 different types:
+# "linkable things" can be any of 6 different types:
 #    1. CMake imported targets (as created by import_library() or by another module)
 #    2. File paths to libraries
 #    3. CMake non-imported targets
 #    4. Linker flags
 #    5. Names of libraries to find on the linker path
+#    6. Generator expressions
 
 # Things of the first 2 types are added to the library tracker.
 
@@ -228,12 +231,15 @@ function(import_libraries NAME)
 	
 	# we actually don't use imported libraries at all; we just create an interface target and set its dependencies
 	add_library(${NAME} INTERFACE)
-	
+		
 	set_property(TARGET ${NAME} PROPERTY INTERFACE_LINK_LIBRARIES ${IMP_LIBS_LIBRARIES})
 	set_property(TARGET ${NAME} PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${IMP_LIBS_INCLUDES})
 	
+	# we don;t want to add generator expressions to the library tracker...
+	string(GENEX_STRIP "${IMP_LIBS_LIBRARIES}" IMP_LIBS_LIBRARIES_NO_GENEX)
+	
 	# add to library tracker
-	foreach(LIBRARY ${IMP_LIBS_LIBRARIES})
+	foreach(LIBRARY ${IMP_LIBS_LIBRARIES_NO_GENEX})
 		if("${LIBRARY}" MATCHES "^${LINKER_FLAG_PREFIX}")
 			# linker flag -- ignore
 			

@@ -1,6 +1,8 @@
 #CMake config file for MPI
 # MUST be included after OpenMPConfig, if OpenMPConfig is included at all
-option(MPI "Build Amber with MPI inter-machine parallelization support." FALSE)
+option(MPI "Build ${PROJECT_NAME} with MPI inter-machine parallelization support." FALSE)
+
+include(ParallelizationConfig)
 
 if(MPI)
 	find_package(MPI)
@@ -43,38 +45,35 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		#create a non-cached variable with the contents of the cache variable plus one extra flag
 		set(MPI_Fortran_COMPILE_FLAGS ${MPI_Fortran_COMPILE_FLAGS} -fno-range-check)
 	endif()
-else()
-	#set these flags to empty string so that they can be used all the time without having to worry about wihether MPI is enabled
+	
+	message("MPI_C_COMPILE_FLAGS: ${MPI_C_COMPILE_FLAGS}")
+	
+	# create imported targets
+	# --------------------------------------------------------------------
 	foreach(LANG C CXX Fortran)
-		set(MPI_${LANG}_COMPILE_FLAGS "")
-		set(MPI_${LANG}_INCLUDE_PATH "")
-	endforeach()
-endif()
-
-
-#Link MPI to a target.  Does nothing if MPI is disabled.
-#the LANGUAGE arg is the language of the compiler used to link the target, ususally the language making up the largest percentage of source files.
-#This macro will set that to be the used linker language, so you'll find out if you guessed wrong!
-
-#NOTE: this will not overwrite the LINK_FLAGS property of the target.  Make sure nothing else does!
-macro(link_mpi TARGET LANGUAGE)
-	if(MPI)	
-		#link the MPI libraries
-		target_link_libraries(${TARGET} ${MPI_${LANGUAGE}_LIBRARIES})
+		string(TOLOWER ${LANG} LANG_LOWERCASE)
+		import_libraries(mpi_${LANG_LOWERCASE} LIBRARIES ${MPI_${LANG}_LINK_FLAGS} ${MPI_${LANG}_LIBRARIES} INCLUDES ${MPI_${LANG}_INCLUDE_PATH})
+		set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${MPI_${LANG}_INCLUDE_PATH})
 		
-		#Append the MPI link flags
-		get_property(CURRENT_LINK_FLAGS TARGET ${TARGET} PROPERTY LINK_FLAGS)
-				
-		set(NEW_LINK_FLAGS "${CURRENT_LINK_FLAGS} ${MPI_${LANGUAGE}_LINK_FLAGS}")		
-		set_property(TARGET ${TARGET} PROPERTY LINK_FLAGS ${NEW_LINK_FLAGS})
-				
-		#force the linker language
-		set_property(TARGET ${TARGET} PROPERTY LINKER_LANGUAGE ${LANGUAGE})
-	endif()
-endmacro()
-
-if(DEFINED OPENMP AND (OPENMP OR MPI))
-	set(PARALLEL TRUE)
-else()
-	set(PARALLEL FALSE)
+		if(MCPAR_WORKAROUND_ENABLED)
+			# use generator expression
+			set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:${LANG}>:${MPI_${LANG}_COMPILE_FLAGS}>)
+		else()
+			set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_COMPILE_OPTIONS ${MPI_${LANG}_COMPILE_FLAGS})
+		endif()
+		
+		# C++ MPI doesn't like having "MPI" defined, but it's what Amber uses as the MPI switch in most programs (though not EMIL)
+		if(NOT ${LANG} STREQUAL CXX)
+			set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_COMPILE_DEFINITIONS MPI)	
+		endif()
+			
+	endforeach()
+	
 endif()
+
+
+# Build an object library with MPI support
+macro(mpi_object_library TARGET LANGUAGE)
+	target_compile_options(${TARGET} PRIVATE ${MPI_${LANG}_COMPILE_FLAGS})
+	target_compile_definitions(${TARGET} PUBLIC ${MPI_${LANG}_INCLUDE_PATH})
+endmacro()

@@ -845,7 +845,7 @@ endif()
 #------------------------------------------------------------------------------
 
 if(xblas_EXTERNAL)
-	import_library(xblaslib ${XBLAS_LIBRARY})
+	import_library(xblas ${XBLAS_LIBRARY})
 	
 elseif(xblas_INTERNAL)
 	list(APPEND 3RDPARTY_SUBDIRS xblas)
