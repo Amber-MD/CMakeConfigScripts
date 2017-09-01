@@ -10,7 +10,7 @@ else()
 	#first, find CUDA.
 	find_package(CUDA QUIET)
 	message(STATUS "Found CUDA - ${CUDA_FOUND}")
-	option(CUDA "Build certain Amber and AmberTools programs with CUDA GPU acceleration support." FALSE)
+	option(CUDA "Build ${PROJECT_NAME} with CUDA GPU acceleration support." FALSE)
 	
 	if(CUDA AND NOT CUDA_FOUND)
 		message(FATAL_ERROR "You turned on CUDA, but it was not found.  Please set the CUDA_TOOLKIT_ROOT_DIR option to your CUDA install directory.")

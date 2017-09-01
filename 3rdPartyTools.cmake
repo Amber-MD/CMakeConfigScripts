@@ -81,9 +81,10 @@ macro(set_3rdparty TOOL STATUS)
 				# getting here means there's been a programming error
 				message(FATAL_ERROR "3rd party program ${TOOL} is not bundled and cannot be built inside Amber.")
 			elseif("${REQUIRED_3RDPARTY_TOOLS}" MATCHES ${TOOL})
+				# kind of a kludge - even when we're in a submodule, things will still get set top internal, so we just treat internal equal to disabled
 				message(FATAL_ERROR "3rd party program ${TOOL} is required, but was not found.")
 			else()
-				# it's a submodule, and it's not required, so it's OK that the tool is not bundled
+				# we're in a submodule, and it's not required, so it's OK that the tool is not bundled
 				set(${TOOL}_DISABLED TRUE)
 				set(${TOOL}_ENABLED FALSE)
 				

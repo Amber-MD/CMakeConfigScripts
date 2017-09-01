@@ -141,13 +141,48 @@ macro(disable_all_tools_except REASON) # TOOLS...
 	endforeach()
 endmacro(disable_all_tools_except)
 
+# set the dependencies of a tool
+# if one of its dependencies is disabled, then TOOL will also be disabled.
+# NOTE: circular dependencies are OK (for example, SANDER and PBSA depend on each other)
+macro(tool_depends TOOL) #ARGN: other tools that TOOL depends on
+	if(DEFINED TOOL_DEPENDENCIES_${TOOL})
+		list(APPEND TOOL_DEPENDENCIES_${TOOL} ${ARGN})
+	else()
+		set(TOOL_DEPENDENCIES_${TOOL} ${ARGN})
+	endif()
+
+endmacro(tool_depends)
+
+
+# --------------------------------------------------------------------
+# tool dependencies
+# --------------------------------------------------------------------
+
+tool_depends(pbsa sander lib)
+tool_depends(sander sqm pbsa sebomd emil lib)
+tool_depends(sqm sff lib)
+tool_depends(sebomd sander)
+
+tool_depends(sff pbsa)
+tool_depends(nab sff pbsa cifparse)
+
+tool_depends(rism nab lib)
+
+# python programs
+tool_depends(pytraj cpptraj)
+tool_depends(pysander sander)
+tool_depends(pymdgx mdgx)
+
+# extra dependencies if FFT is enabled
+if(USE_FFT)
+	tool_depends(sff rism)
+	tool_depends(sander rism)
+endif()
 # --------------------------------------------------------------------
 # Now, the logic for deciding whether to use them
 # --------------------------------------------------------------------
 
 # FFT programs
-option(USE_FFT "Whether to use the Fastest Fourier Transform in the West library and build RISM and the PBSA FFT solver." TRUE)
-
 if(USE_FFT)
 	if(${CMAKE_C_COMPILER_ID} STREQUAL PGI)
 
@@ -156,7 +191,7 @@ if(USE_FFT)
 			message(FATAL_ERROR "RISM and PBSA FFT solver require PGI compiler version 9.0-4 or higher. Please disable USE_FFT.")
 		endif()
 	elseif(${CMAKE_C_COMPILER_ID} STREQUAL Cray) 
-		message(FATAL_ERROR "RISM and PBSA FFT solver currently not built with cray compilers.  Please reconfigure with -DUSE_FFT=FALSE.")
+		message(FATAL_ERROR "RISM and PBSA FFT solver currently not built with cray compilers.  Please disable USE_FFT.")
 	endif()
 else()
 	disable_tool(rism "Rism requires FFTW")
@@ -227,7 +262,7 @@ if(MINGW)
 	disable_tool(pytraj "pytraj is not currently supported with MinGW. It must be built with MSVC.")
 endif() 
 
-disable_all_tools_except("Testing reasons" lib emil cpptraj)
+disable_all_tools_except("Testing reasons" lib emil cpptraj sff rism pbsa sqm sander nab cifparse sebomd)
 
 # --------------------------------------------------------------------
 # Disable certain sets of programs due to the build type
@@ -251,28 +286,32 @@ if(CRAY)
 			amberlite
 			quick)
 	endif()
-else()
-	if(OPENMP)
-		option(OPENMP_ONLY "Only build the tools with OpenMP support.  Use this to layer an OpenMP install on top of a regular install." FALSE)
-
-		if(OPENMP_ONLY)
-			disable_all_tools_except("Only OpenMP-enabled tools are being built" amber_common pytraj cpptraj saxs paramfit sff)
-		endif()
-	elseif(MPI)
-		option(MPI_ONLY "Only build the tools and libraries with MPI support.  Use this to layer an MPI install on top of a regular install." FALSE)
-
-		if(MPI_ONLY)
-			disable_all_tools_except("Only MPI-enabled tools are being built" amber_common etc sff pbsa cpptraj mdgx nab rism)
-		endif()
-	endif()
-	
-	if(OPENMP_ONLY AND MPI_ONLY)
-		message(SEND_ERROR "...What?  You can't have BOTH an MPI_ONLY and an OPENMP_ONLY install!")
-	endif()
 endif()
+
+# --------------------------------------------------------------------
+# Disable tools whose dependencies have been disabled
+# --------------------------------------------------------------------
+
+# we have to go through this a couple times.  Lets say A depends on B, and B depends on C.
+# Early on, A checks if B is there, and it is, so A stays enabled.  Later, B checks if C is there, and it isn't, so
+# it disables itself. However, now A is enabled when it shouldn't
+# There are probably more sophisticated ways to solve this but they'd be difficult to implement in CMake
+
+# hopefully 3 iterations is enough
+foreach(ITERATION RANGE 0 2)
+	foreach(TOOL ${AMBER_TOOLS})
+		
+		foreach(DEPENDENCY ${TOOL_DEPENDENCIES_${TOOL}})
+			list_contains(DEPEND_ENABLED ${DEPENDENCY} ${AMBER_TOOLS})
+			if(NOT DEPEND_ENABLED)
+				disable_tool(${TOOL} "Its dependency ${DEPENDENCY} is disabled.")
+			endif()
+		endforeach()
+	endforeach()
+endforeach()
 
 #------------------------------------------------------------------------------
 #  User Config
 #------------------------------------------------------------------------------
-set(FORCE_DISABLE_TOOLS "" CACHE STRING "Tools to force to not build.  This may cause errors if you disable something that other things depend on, so use it wisely and as a last resort.  Accepts a semicolon-seperated list of directories in AmberTools/src.")
-disable_tools("Disabled by user" ${FORCE_DISABLE_TOOLS})
+set(DISABLE_TOOLS "" CACHE STRING "Tools to not build.  Accepts a semicolon-seperated list of directories in AmberTools/src.")
+disable_tools("Disabled by user" ${DISABLE_TOOLS})

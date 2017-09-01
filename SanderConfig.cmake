@@ -35,32 +35,32 @@ endif()
 #---------------------------------------------------
 # make the SANDER report for the build report
 set(SANDER_VARIANTS "")
+	
+list(APPEND SANDER_VARIANTS normal)
 
+if(BUILD_SANDER_LES)
+	list(APPEND SANDER_VARIANTS LES)
+endif()
+
+if(BUILD_SANDER_APBS)
+	list(APPEND SANDER_VARIANTS APBS)
+endif()
+
+if(BUILD_SANDER_APBS)
+	list(APPEND SANDER_VARIANTS PUPIL)
+endif()
+
+if(BUILD_SANDER_API)
+	list(APPEND SANDER_VARIANTS API)
+	if(BUILD_SANDER_LES)
+		list(APPEND SANDER_VARIANTS LES-API)
+	endif()
+endif()
+	
 if(MPI)
 	list(APPEND SANDER_VARIANTS MPI)
 	if(BUILD_SANDER_LES)
 		list(APPEND SANDER_VARIANTS LES-MPI)
-	endif()
-else()
-	list(APPEND SANDER_VARIANTS normal)
-	
-	if(BUILD_SANDER_LES)
-		list(APPEND SANDER_VARIANTS LES)
-	endif()
-	
-	if(BUILD_SANDER_APBS)
-		list(APPEND SANDER_VARIANTS APBS)
-	endif()
-	
-	if(BUILD_SANDER_APBS)
-		list(APPEND SANDER_VARIANTS PUPIL)
-	endif()
-	
-	if(BUILD_SANDER_API)
-		list(APPEND SANDER_VARIANTS API)
-		if(BUILD_SANDER_LES)
-			list(APPEND SANDER_VARIANTS LES-API)
-		endif()
 	endif()
 endif()
 

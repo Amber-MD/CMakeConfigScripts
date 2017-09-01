@@ -46,7 +46,7 @@ endmacro(validate_configuration_enum)
 # foo.bar.s > foo.bar
 
 #different from get_filename_component(.. NAME_WE), where foo.bar.s > foo
-macro(strip_shortest_extension OUTPUT_VAR FILENAME)
+macro(strip_last_extension OUTPUT_VAR FILENAME)
     #from http://stackoverflow.com/questions/30049180/strip-filename-shortest-extension-by-cmake-get-filename-removing-the-last-ext
     string(REGEX REPLACE "\\.[^.]*$" "" ${OUTPUT_VAR} ${FILENAME})
 endmacro()
@@ -77,3 +77,29 @@ macro(append_compile_flags NEW_FLAGS) # SOURCE...
 		set_property(SOURCE ${SOURCE_FILE} PROPERTY COMPILE_FLAGS ${NEW_COMPILE_FLAGS})
 	endforeach()
 endmacro(append_compile_flags)
+	
+# defines a component, and creates a "make install_<name>" target
+# NAME - the name as used in install commands
+# DESCRIPTION - description of the component
+macro(define_component NAME DESCRIPTION)
+	
+	# create component list for CPack if it doesn't yet exist
+	if(NOT DEFINED CPACK_COMPONENTS_ALL)
+		set(CPACK_COMPONENTS_ALL "")
+	endif()
+	
+	list(APPEND CPACK_COMPONENTS_ALL ${NAME})
+	
+	string(TOUPPER ${NAME} COMPONENT_NAME_UCASE)
+	string(TOLOWER ${NAME} COMPONENT_NAME_LCASE)
+	
+	set(CPACK_COMPONENT_${COMPONENT_NAME_UCASE}_DISPLAY_NAME ${NAME})
+	set(CPACK_COMPONENT_${COMPONENT_NAME_UCASE}_DESCRIPTION ${DESCRIPTION})
+	
+	# add "make install" target	
+	ADD_CUSTOM_TARGET(install_${COMPONENT_NAME_LCASE}
+	  ${CMAKE_COMMAND}
+	  -D "CMAKE_INSTALL_COMPONENT=${NAME}"
+	  -P "${CMAKE_BINARY_DIR}/cmake_install.cmake"
+	  )
+endmacro()

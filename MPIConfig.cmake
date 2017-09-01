@@ -74,30 +74,35 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 	
 	# Add MPI support to an object library
 	macro(mpi_object_library TARGET LANGUAGE)
-		target_compile_options(${TARGET} PRIVATE ${MPI_${LANG}_COMPILE_FLAGS})
-		target_compile_definitions(${TARGET} PUBLIC ${MPI_${LANG}_INCLUDE_PATH})
+		if(MCPAR_WORKAROUND_ENABLED)
+			# use generator expression
+			set_property(TARGET ${TARGET} PROPERTY COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:${LANG}>:${MPI_${LANG}_COMPILE_FLAGS}>)
+		else()
+			set_property(TARGET ${TARGET} PROPERTY COMPILE_OPTIONS ${MPI_${LANG}_COMPILE_FLAGS})
+		endif()
+		
+		target_include_directories(${TARGET} PUBLIC ${MPI_${LANG}_INCLUDE_PATH})
+		
+		if(NOT ${LANG} STREQUAL CXX)
+			target_compile_definitions(${TARGET} PRIVATE MPI)
+		endif()
 	endmacro()
 
-	# make a version of the thing passed 
+	# make a MPI version of the thing passed 
 	# also allows switching out sources if needed
-	# usage: make_mpi_version(<target> <new name> LANGUAGES <language 1> [<language 2...>] [SWAP_SOURCES <source 1...> TO <replacement source 1...>])
+	# INSTALL - causes the new target to get installed in the MPI component to the default location (BINDIR etc)
+	# usage: make_mpi_version(<target> <new name> LANGUAGES <language 1> [<language 2...>] [SWAP_SOURCES <source 1...> TO <replacement source 1...>] INSTALL)
 	function(make_mpi_version TARGET NEW_NAME) 
 	
 		# parse arguments
 		# --------------------------------------------------------------------	
-		cmake_parse_arguments(MAKE_MPI "" "" "LANGUAGES;SWAP_SOURCES;TO" ${ARGN})
+		cmake_parse_arguments(MAKE_MPI "INSTALL" "" "LANGUAGES;SWAP_SOURCES;TO" ${ARGN})
 	
 		if("${MAKE_MPI_LANGUAGES}" STREQUAL "")
 			message(FATAL_ERROR "Incorrect usage.  At least one LANGUAGE should be provided.")
 		endif()
 		
-		# make sure that both SWAP_SOURCES and TO are provided if either is
-		if(("${MAKE_MPI_SWAP_SOURCES}" STREQUAL "" AND NOT "${MAKE_MPI_TO}" STREQUAL "") OR ((NOT "${MAKE_MPI_SWAP_SOURCES}" STREQUAL "") AND "${MAKE_MPI_TO}" STREQUAL ""))
-			message(FATAL_ERROR "Incorrect usage.  You must provide both SWAP_SOURCES and TO, or neither at all.")
-		endif()
-		
-		
-		if(NOT "${IMP_LIBS_UNPARSED_ARGUMENTS}" STREQUAL "")
+		if(NOT "${MAKE_MPI_UNPARSED_ARGUMENTS}" STREQUAL "")
 			message(FATAL_ERROR "Incorrect usage.  Extra arguments provided.")
 		endif()
 	
@@ -117,8 +122,7 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		
 		# make a new one
 		# --------------------------------------------------------------------
-		if("${MAKE_MPI_SWAP_SOURCES}" STREQUAL "")
-			message("copy_target(${TARGET} ${NEW_NAME})") 
+		if("${MAKE_MPI_SWAP_SOURCES}" STREQUAL "" AND "${MAKE_MPI_TO}" STREQUAL "")
 			copy_target(${TARGET} ${NEW_NAME})
 		else()
 			copy_target(${TARGET} ${NEW_NAME} SWAP_SOURCES ${MAKE_MPI_SWAP_SOURCES} TO ${MAKE_MPI_TO})
@@ -140,6 +144,17 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 			endif()
 			
 		endforeach()
+		
+		# install if necessary
+		# --------------------------------------------------------------------
+		if(MAKE_MPI_INSTALL)
+			if("${TARGET_TYPE}" STREQUAL "EXECUTABLE")
+				install(TARGETS ${NEW_NAME} DESTINATION ${BINDIR} COMPONENT MPI)
+			else()
+				install_libraries(${NEW_NAME} COMPONENT MPI)
+			endif()
+		endif()
+		
 	endfunction(make_mpi_version)
 endif()
 

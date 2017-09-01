@@ -15,8 +15,8 @@ if(DRAGONEGG)
 endif()
 
 #shared vs static option
-option(STATIC "If true, build static libraries and freestanding (except for data files) executables. Otherwise, compile common code into shared libraries and link them to programs.
-	The runtime path is set properly now, so unless you move the installation AND don't source amber.sh you won't have to mess with LD_LIBRARY PATH" FALSE)
+option(STATIC "If true, build static libraries and freestanding (except for data files) executables. Otherwise, compile common code into shared libraries and link them to programs. \
+The runtime path is set properly now, so unless you move the installation AND don't source amber.sh you won't have to mess with LD_LIBRARY PATH" FALSE)
 
 if(STATIC)
 	set(SHARED FALSE)
@@ -25,6 +25,9 @@ else()
 endif()		
 
 option(LARGE_FILE_SUPPORT "Build C code with large file support" TRUE)
+
+# FFT support 
+option(USE_FFT "Whether to use the Fastest Fourier Transform in the West library and build RISM and the PBSA FFT solver." TRUE)
 
 #set default library type appropriately
 set(BUILD_SHARED_LIBS ${SHARED})
@@ -35,7 +38,7 @@ set(BUILD_SHARED_LIBS ${SHARED})
 # So, we use CMAKE_<LANG>_FLAGS_DEBUG for per-config debugging flags, but use a separate optimization switch.
 option(OPTIMIZE "Whether to build code with compiler flags for optimization." TRUE)
 
-option(UNUSED_WARNINGS "Enable warnings about unused variables.  Really clutters up the build output." TRUE)
+option(UNUSED_WARNINGS "Enable warnings about unused variables.  Really clutters up the build output." FALSE)
 option(UNINITIALIZED_WARNINGS "Enable warnings about uninitialized variables.  Kind of clutters up the build output, but these need to be fixed." TRUE)
 
 option(DOUBLE_PRECISION "Build Amber's Fortran programs with double precision math." TRUE)
@@ -44,6 +47,12 @@ option(DOUBLE_PRECISION "Build Amber's Fortran programs with double precision ma
 #let's try to enforce a reasonable standard here
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
+
+# I can't think of any better place to put this...
+option(INSTALL_TESTS "Whether or not to install ${PROJECT_NAME}'s tests, examples, and benchmarks.  Be warned, they take up over a gigabyte. \
+For the Tests, Examples, and Benchmarks packages to be generated, this option must be enabled.  Note that you can run the tests out of the source \
+directory so you would only really use this option if you wanted to move the install directory to a different machine or generate packages.")
+# It would have been really nice to use install(EXCLUDE_FROM_ALL) to get this functionality, but it doesn't exist until CMake 3.6, sadly.
 
 #------------------------------------------------------------------------------
 #  Now that we have our compiler, detect target architecture.

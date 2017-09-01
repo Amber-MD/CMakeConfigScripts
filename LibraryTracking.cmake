@@ -248,15 +248,27 @@ function(import_libraries NAME)
 			using_external_library("${LIBRARY}")
 			
 		elseif(TARGET "${LIBRARY}")
-			get_property(LIBRARY_HAS_IMPORTED_LOCATION TARGET ${LIBRARY} PROPERTY IMPORTED_LOCATION SET)
-			if(LIBRARY_HAS_IMPORTED_LOCATION)
-				# CMake imported target
-				get_property(LIBRARY_IMPORTED_LOCATION TARGET ${LIBRARY} PROPERTY IMPORTED_LOCATION)
-				using_external_library("${LIBRARY_IMPORTED_LOCATION}")
+			
+			get_property(TARGET_LIB_TYPE TARGET ${LIBRARY} PROPERTY TYPE)
+			
+			# it's an error to check if an interface library has an imported location
+			if(NOT "${TARGET_LIB_TYPE}" STREQUAL "INTERFACE_LIBRARY")
 				
+				get_property(LIBRARY_HAS_IMPORTED_LOCATION TARGET ${LIBRARY} PROPERTY IMPORTED_LOCATION SET)
+				if(LIBRARY_HAS_IMPORTED_LOCATION)
+					# CMake imported target
+					get_property(LIBRARY_IMPORTED_LOCATION TARGET ${LIBRARY} PROPERTY IMPORTED_LOCATION)
+					using_external_library("${LIBRARY_IMPORTED_LOCATION}")
+					
+				endif()
+				
+				# else it's a CMake target that is built by this project -- ignore
+			
 			endif()
-			# CMake target that is built by this project -- ignore
 		endif()
 		# otherwise it's a library name to find on the linker search path (using CMake in "naive mode")
 	endforeach()
+	
+
+	
 endfunction(import_libraries)

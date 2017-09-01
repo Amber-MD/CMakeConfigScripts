@@ -12,8 +12,18 @@ function(install_libraries) # LIBRARIES...
 			"SUBDIR;COMPONENT"
 			""
 			${ARGN})
-
-	install(TARGETS ${INSTALL_LIBS_UNPARSED_ARGUMENTS} RUNTIME DESTINATION ${DLLDIR} ARCHIVE DESTINATION ${LIBDIR}/${INSTALL_LIBS_SUBDIR} LIBRARY DESTINATION ${LIBDIR}/${INSTALL_LIBS_SUBDIR})
+	
+	if("${INSTALL_LIBS_COMPONENT}" STREQUAL "")
+		install(TARGETS ${INSTALL_LIBS_UNPARSED_ARGUMENTS} 
+			RUNTIME DESTINATION ${DLLDIR} 
+			ARCHIVE DESTINATION ${LIBDIR}/${INSTALL_LIBS_SUBDIR} 
+			LIBRARY DESTINATION ${LIBDIR}/${INSTALL_LIBS_SUBDIR})
+	else()
+		install(TARGETS ${INSTALL_LIBS_UNPARSED_ARGUMENTS} COMPONENT ${INSTALL_LIBS_COMPONENT}
+			RUNTIME DESTINATION ${DLLDIR} 
+			ARCHIVE DESTINATION ${LIBDIR}/${INSTALL_LIBS_SUBDIR} 
+			LIBRARY DESTINATION ${LIBDIR}/${INSTALL_LIBS_SUBDIR})
+	endif()
 endfunction(install_libraries)
 
 #shorthand for linking multiple targets to a library or libraries.
@@ -84,6 +94,7 @@ macro(not_empty_string OUTPUT_VARIABLE STRING)
 endmacro(not_empty_string)
 
 #sets OUTPUT_VAR to TRUE if LIST contains ELEMENT
+# If only we could use recent CMake versions this wouldn't be needed, sigh
 macro(list_contains OUTPUT ELEMENT) #3rd arg: LIST...
 	#change macro argument to variable
 	set(ARGN_LIST ${ARGN})

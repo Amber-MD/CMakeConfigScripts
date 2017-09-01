@@ -7,7 +7,7 @@ function(copy_property PROPERTY SOURCE DESTINATION)
 	if(PROP_IS_DEFINED)
 		get_property(PROP_VALUE TARGET ${SOURCE} PROPERTY ${PROPERTY})
 		#message("Copying ${PROPERTY} with value ${PROP_VALUE}")
-		set_property(TARGET ${DESTINATION} PROPERTY ${PROPERTY} ${PROP_VALUE})
+		set_property(TARGET ${DESTINATION} PROPERTY ${PROPERTY} "${PROP_VALUE}")
 	endif()
 	
 endfunction(copy_property)
@@ -18,29 +18,22 @@ endfunction(copy_property)
 
 function(copy_target SOURCE DESTINATION)
 
+	#message("Copying target ${SOURCE} -> ${DESTINATION} --------------------------------------")
 	# parse arguments
 	# --------------------------------------------------------------------	
 	cmake_parse_arguments(COPY_TARGET "" "" "LANGUAGES;SWAP_SOURCES;TO" ${ARGN})
-	
-	# make sure that both SWAP_SOURCES and TO are provided if either is
-	if(("${COPY_TARGET_SWAP_SOURCES}" STREQUAL "" AND NOT "${COPY_TARGET_TO}" STREQUAL "") OR ((NOT "${COPY_TARGET_SWAP_SOURCES}" STREQUAL "") AND "${COPY_TARGET_TO}" STREQUAL ""))
-		message(FATAL_ERROR "Incorrect usage.  You must provide both SWAP_SOURCES and TO, or neither at all.")
-	endif()
 	
 	# set up source list
 	# --------------------------------------------------------------------
 	get_property(TARGET_SOURCES TARGET ${SOURCE} PROPERTY SOURCES)
 	
-	list(LENGTH COPY_TARGET_SWAP_SOURCES NUM_SOURCES_TO_REPLACE)
-	math(EXPR NUM_SOURCES_TO_REPLACE "${NUM_SOURCES_TO_REPLACE} - 1") # convert from 1 indexed to 0 indexed
+	if(NOT "${COPY_TARGET_SWAP_SOURCES}" STREQUAL "")
+		list(REMOVE_ITEM TARGET_SOURCES ${COPY_TARGET_SWAP_SOURCES})
+	endif()
 	
-	foreach(INDEX RANGE ${NUM_SOURCES_TO_REPLACE})
-		# get variables
-		list(GET COPY_TARGET_SWAP_SOURCES ${INDEX} SOURCEFILE)
-		list(GET COPY_TARGET_TO ${INDEX} REPLACEMENT)
-		
-		string(REPLACE ${SOURCEFILE} ${REPLACEMENT} TARGET_SOURCES "${TARGET_SOURCES}")
-	endforeach()
+	if(NOT "${COPY_TARGET_TO}" STREQUAL "")
+		list(APPEND TARGET_SOURCES ${COPY_TARGET_TO})
+	endif()
 	
 	# create target according to type
 	# --------------------------------------------------------------------
@@ -89,6 +82,7 @@ function(copy_target SOURCE DESTINATION)
 	copy_property(Fortran_FORMAT ${SOURCE} ${DESTINATION})
 	copy_property(Fortran_MODULE_DIRECTORY ${SOURCE} ${DESTINATION})
 	copy_property(GNUtoMS ${SOURCE} ${DESTINATION})
+	copy_property(IMPORT_PREFIX ${SOURCE} ${DESTINATION})
 	copy_property(INCLUDE_DIRECTORIES ${SOURCE} ${DESTINATION})
 	copy_property(INSTALL_NAME_DIR ${SOURCE} ${DESTINATION})
 	copy_property(INSTALL_RPATH ${SOURCE} ${DESTINATION})
@@ -137,4 +131,15 @@ function(copy_target SOURCE DESTINATION)
 	copy_property(VS_WINRT_EXTENSIONS ${SOURCE} ${DESTINATION})
 	copy_property(WIN32_EXECUTABLE ${SOURCE} ${DESTINATION})
 endfunction(copy_target)
+
+# useful function when duplicating targets:
+function(remove_link_libraries TARGET) # ARGN: LIBRARIES...
+	get_property(TARGET_LINK_LIBRARIES TARGET ${TARGET} PROPERTY LINK_LIBRARIES)
+	get_property(TARGET_INTERFACE_LINK_LIBRARIES TARGET ${TARGET} PROPERTY INTERFACE_LINK_LIBRARIES)
 	
+	list(REMOVE_ITEM TARGET_LINK_LIBRARIES ${ARGN})
+	list(REMOVE_ITEM TARGET_INTERFACE_LINK_LIBRARIES ${ARGN})
+	
+	set_property(TARGET ${TARGET} PROPERTY LINK_LIBRARIES ${TARGET_LINK_LIBRARIES})
+	set_property(TARGET ${TARGET} PROPERTY INTERFACE_LINK_LIBRARIES ${TARGET_INTERFACE_LINK_LIBRARIES})
+endfunction(remove_link_libraries)
