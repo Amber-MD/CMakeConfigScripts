@@ -262,23 +262,60 @@ endif()
 #  NetCDF
 #------------------------------------------------------------------------------
 
-if(NEED_netcdf OR NEED_netcdf-fortran)
-	
-	#tell it to find the Fortran interfaces
-	set(NETCDF_F77 ${NEED_netcdf-fortran})
-	set(NETCDF_F90 ${NEED_netcdf-fortran})
-	
-	find_package(NetCDF)
-	
-	if(NETCDF_FOUND)
-		set_3rdparty(netcdf EXTERNAL)
-		set_3rdparty(netcdf-fortran EXTERNAL)
-	else()
-		set_3rdparty(netcdf INTERNAL)
-		set_3rdparty(netcdf-fortran INTERNAL)
-	endif()
+# NetCDF is kind of a special case to the internal vs external rules.
+# per https://github.com/Amber-MD/cmake-buildscripts/issues/8 , on some platforms the system installation is broken.
+# So, we Amber developers have decided to make internal netcdf the default whenever possible.
+
+# if we are just looking for NetCDF, and DON'T need fortran, then we're good to go.
+if((NEED_netcdf AND NOT NEED_netcdf-fortran) AND "${BUNDLED_3RDPARTY_TOOLS}" MATCHES "netcdf")
+	set_3rdparty(netcdf INTERNAL)
 endif()
 
+# if we need both and have both, also good.
+if((NEED_netcdf AND NEED_netcdf-fortran) AND ("${BUNDLED_3RDPARTY_TOOLS}" MATCHES "netcdf" AND "${BUNDLED_3RDPARTY_TOOLS}" MATCHES "netcdf-fortran"))
+	set_3rdparty(netcdf INTERNAL)
+	set_3rdparty(netcdf-fortran INTERNAL)
+endif()
+
+# if we need both, but only have the C version, then use the internal Fortran version (not that this could be a problem if the system NetCDF is an earlier version than v4.3.0)
+if((NEED_netcdf AND NEED_netcdf-fortran) AND ("${BUNDLED_3RDPARTY_TOOLS}" MATCHES "netcdf" AND NOT "${BUNDLED_3RDPARTY_TOOLS}" MATCHES "netcdf-fortran"))
+	set_3rdparty(netcdf INTERNAL)
+	
+	find_package(NetCDF COMPONENTS F77 F90)
+	if(NetCDF_F90_FOUND)
+		set_3rdparty(netcdf-fortran EXTERNAL)
+	else()
+		set_3rdparty(netcdf-fortran DISABLED)
+	endif()
+	
+endif()
+
+
+# if we don't have bundled netcdf, then look for it externally.
+# (I don't handle the case where netcdf-fortran is bundled but netcdf isn't, because that would just be weird)
+if(NEED_netcdf AND NOT "${BUNDLED_3RDPARTY_TOOLS}" MATCHES "netcdf")
+	
+	#tell it to find the Fortran interfaces
+	if(NEED_netcdf-fortran)	
+		find_package(NetCDF COMPONENTS F77 F90)
+	else()
+		find_package(NetCDF)
+	endif()
+	
+	if(NetCDF_FOUND)
+		set_3rdparty(netcdf EXTERNAL)
+	else()
+		set_3rdparty(netcdf DISABLED)
+	endif()
+	
+	if(NEED_netcdf-fortran)
+		if(NetCDF_F90_FOUND)
+			set_3rdparty(netcdf-fortran EXTERNAL)
+		else()
+			set_3rdparty(netcdf-fortran DISABLED)
+		endif()
+	endif()
+endif()
 
 #------------------------------------------------------------------------------
 #  XBlas
@@ -766,67 +803,41 @@ endif()
 
 if(netcdf_EXTERNAL)
 	
-	# Try to compile and run test NetCDF programs in C and Fortran
-	# Fails if it can't
-	set(CMAKE_REQUIRED_LIBRARIES ${NETCDF_LIBRARIES_C})
-	set(CMAKE_REQUIRED_INCLUDES ${NETCDF_INCLUDES})
-
-	set(TEST_NETCDF_C_SOURCE ${CMAKE_SOURCE_DIR}/cmake/netcdf-test.c)
-
-	file(READ ${TEST_NETCDF_C_SOURCE} TEST_NETCDF_C_PROG)
-
-	check_c_source_runs("${TEST_NETCDF_C_PROG}" EXT_NETCDF_C_WORKS)
-
-	if(NOT EXT_NETCDF_C_WORKS)
-		#force the compile test to be repeated next configure
-		unset(EXT_NETCDF_C_WORKS CACHE)
-		message(FATAL_ERROR "Error: Could not compile and run programs with NetCDF C interface. Check CMakeFiles/CMakeError.log for details, and fix whatever's wrong.")
+	if(NOT NetCDF_FOUND)
+		message(FATAL_ERROR "netcdf was set to be sourced externally, but it was not found!")
 	endif()
 	
 	# Import the system netcdf as a library
-	import_library(netcdf ${NETCDF_LIBRARIES_C} ${NETCDF_INCLUDES})
-	using_external_library(${NETCDF_LIBRARIES_C})
+	import_library(netcdf ${NetCDF_LIBRARIES_C} ${NetCDF_INCLUDES})
+	using_external_library(${NetCDF_LIBRARIES_C})
+	
 elseif(netcdf_INTERNAL)
 
 	#TODO on Cray systems a static netcdf may be required
 
 	if(${COMPILER} STREQUAL cray)
-			message(FATAL_ERROR "Bundled NetCDF cannot be used with cray compilers.  Please reconfigure with -DUSE_SYSTEM_NETCDF=TRUE. \
+			message(FATAL_ERROR "Bundled NetCDF cannot be used with cray compilers.  Please reconfigure with -DFORCE_EXTERNAL_LIBS=netcdf. \
 		 On cray systems you can usually load the system NetCDF with 'module load cray-netcdf' or 'module load netcdf'.")
 	endif()
-
-	set(NETCDF_FORTRAN_MOD_DIR "${CMAKE_BINARY_DIR}/AmberTools/src/netcdf-fortran-4.2/install/include")
-	
+		
 	list(APPEND 3RDPARTY_SUBDIRS netcdf-4.3.0)
 endif()
 
 if(netcdf-fortran_EXTERNAL)
 
-	set(CMAKE_REQUIRED_INCLUDES ${NETCDF_INCLUDES})
-	set(CMAKE_REQUIRED_LIBRARIES ${NETCDF_LIBRARIES_F90} ${NETCDF_LIBRARIES_C})
-	# Test NetCDF Fortran
-	check_fortran_source_runs(
-			"program testf
-  use netcdf
-  !write(6,*) nf90_strerror(0)
-  write(6,*) 'testing a Fortran program'
-end program testf"
-			EXT_NETCDF_FORTRAN_WORKS)
-
-	if(NOT EXT_NETCDF_FORTRAN_WORKS)
-		#force the compile test to be repeated next configure
-		unset(EXT_NETCDF_FORTRAN_WORKS CACHE)
-		message(FATAL_ERROR "Error: Could not compile and run programs with NetCDF Fortran interface. Check CMakeFiles/CMakeError.log for details, and fix whatever's wrong.")
+	if(NOT NetCDF_F90_FOUND)
+		message(FATAL_ERROR "netcdf-fortran was set to be sourced externally, but it was not found!")
 	endif()
-
+	
 	# Import the system netcdf as a library
-	import_library(netcdff ${NETCDF_LIBRARIES_F90} ${NETCDF_INCLUDES})
+	import_library(netcdff ${NetCDF_LIBRARIES_F90} ${NetCDF_INCLUDES})
 	set_property(TARGET netcdff PROPERTY INTERFACE_LINK_LIBRARIES netcdf)
 	
-	using_external_library(${NETCDF_LIBRARIES_F90})
+	using_external_library(${NetCDF_LIBRARIES_F90})
 
 	# This is really for symmetry with the other MOD_DIRs more than anything.
-	set(NETCDF_FORTRAN_MOD_DIR ${NETCDF_INCLUDES})
+	set(NETCDF_FORTRAN_MOD_DIR ${NetCDF_INCLUDES})
+	
 elseif(netcdf-fortran_INTERNAL)
 
 	#TODO on Cray systems a static netcdf may be required

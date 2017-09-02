@@ -34,7 +34,7 @@ set PERL5LIB=%AMBERHOME%\\${PERL_MODULE_DIR_WIN}")
 	# python path
 	if(BUILD_PYTHON)
 		file(APPEND ${VAR_FILE_BAT} "
-set PYTHONPATH=%AMBERHOME%\\lib\\site-packages:%PYTHONPATH%")
+set PYTHONPATH=%AMBERHOME%\\lib\\site-packages")
 	endif()
 	
 	install(PROGRAMS ${VAR_FILE_BAT} DESTINATION ".")
