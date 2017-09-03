@@ -4,12 +4,12 @@ if(POLICY CMP0018)
 endif()
 
 if(POLICY CMP0025)
-	#report OS X version of Clang as regular clang instead of "AppleClang"
+	#report OS X version of Clang as "AppleClang"
 	cmake_policy(SET CMP0025 NEW)
 endif()
 
 if(POLICY CMP0026)
-	#enable deprecated LOCATION property.  Used for pytraj build workaround.
+	#disable deprecated LOCATION property. 
 	cmake_policy(SET CMP0026 NEW)
 endif()
 
@@ -20,7 +20,7 @@ endif()
 
 if(POLICY CMP0058)
 	#Spoof Ninja dependencies that don't exist in case they are custom command byproducts
-	# We would actually like to set this to the new behavior, but it doesn't exist in CMake 3.1
+	# We would actually like to set this to the new behavior, but it doesn't exist in CMake 3.1 and we want consistency
 	cmake_policy(SET CMP0058 OLD)
 endif()
 

@@ -146,7 +146,7 @@ else()
     
     # Almost all of the MKL libraries are in MKL_HOME
 	# ..but libiomp5.so is NOT!
-	#it's in the lib folder of the __DIRECTORY CONTAINING__ MKL_HOME.
+	#it's in the lib folder of the DIRECTORY CONTAINING MKL_HOME.
     
     find_library(MKL_INTEL_OMP_LIBRARY ${MKL_INTEL_OMP_LIBNAME} PATHS ${MKL_OMP_LIB_PATHS})
     

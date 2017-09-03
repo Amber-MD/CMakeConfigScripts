@@ -11,11 +11,77 @@
 # on everything else:
 # We package/depend on libraries in the lib folder
  
- 
-set(USED_LIB_RUNTIME_PATH "") # Path to a .so, .dylib, or .dll library.  "<none>" if the library is static only.
-set(USED_LIB_LINKTIME_PATH "") # Path to a .a or .lib static library, or an import library
-set(USED_LIB_NAME "") # contains the library names as supplied to the linker.
+# these must be cache variables so that they can be set from within a function
+set(USED_LIB_RUNTIME_PATH "" CACHE INTERNAL "Paths to shared libraries needed at runtime" FORCE) # Path to a .so, .dylib, or .dll library.  "<none>" if the library is static only.
+set(USED_LIB_LINKTIME_PATH "" CACHE INTERNAL "Paths to shared libraries needed at link time" FORCE) # Path to a .a or .lib static library, or an import library
+set(USED_LIB_NAME "" CACHE INTERNAL "Names of used shared libraries" FORCE) # contains the library names as supplied to the linker.
 
+# linker flag prefix -- if a link library starts with this character, it will be ignored by import_libraries()
+# this is needed because FindMKL can return linker flags mixed with its libraries (which is actually the official CMake way of doing things)
+if(TARGET_WINDOWS AND NOT MINGW)
+	set(LINKER_FLAG_PREFIX "/")  # stupid illogical MSVC command-line format...
+else()
+	set(LINKER_FLAG_PREFIX "-")
+endif()
+
+# utility functions
+# --------------------------------------------------------------------
+
+#Unfortunately, CMake doesn't let you import a library without knowing whether it is shared or static, and there's no easy way to tell which it is.
+#sets OUTPUT_VARAIBLE to "IMPORT", "SHARED", or "STATIC" depending on the library passed
+function(get_lib_type LIBRARY OUTPUT_VARIABLE)
+
+	if(NOT EXISTS ${LIBRARY})
+		message(FATAL_ERROR "get_lib_type(): library ${LIBRARY} does not exist!")
+	endif()
+
+	get_filename_component(LIB_NAME ${LIBRARY} NAME)
+	
+	# first, check for import libraries
+	if(TARGET_WINDOWS)
+		if(MINGW)
+			# on MinGW, import libraries have a different file extension, so our job is easy.
+			if(${LIB_NAME} MATCHES ".*${CMAKE_IMPORT_LIBRARY_SUFFIX}")
+				set(${OUTPUT_VARIABLE} IMPORT PARENT_SCOPE)
+				return()
+			endif()
+		else() # MSVC, Intel, or some other Windows compiler
+			
+			# we have to work a little harder, and use Dumpbin to check the library type.
+			find_program(DUMPBIN dumpbin)
+			
+			if(NOT DUMPBIN)
+				message(FATAL_ERROR "The Microsoft Dumpbin tool was not found.  It is needed to analyze libraries, so please set the DUMPBIN variable to point to it.")
+			endif()
+			
+			execute_process(COMMAND ${DUMPBIN} OUTPUT_VARIABLE DUMPBIN_OUTPUT ERROR_VARIABLE DUMPBIN_ERROUT RESULT_VARIABLE DUMPBIN_RESULT)
+			
+			# sanity check
+			if(NOT ${DUMPBIN_RESULT} EQUAL 0)
+				message(FATAL_ERROR "Could not analyze the type of library ${LIBRARY}: dumpbin failed to execute with error ${DUMPBIN_ERROUT}")
+			endif()
+			
+			# check for dynamic symbol entries
+			# https://stackoverflow.com/questions/488809/tools-for-inspecting-lib-files
+			if("${DUMPBIN_OUTPUT}" MATCHES "Symbol name  :")
+				# found one!  It's an import library!
+				set(${OUTPUT_VARIABLE} IMPORT PARENT_SCOPE)
+				return()
+			endif()
+		endif()
+	endif()
+	
+	# now we can figure the rest out by suffix matching
+	if(${LIB_NAME} MATCHES ".*${CMAKE_SHARED_LIBRARY_SUFFIX}")
+		set(${OUTPUT_VARIABLE} SHARED PARENT_SCOPE)
+	elseif(${LIB_NAME} MATCHES ".*${CMAKE_STATIC_LIBRARY_SUFFIX}")
+		set(${OUTPUT_VARIABLE} STATIC PARENT_SCOPE)
+	else()
+		message(FATAL_ERROR "Could not determine whether \"${LIBRARY}\" is a static or shared library, it does not have a known suffix.")
+	endif()
+	
+	#printvar(${OUTPUT_VARIABLE})
+endfunction(get_lib_type)
 
 # Like using_external_library, but accepts multiple paths.
 macro(using_external_libraries)	
@@ -27,21 +93,15 @@ endmacro(using_external_libraries)
 
 # Notify the packager that an external library is being used
 # If a Windows import library as passed as an argument, will automatically find and add the corresponding DLL
-macro(using_external_library LIBPATH)
+function(using_external_library LIBPATH)
 	
 	if("${LIBPATH}" STREQUAL "" OR NOT EXISTS "${LIBPATH}")
 		message(FATAL_ERROR "Non-existant library ${LIBPATH} recorded as a used library")
 	endif()
 	
 	if(NOT ("${USED_LIB_RUNTIME_PATH}" MATCHES "${LIBPATH}" OR "${USED_LIB_LINKTIME_PATH}" MATCHES "${LIBPATH}"))
-		is_static_library("${LIBPATH}" LIB_IS_STATIC)
-	
-		if(TARGET_SUPPORTS_IMPORT_LIBRARIES)
-			test(LIB_IS_IMPORT ${LIBPATH} MATCHES ".*${CMAKE_IMPORT_LIBRARY_SUFFIX}")
-		else()
-			set(LIB_IS_IMPORT FALSE)
-		endif()
-	
+		get_lib_type("${LIBPATH}" LIB_TYPE)
+
 		# Figure out the library name that you'd feed to the linker from the filename
 		# --------------------------------------------------------------------
 	
@@ -56,11 +116,9 @@ macro(using_external_library LIBPATH)
 		
 		#remove the file extension
 	
-		if(TARGET_SUPPORTS_IMPORT_LIBRARIES)
+		if("${LIB_TYPE}" STREQUAL "IMPORT")
 			string(REGEX REPLACE "${CMAKE_IMPORT_LIBRARY_SUFFIX}$" "" LIBNAME ${LIBNAME})
-		endif()
-	
-		if(LIB_IS_STATIC)
+		elseif("${LIB_TYPE}" STREQUAL "STATIC")
 			string(REGEX REPLACE "${CMAKE_STATIC_LIBRARY_SUFFIX}\$" "" LIBNAME ${LIBNAME})
 		else()
 			string(REGEX REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}\$" "" LIBNAME ${LIBNAME})
@@ -70,7 +128,7 @@ macro(using_external_library LIBPATH)
 		# if we are on Windows, we need to find the corresponding .dll library if we got an import library
 		# --------------------------------------------------------------------
 	
-		if(LIB_IS_IMPORT AND ${CMAKE_SYSTEM_NAME} STREQUAL Windows)
+		if("${LIB_TYPE}" STREQUAL IMPORT)
 			# accept user override
 			if(NOT DEFINED DLL_LOCATION_${LIBNAME})
 				#try to find it in the bin subdirectory of the location where the import library is installed.
@@ -98,24 +156,119 @@ macro(using_external_library LIBPATH)
 		# save the data to the global lists
 		# --------------------------------------------------------------------
 	
-		if(LIB_IS_IMPORT)
-			list(APPEND USED_LIB_LINKTIME_PATH ${LIBPATH})
-			list(APPEND USED_LIB_RUNTIME_PATH ${DLL_LOCATION_${LIBNAME}})
+		if("${LIB_TYPE}" STREQUAL "IMPORT")
+			set(USED_LIB_LINKTIME_PATH ${USED_LIB_LINKTIME_PATH} ${LIBPATH} CACHE INTERNAL "" FORCE)
+			set(USED_LIB_RUNTIME_PATH ${USED_LIB_RUNTIME_PATH} ${DLL_LOCATION_${LIBNAME}} CACHE INTERNAL "" FORCE)
 		
-			#message("Recorded DLL/implib combo ${LIBNAME}: import library at ${LIBPATH}, DLL at ${DLL_LOCATION_${LIBNAME}}")
+			message("Recorded DLL/implib combo ${LIBNAME}: import library at ${LIBPATH}, DLL at ${DLL_LOCATION_${LIBNAME}}")
 		
-		elseif(LIB_IS_STATIC)
-			list(APPEND USED_LIB_LINKTIME_PATH ${LIBPATH})
-			list(APPEND USED_LIB_RUNTIME_PATH "<none>")
+		elseif("${LIB_TYPE}" STREQUAL "STATIC")
+			set(USED_LIB_LINKTIME_PATH ${USED_LIB_LINKTIME_PATH} ${LIBPATH} CACHE INTERNAL "" FORCE)
+			set(USED_LIB_RUNTIME_PATH ${USED_LIB_RUNTIME_PATH} "<none>" CACHE INTERNAL "" FORCE)
 		
-			#message("Recorded static library ${LIBNAME} at ${LIBPATH}")
-		else() # Unix shared library
-			list(APPEND USED_LIB_LINKTIME_PATH ${LIBPATH})
-			list(APPEND USED_LIB_RUNTIME_PATH ${LIBPATH})
+			message("Recorded static library ${LIBNAME} at ${LIBPATH}")
+		elseif("${LIB_TYPE}" STREQUAL "SHARED") 
+			set(USED_LIB_LINKTIME_PATH ${USED_LIB_LINKTIME_PATH} ${LIBPATH} CACHE INTERNAL "" FORCE)
+			set(USED_LIB_RUNTIME_PATH ${USED_LIB_RUNTIME_PATH} ${LIBPATH} CACHE INTERNAL "" FORCE)
 		
-			#message("Recorded shared library ${LIBNAME} at ${LIBPATH}")
+			message("Recorded shared library ${LIBNAME} at ${LIBPATH}")
+		else()
+			message(FATAL_ERROR "Shouldn't get here!")
 		endif()
 	
-		list(APPEND USED_LIB_NAME ${LIBNAME})
+		set(USED_LIB_NAME ${USED_LIB_NAME} ${LIBNAME} CACHE INTERNAL "" FORCE)
 	endif()
-endmacro(using_external_library)
+endfunction(using_external_library)
+
+
+# import functions
+# --------------------------------------------------------------------
+
+# shorthand for adding an imported library, with a path and include dirs.
+
+#usage: import_library(<library name> <library path> [include dir 1] [include dir 2]...)
+function(import_library NAME PATH) #3rd arg: INCLUDE_DIRS
+
+	#Try to figure out whether it is shared or static.
+	get_lib_type(${PATH} LIB_TYPE)
+
+	if("${LIB_TYPE}" STREQUAL "STATIC")
+		add_library(${NAME} STATIC IMPORTED GLOBAL)
+	else()
+		add_library(${NAME} SHARED IMPORTED GLOBAL)
+	endif()
+
+	set_property(TARGET ${NAME} PROPERTY IMPORTED_LOCATION ${PATH})
+	set_property(TARGET ${NAME} PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${ARGN})
+	
+	using_external_library("${PATH}")
+	
+endfunction(import_library)
+
+# shorthand for adding one library target which corresponds to multiple linkable things
+# "linkable things" can be any of 6 different types:
+#    1. CMake imported targets (as created by import_library() or by another module)
+#    2. File paths to libraries
+#    3. CMake non-imported targets
+#    4. Linker flags
+#    5. Names of libraries to find on the linker path
+#    6. Generator expressions
+
+# Things of the first 2 types are added to the library tracker.
+
+#usage: import_libraries(<library name> LIBRARIES <library paths...> INCLUDES [include dir 1] [include dir 2]...)
+function(import_libraries NAME)
+
+	cmake_parse_arguments(IMP_LIBS "" "" "LIBRARIES;INCLUDES" ${ARGN})
+	
+	if("${IMP_LIBS_LIBRARIES}" STREQUAL "")
+		message(FATAL_ERROR "Incorrect usage.  At least one LIBRARY should be provided.")
+	endif()
+	
+	if(NOT "${IMP_LIBS_UNPARSED_ARGUMENTS}" STREQUAL "")
+		message(FATAL_ERROR "Incorrect usage.  Extra arguments provided.")
+	endif()
+	
+	# we actually don't use imported libraries at all; we just create an interface target and set its dependencies
+	add_library(${NAME} INTERFACE)
+		
+	set_property(TARGET ${NAME} PROPERTY INTERFACE_LINK_LIBRARIES ${IMP_LIBS_LIBRARIES})
+	set_property(TARGET ${NAME} PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${IMP_LIBS_INCLUDES})
+	
+	# we don;t want to add generator expressions to the library tracker...
+	string(GENEX_STRIP "${IMP_LIBS_LIBRARIES}" IMP_LIBS_LIBRARIES_NO_GENEX)
+	
+	# add to library tracker
+	foreach(LIBRARY ${IMP_LIBS_LIBRARIES_NO_GENEX})
+		if("${LIBRARY}" MATCHES "^${LINKER_FLAG_PREFIX}")
+			# linker flag -- ignore
+			
+		elseif(EXISTS "${LIBRARY}")
+			# full path to library
+			using_external_library("${LIBRARY}")
+			
+		elseif(TARGET "${LIBRARY}")
+			
+			get_property(TARGET_LIB_TYPE TARGET ${LIBRARY} PROPERTY TYPE)
+			
+			# it's an error to check if an interface library has an imported location
+			if(NOT "${TARGET_LIB_TYPE}" STREQUAL "INTERFACE_LIBRARY")
+				
+				get_property(LIBRARY_HAS_IMPORTED_LOCATION TARGET ${LIBRARY} PROPERTY IMPORTED_LOCATION SET)
+				if(LIBRARY_HAS_IMPORTED_LOCATION)
+					# CMake imported target
+					get_property(LIBRARY_IMPORTED_LOCATION TARGET ${LIBRARY} PROPERTY IMPORTED_LOCATION)
+					using_external_library("${LIBRARY_IMPORTED_LOCATION}")
+					
+				endif()
+				
+				# else it's a CMake target that is built by this project -- ignore
+			
+			endif()
+		endif()
+		# otherwise it's a library name to find on the linker search path (using CMake in "naive mode")
+	endforeach()
+	
+
+	
+endfunction(import_libraries)

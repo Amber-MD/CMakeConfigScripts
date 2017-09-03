@@ -15,8 +15,8 @@ if(DRAGONEGG)
 endif()
 
 #shared vs static option
-option(STATIC "If true, build static libraries and freestanding (except for data files) executables. Otherwise, compile common code into shared libraries and link them to programs.
-	The runtime path is set properly now, so unless you move the installation AND don't source amber.sh you won't have to mess with LD_LIBRARY PATH" FALSE)
+option(STATIC "If true, build static libraries and freestanding (except for data files) executables. Otherwise, compile common code into shared libraries and link them to programs. \
+The runtime path is set properly now, so unless you move the installation AND don't source amber.sh you won't have to mess with LD_LIBRARY PATH" FALSE)
 
 if(STATIC)
 	set(SHARED FALSE)
@@ -25,6 +25,9 @@ else()
 endif()		
 
 option(LARGE_FILE_SUPPORT "Build C code with large file support" TRUE)
+
+# FFT support 
+option(USE_FFT "Whether to use the Fastest Fourier Transform in the West library and build RISM and the PBSA FFT solver." TRUE)
 
 #set default library type appropriately
 set(BUILD_SHARED_LIBS ${SHARED})
@@ -35,43 +38,21 @@ set(BUILD_SHARED_LIBS ${SHARED})
 # So, we use CMAKE_<LANG>_FLAGS_DEBUG for per-config debugging flags, but use a separate optimization switch.
 option(OPTIMIZE "Whether to build code with compiler flags for optimization." TRUE)
 
-option(UNUSED_WARNINGS "Enable warnings about unused variables.  Really clutters up the build output." TRUE)
+option(UNUSED_WARNINGS "Enable warnings about unused variables.  Really clutters up the build output." FALSE)
 option(UNINITIALIZED_WARNINGS "Enable warnings about uninitialized variables.  Kind of clutters up the build output, but these need to be fixed." TRUE)
 
 option(DOUBLE_PRECISION "Build Amber's Fortran programs with double precision math." TRUE)
 
-#-------------------------------------------------------------------------------
-#  Set default flags
-#-------------------------------------------------------------------------------
 
 #let's try to enforce a reasonable standard here
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
-set(NO_OPT_FFLAGS -O0)
-set(NO_OPT_CFLAGS -O0)
-set(NO_OPT_CXXFLAGS -O0)
-
-set(OPT_FFLAGS -O3)
-set(OPT_CFLAGS -O3)
-set(OPT_CXXFLAGS -O3)
-
-set(CMAKE_C_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_Fortran_FLAGS_DEBUG "-g")
-
-#blank cmake's default optimization flags, we can't use these because not everything should be built optimized.
-set(CMAKE_C_FLAGS_RELEASE "")
-set(CMAKE_CXX_FLAGS_RELEASE "")
-set(CMAKE_Fortran_FLAGS_RELEASE "")
-
-#a macro to make things a little cleaner
-#NOTE: we can't use add_compile_options because that will apply to all languages
-macro(add_flags LANGUAGE) # FLAGS...
-	foreach(FLAG ${ARGN})
-		set(CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS} ${FLAG}")
-	endforeach()
-endmacro(add_flags)
+# I can't think of any better place to put this...
+option(INSTALL_TESTS "Whether or not to install ${PROJECT_NAME}'s tests, examples, and benchmarks.  Be warned, they take up over a gigabyte. \
+For the Tests, Examples, and Benchmarks packages to be generated, this option must be enabled.  Note that you can run the tests out of the source \
+directory so you would only really use this option if you wanted to move the install directory to a different machine or generate packages.")
+# It would have been really nice to use install(EXCLUDE_FROM_ALL) to get this functionality, but it doesn't exist until CMake 3.6, sadly.
 
 #------------------------------------------------------------------------------
 #  Now that we have our compiler, detect target architecture.
@@ -107,3 +88,14 @@ endif()
 test(TARGET_OSX "${CMAKE_SYSTEM_NAME}" STREQUAL Darwin)
 test(TARGET_WINDOWS "${CMAKE_SYSTEM_NAME}" STREQUAL Windows)
 test(TARGET_LINUX "${CMAKE_SYSTEM_NAME}" STREQUAL Linux)
+
+# --------------------------------------------------------------------
+# Determine if we are mixing different vendors' compilers
+# --------------------------------------------------------------------
+set(MIXING_COMPILERS TRUE)
+if(("${CMAKE_C_COMPILER_ID}" STREQUAL "" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "") OR "${CMAKE_C_COMPILER_ID}" STREQUAL "${CMAKE_CXX_COMPILER_ID}")
+	if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "" OR "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "") OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "${CMAKE_Fortran_COMPILER_ID}")
+		set(MIXING_COMPILERS FALSE)
+	endif()
+endif()
+

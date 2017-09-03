@@ -18,10 +18,18 @@ find_library(APBS_MALOC_LIB maloc)
 
 set(APBS_LIBRARIES ${APBS_API_LIB} ${APBS_ROUTINES_LIB} ${APBS_MG_LIB} ${APBS_PMGC_LIB} ${APBS_GENERIC_LIB} ${APBS_MALOC_LIB} )
 
+# on Windows, maloc needs to link to ws2_32.dll
+if("${CMAKE_SYSTEM_NAME}" STREQUAL Windows)
+	# we can probably get away with not using find_library() here since ws2_32 is a standard universal Windows library
+	list(APPEND APBS_LIBRARIES ws2_32)
+endif()
+
 find_path(APBS_INCLUDES apbs/apbs.h)
 
 #some of apbs's headers #include <maloc/maloc.h>, so we have to supply the outer include directory as well
 set(APBS_INNER_INCLUDES ${APBS_INCLUDES}/apbs ${APBS_INCLUDES})
+
+
 	
 if(NOT(APBS_GENERIC_LIB AND APBS_ROUTINES_LIB AND APBS_PMGC_LIB AND APBS_MG_LIB AND APBS_MALOC_LIB))
 

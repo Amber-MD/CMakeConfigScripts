@@ -1,17 +1,9 @@
 include(CMakeParseArguments)
 
 #converts a list into a string with each of its elements seperated by a space
-
-#NOTE: the leading space is a feature, not a bug!
-macro(list_to_space_seperated OUTPUT_VAR)# 2nd arg: LIST...
-	set(${OUTPUT_VAR} "")	
-
-	foreach(ELEMENT ${ARGN})
-		if(NOT ${ELEMENT} STREQUAL "")
-			set(${OUTPUT_VAR} "${${OUTPUT_VAR}} ${ELEMENT}")
-		endif()
-	endforeach()
-endmacro(list_to_space_seperated)
+macro(list_to_space_separated OUTPUT_VAR)# 2nd arg: LIST...
+	string(REPLACE ";" " " ${OUTPUT_VAR} "${ARGN}")
+endmacro(list_to_space_separated)
 
 #causes a symlink between FILE and SYMLINK to be created at install time.
 # the paths of FILE and SYMLINK are appended to the install prefix
@@ -42,7 +34,7 @@ macro(validate_configuration_enum VARIABLE) #2nd argument: VALID_VALUES...
 	list_contains(VALID ${${VARIABLE}} ${ARGN})
 	
 	if(NOT VALID)
-		list_to_space_seperated(VALID_VALUES_STRING ${ARGN})
+		list_to_space_separated(VALID_VALUES_STRING ${ARGN})
 		
 		message(FATAL_ERROR "${${VARIABLE}} is not a valid value for ${VARIABLE} -- must be one of: ${VALID_VALUES_STRING}")
 	endif()
@@ -54,7 +46,7 @@ endmacro(validate_configuration_enum)
 # foo.bar.s > foo.bar
 
 #different from get_filename_component(.. NAME_WE), where foo.bar.s > foo
-macro(strip_shortest_extension OUTPUT_VAR FILENAME)
+macro(strip_last_extension OUTPUT_VAR FILENAME)
     #from http://stackoverflow.com/questions/30049180/strip-filename-shortest-extension-by-cmake-get-filename-removing-the-last-ext
     string(REGEX REPLACE "\\.[^.]*$" "" ${OUTPUT_VAR} ${FILENAME})
 endmacro()
@@ -85,30 +77,29 @@ macro(append_compile_flags NEW_FLAGS) # SOURCE...
 		set_property(SOURCE ${SOURCE_FILE} PROPERTY COMPILE_FLAGS ${NEW_COMPILE_FLAGS})
 	endforeach()
 endmacro(append_compile_flags)
-
-#Unfortunately, CMake doesn't let you import a library without knowing whether it is shared or static, but there's no easy way to tell.
-#Also, for Readline, we need to use definitions depending on whether it is static or shared
-
-#sets OUTPUT_VARAIBLE to TRUE or FALSE depending on whether LIBRARY is shared or static.  Errors out if it can't tell.
-macro(is_static_library LIBRARY OUTPUT_VARIABLE)
-	# This is frustratingly platform-specific logic, but we have to do it
-	get_filename_component(LIB_NAME ${LIBRARY} NAME)
-
-	set(IS_IMPORT_LIBRARY FALSE)
-	if(TARGET_SUPPORTS_IMPORT_LIBRARIES)
-		if(${LIB_NAME} MATCHES ".*${CMAKE_IMPORT_LIBRARY_SUFFIX}")
-			set(IS_IMPORT_LIBRARY TRUE)
-		endif()
+	
+# defines a component, and creates a "make install_<name>" target
+# NAME - the name as used in install commands
+# DESCRIPTION - description of the component
+macro(define_component NAME DESCRIPTION)
+	
+	# create component list for CPack if it doesn't yet exist
+	if(NOT DEFINED CPACK_COMPONENTS_ALL)
+		set(CPACK_COMPONENTS_ALL "")
 	endif()
 	
-	if(IS_IMPORT_LIBRARY) 	#special exception for import libraries, which are seen as shared but are actually static
-		set(${OUTPUT_VARIABLE} TRUE)
-	elseif(${LIB_NAME} MATCHES ".*${CMAKE_SHARED_LIBRARY_SUFFIX}")
-		set(${OUTPUT_VARIABLE} FALSE)
-	elseif(${LIB_NAME} MATCHES ".*${CMAKE_STATIC_LIBRARY_SUFFIX}")
-		set(${OUTPUT_VARIABLE} TRUE)
-	else()
-		message(FATAL_ERROR "Could not determine whether \"${LIBRARY}\" is a static or shared library, it does not have a known suffix.")
-	endif()
-endmacro(is_static_library)
-
+	list(APPEND CPACK_COMPONENTS_ALL ${NAME})
+	
+	string(TOUPPER ${NAME} COMPONENT_NAME_UCASE)
+	string(TOLOWER ${NAME} COMPONENT_NAME_LCASE)
+	
+	set(CPACK_COMPONENT_${COMPONENT_NAME_UCASE}_DISPLAY_NAME ${NAME})
+	set(CPACK_COMPONENT_${COMPONENT_NAME_UCASE}_DESCRIPTION ${DESCRIPTION})
+	
+	# add "make install" target	
+	ADD_CUSTOM_TARGET(install_${COMPONENT_NAME_LCASE}
+	  ${CMAKE_COMMAND}
+	  -D "CMAKE_INSTALL_COMPONENT=${NAME}"
+	  -P "${CMAKE_BINARY_DIR}/cmake_install.cmake"
+	  )
+endmacro()

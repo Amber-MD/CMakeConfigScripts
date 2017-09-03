@@ -8,6 +8,8 @@
 #ignores non-Fortran source files (those without an f in their suffix)
 
 function(apply_optimization_declarations SRC_FILES)
+	list(REMOVE_DUPLICATES ARGV)
+	
 	foreach(SRC_FILE ${ARGV})
 		
 		#resolve relative paths

@@ -39,9 +39,12 @@ set(CPACK_STRIP_FILES TRUE)
 # --------------------------------------------------------------------
 # figure out package category
 
-if(${PACKAGE_TYPE} STREQUAL TBZ2 OR ${PACKAGE_TYPE} STREQUAL TBZ2)
+if(${PACKAGE_TYPE} STREQUAL TBZ2 OR ${PACKAGE_TYPE} STREQUAL ZIP)
 	#archives are simple.  No dependencies, no metadata.
 	set(PACK_TYPE_CATEGORY archive)
+	
+	set(CPACK_ARCHIVE_COMPONENT_INSTALL TRUE)
+	
 elseif(${PACKAGE_TYPE} STREQUAL NSIS)
 	#Windows installer. Needed libraries must be bundled.
 	set(PACK_TYPE_CATEGORY windows-installer)
@@ -107,7 +110,7 @@ elseif(${PACKAGE_TYPE} STREQUAL NSIS)
 	set(CPACK_NSIS_HELP_LINK "http://ambermd.org/doc12/")
 	set(CPACK_NSIS_URL_INFO_ABOUT "http://ambermd.org/")
 	set(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
-
+	
 elseif(${PACKAGE_TYPE} STREQUAL Bundle)
 	# OS X .app package.
 	set(PACK_TYPE_CATEGORY mac-app)
@@ -174,11 +177,13 @@ else()
 		# However, for this to work it needs CMake >= 3.7
 		set(CPACK_DEBIAN_ARCHIVE_TYPE "gnutar")
 		
+		
 		if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_LESS 3.7)
 			message(FATAL_ERROR "Building DEB packages requires CMake >= 3.7 due to CMake bug #14332.  Either change PACKAGE_TYPE to something else (e.g. TBZ2), or \
 upgrade CMake.  Sorry, I know this is a pain, but there's no other fix.")
 		endif()
 		
+		set(CPACK_DEB_COMPONENT_INSTALL TRUE)
 		
 	elseif(${PACKAGE_TYPE} STREQUAL RPM)	
 		#RPM package
@@ -191,6 +196,8 @@ upgrade CMake.  Sorry, I know this is a pain, but there's no other fix.")
 		# tell CPack to autocreate the package names following distro standards
 		# these don't work prior to CMake 3.6, so when those versions are used the package will get named according to PACKAGE_NAME
 		set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
+		
+		set(CPACK_RPM_COMPONENT_INSTALL TRUE)
 	endif()
 		
 endif()
@@ -214,8 +221,15 @@ function(print_packaging_report)
 	colormsg(HIGREEN "**************************************************************************")
 	colormsg("                             " _WHITE_ "Packaging Report")
 	colormsg(HIGREEN "**************************************************************************")
-	colormsg("Package type:         " HIBLUE "${PACKAGE_TYPE}")
-	colormsg("Package category:     " HIBLUE "${PACK_TYPE_CATEGORY}")
+	colormsg("Package type:              " HIBLUE "${PACKAGE_TYPE}")
+	colormsg("Package category:          " HIBLUE "${PACK_TYPE_CATEGORY}")
+		
+	if(DEFINED CPACK_COMPONENTS_ALL)
+	list_to_space_separated(CPACK_COMPONENTS_ALL_SPC ${CPACK_COMPONENTS_ALL})
+	colormsg("Packaging these components:" HIBLUE "${CPACK_COMPONENTS_ALL_SPC}")
+	endif()
+	
+	colormsg("")
 	colormsg("External libraries used by ${PROJECT_NAME}:")
 	colormsg(HIGREEN "--------------------------------------------------------------------------")
 	foreach(LIBNAME ${USED_LIB_NAME})
@@ -227,7 +241,7 @@ function(print_packaging_report)
 		if("${RUNTIME_PATH}" STREQUAL "<none>" OR "${RUNTIME_PATH}" STREQUAL "${LINKTIME_PATH}")
 			colormsg("${LIBNAME} -" YELLOW "${LINKTIME_PATH}")
 		else()
-			colormsg("${LIBNAME} -" YELLOW "${LINKTIME_PATH} (link time)," MAG "${RUNTIME_PATH} (runtime)")
+			colormsg("${LIBNAME} -" YELLOW "${LINKTIME_PATH} (link time), ${RUNTIME_PATH} (runtime)")
 		endif()	
 	endforeach()
 	colormsg(HIGREEN "**************************************************************************")
@@ -266,7 +280,15 @@ function(print_packaging_report)
 		colormsg("Please ensure that all libraries used by Amber's executables are included in this list.")
 		colormsg("If any libraries are missing, please list them in the variable EXTRA_LIBS_TO_BUNDLE")
 	elseif(${PACK_TYPE_CATEGORY} STREQUAL linux-package)
-		colormsg("This is a Linux package, so dependencies will be automatically calculated for the current distro you are building on.")
+		if(${PACKAGE_TYPE} STREQUAL "RPM")
+			colormsg("This is an RPM package, so dependencies will be automatically calculated for the current distro you are building on.")
+		else()
+			colormsg("You will need to pass the Debian package dependency string in the CMake variable DEB_PACKAGE_DEPENDENCIES")
+			colormsg("Example: " HIBLUE "libarpack2 (>= 3.0.2-3), liblapack3gf (>= 3.3.1-1), libblas3gf (>= 1.2.20110419-2ubuntu1), libreadline6 (>= 6.3-4ubuntu2)")
+			colormsg("")
+			colormsg("Its current contents are:\"${DEB_PACKAGE_DEPENDENCIES}\"")
+		endif()
+		
 		colormsg("")
 		colormsg("${PROJECT_NAME} will be installed by the package to: " HIBLUE "${CMAKE_INSTALL_PREFIX}")
 	endif()

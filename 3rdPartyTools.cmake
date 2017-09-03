@@ -81,9 +81,10 @@ macro(set_3rdparty TOOL STATUS)
 				# getting here means there's been a programming error
 				message(FATAL_ERROR "3rd party program ${TOOL} is not bundled and cannot be built inside Amber.")
 			elseif("${REQUIRED_3RDPARTY_TOOLS}" MATCHES ${TOOL})
+				# kind of a kludge - even when we're in a submodule, things will still get set top internal, so we just treat internal equal to disabled
 				message(FATAL_ERROR "3rd party program ${TOOL} is required, but was not found.")
 			else()
-				# it's a submodule, and it's not required, so it's OK that the tool is not bundled
+				# we're in a submodule, and it's not required, so it's OK that the tool is not bundled
 				set(${TOOL}_DISABLED TRUE)
 				set(${TOOL}_ENABLED FALSE)
 				
@@ -430,8 +431,8 @@ if(NEED_lio)
 		find_library(LIO_G2G_LIBRARY NAMES g2g PATHS ${LIO_HOME}/g2g DOC "Path to libg2g.so")
 		find_library(LIO_AMBER_LIBRARY NAMES lio-g2g PATHS ${LIO_HOME}/lioamber DOC "Path to liblio-g2g.so")
 	else()
-		find_library(LIO_G2G_LIBRARY g2g DOC "libg2g.so")
-		find_library(LIO_AMBER_LIBRARY lio-g2g DOC "liblio-g2g.so")
+		find_library(LIO_G2G_LIBRARY g2g DOC "Path to libg2g.so")
+		find_library(LIO_AMBER_LIBRARY lio-g2g DOC "Path to liblio-g2g.so")
 	endif()
 	
 	if(LIO_G2G_LIBRARY AND LIO_G2G_LIBRARY)	
@@ -716,9 +717,7 @@ endif()
 #------------------------------------------------------------------------------
 
 if(readline_EXTERNAL)
-	import_library(readline ${READLINE_LIBRARY} ${READLINE_INCLUDE_DIR} ${READLINE_INCLUDE_DIR}/readline)
-	using_external_library(${READLINE_LIBRARY})
-	
+	import_library(readline ${READLINE_LIBRARY} ${READLINE_INCLUDE_DIR} ${READLINE_INCLUDE_DIR}/readline)	
 	
 	# Configure dll imports if neccesary
 	# It's not like this is, y'know, DOCUMENTED anywhere
@@ -757,11 +756,7 @@ if(mkl_ENABLED)
 	endif()
 	
 	# add to library tracker
-	foreach(LIBRARY ${MKL_FORTRAN_LIBRARIES})
-		if(NOT ("${LIBRARY}" MATCHES "^-.*" OR "${LIBRARY}" STREQUAL Threads::Threads)) # get rid of some things in this list that are not really libraries
-			using_external_library(${LIBRARY})
-		endif()
-	endforeach()
+	import_libraries(mkl LIBRARIES ${MKL_FORTRAN_LIBRARIES} INCLUDES ${MKL_INCLUDE_DIRS})
 endif()
 
 #------------------------------------------------------------------------------
@@ -776,7 +771,6 @@ if(fftw_EXTERNAL)
 
 	# Import the system fftw as a library
 	import_library(fftw ${FFTW_LIBRARIES} ${FFTW_INCLUDES})
-	using_external_library(${FFTW_LIBRARIES})
 	
 	is_static_library("${FFTW_LIBRARIES}" EXT_FFTW_IS_STATIC)
 	
@@ -788,7 +782,6 @@ if(fftw_EXTERNAL)
 	if(MPI)
 		# Import MPI fftw
 		import_library(fftw_mpi ${FFTW_MPI_LIBRARIES} ${FFTW_MPI_INCLUDES})
-		using_external_library(${FFTW_MPI_LIBRARIES})
 		
 	endif()	
 	
@@ -809,7 +802,6 @@ if(netcdf_EXTERNAL)
 	
 	# Import the system netcdf as a library
 	import_library(netcdf ${NetCDF_LIBRARIES_C} ${NetCDF_INCLUDES})
-	using_external_library(${NetCDF_LIBRARIES_C})
 	
 elseif(netcdf_INTERNAL)
 
@@ -833,8 +825,6 @@ if(netcdf-fortran_EXTERNAL)
 	import_library(netcdff ${NetCDF_LIBRARIES_F90} ${NetCDF_INCLUDES})
 	set_property(TARGET netcdff PROPERTY INTERFACE_LINK_LIBRARIES netcdf)
 	
-	using_external_library(${NetCDF_LIBRARIES_F90})
-
 	# This is really for symmetry with the other MOD_DIRs more than anything.
 	set(NETCDF_FORTRAN_MOD_DIR ${NetCDF_INCLUDES})
 	
@@ -856,8 +846,7 @@ endif()
 #------------------------------------------------------------------------------
 
 if(xblas_EXTERNAL)
-	import_library(xblaslib ${XBLAS_LIBRARY})
-	using_external_library(${XBLAS_LIBRARY})
+	import_library(xblas ${XBLAS_LIBRARY})
 	
 elseif(xblas_INTERNAL)
 	list(APPEND 3RDPARTY_SUBDIRS xblas)
@@ -873,7 +862,6 @@ if(blas_INTERNAL)
 	list(APPEND 3RDPARTY_SUBDIRS blas)
 elseif(blas_EXTERNAL)
 	import_libraries(blas LIBRARIES "${BLAS_LIBRARIES}")
-	using_external_libraries(${BLAS_LIBRARIES})
 endif()
 
 #  LAPACK
@@ -881,7 +869,6 @@ if(lapack_INTERNAL)
 	list(APPEND 3RDPARTY_SUBDIRS lapack)
 elseif(lapack_EXTERNAL)
 	import_libraries(lapack LIBRARIES "${LAPACK_LIBRARIES}")
-	using_external_libraries(${LAPACK_LIBRARIES})
 endif()
 
 
@@ -892,7 +879,6 @@ if(arpack_EXTERNAL)
 	endif()
 	
 	import_library(arpack ${ARPACK_LIBRARY})
-	using_external_library(${ARPACK_LIBRARY})
 
 	set(CMAKE_REQUIRED_LIBRARIES ${ARPACK_LIBRARY})
 
@@ -922,7 +908,6 @@ elseif(pnetcdf_EXTERNAL)
 	
 	import_library(pnetcdf ${PnetCDF_C_LIBRARY} ${PnetCDF_C_INCLUDES})
 	
-	using_external_library(${PnetCDF_C_LIBRARY})
 endif()
 
 #------------------------------------------------------------------------------
@@ -930,24 +915,11 @@ endif()
 #------------------------------------------------------------------------------
 
 if(apbs_EXTERNAL)
-	using_external_library(${APBS_API_LIB})
-	using_external_library(${APBS_GENERIC_LIB})
-	using_external_library(${APBS_ROUTINES_LIB})
-	using_external_library(${APBS_PMGC_LIB})
-	using_external_library(${APBS_MG_LIB})
-	using_external_library(${APBS_MALOC_LIB})
-	
-	import_library(iapbs ${APBS_API_LIB})
-	import_library(apbs_generic ${APBS_GENERIC_LIB})
-	import_library(apbs_routines ${APBS_ROUTINES_LIB})
-	import_library(apbs_pmgc ${APBS_PMGC_LIB})
-	import_library(apbs_mg ${APBS_MG_LIB})
-	import_library(maloc ${APBS_MALOC_LIB})
-
-	# on Windows, maloc needs to link to ws2_32.dll
-	if(TARGET_WINDOWS)
-		set_property(TARGET maloc PROPERTY INTERFACE_LINK_LIBRARIES ws2_32)
+	if(NOT APBS_FOUND)
+		message(FATAL_ERROR "You requested to use external apbs, but no installation was found.")
 	endif()
+
+	import_libraries(apbs LIBRARIES ${APBS_LIBRARIES})
 endif()
 
 #------------------------------------------------------------------------------
@@ -955,9 +927,7 @@ endif()
 #------------------------------------------------------------------------------
 
 if(pupil_EXTERNAL)
-	using_external_library(${PUPIL_MAIN_LIB})
-	using_external_library(${PUPIL_BLIND_LIB})
-	using_external_library(${PUPIL_TIME_LIB})
+	import_libraries(pupil LIBRARIES ${PUPIL_LIBRARIES})
 endif()
 
 #------------------------------------------------------------------------------
@@ -965,8 +935,7 @@ endif()
 #------------------------------------------------------------------------------
 
 if(lio_EXTERNAL)
-	using_external_library(${LIO_AMBER_LIBRARY})
-	using_external_library(${LIO_G2G_LIBRARY})	
+	import_libraries(lio LIBRARIES ${LIO_AMBER_LIBRARY} ${LIO_G2G_LIBRARY})	
 endif()
 
 #------------------------------------------------------------------------------
@@ -978,9 +947,9 @@ if(plumed_EXTERNAL)
 	if(STATIC)
 		#build the multiple object files it installs (???) into a single archive
 		add_library(plumed STATIC ${PLUMED_STATIC_DEPENDENCIES})
+		install_libraries(plumed)
 	else()
 		import_library(plumed ${PLUMED_SHARED_DEPENDENCIES})
-		using_external_library(${PLUMED_SHARED_DEPENDENCIES})
 	endif()
 	
 	set(PLUMED_RUNTIME_LINK FALSE)	
@@ -1002,26 +971,19 @@ endif()
 
 if(libbz2_EXTERNAL)
 	import_library(bzip2 ${BZIP2_LIBRARIES} ${BZIP2_INCLUDE_DIR})
-	
-	using_external_library(${BZIP2_LIBRARIES})
 endif()
 
 #------------------------------------------------------------------------------
 # zlib
 #------------------------------------------------------------------------------
 if(zlib_EXTERNAL)
-	# We assume that ${ZLIB_LIBRARIES} resolves to exactly one library.  Hopefully, that assumption is never wrong.
-	using_external_library("${ZLIB_LIBRARIES}")
-	
 	import_library(zlib "${ZLIB_LIBRARIES}" "${ZLIB_INCLUDE_DIR}")
 endif()
 
 #------------------------------------------------------------------------------
 #  Math library
 #------------------------------------------------------------------------------ 
-if(libm_EXTERNAL)
-	using_external_library(${LIBM})
-	
+if(libm_EXTERNAL)	
 	import_library(libm ${LIBM})
 endif()
 
@@ -1030,8 +992,6 @@ endif()
 #------------------------------------------------------------------------------ 
 if(log4cxx_EXTERNAL)
 	import_library(log4cxx ${LOG4CXX_LIBRARY} ${LOG4CXX_INCLUDE_DIR})
-	
-	using_external_library(${LOG4CXX_LIBRARY})
 endif()
 
 #------------------------------------------------------------------------------

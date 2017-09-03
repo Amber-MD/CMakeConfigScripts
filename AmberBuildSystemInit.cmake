@@ -22,6 +22,10 @@ message(STATUS "CMake Version: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${C
 # --------------------------------------------------------------------
 list(REMOVE_ITEM CMAKE_SYSTEM_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
 
+# eliminate extraneous install messages
+# --------------------------------------------------------------------
+set(CMAKE_INSTALL_MESSAGE Lazy)
+
 # configure module path
 # --------------------------------------------------------------------
 

@@ -9,11 +9,21 @@ function(install_libraries) # LIBRARIES...
 	cmake_parse_arguments(
 			INSTALL_LIBS
 			""
-			"SUBDIR"
+			"SUBDIR;COMPONENT"
 			""
 			${ARGN})
-
-	install(TARGETS ${INSTALL_LIBS_UNPARSED_ARGUMENTS} RUNTIME DESTINATION ${DLLDIR} ARCHIVE DESTINATION ${LIBDIR}/${INSTALL_LIBS_SUBDIR} LIBRARY DESTINATION ${LIBDIR}/${INSTALL_LIBS_SUBDIR})
+	
+	if("${INSTALL_LIBS_COMPONENT}" STREQUAL "")
+		install(TARGETS ${INSTALL_LIBS_UNPARSED_ARGUMENTS} 
+			RUNTIME DESTINATION ${DLLDIR} 
+			ARCHIVE DESTINATION ${LIBDIR}/${INSTALL_LIBS_SUBDIR} 
+			LIBRARY DESTINATION ${LIBDIR}/${INSTALL_LIBS_SUBDIR})
+	else()
+		install(TARGETS ${INSTALL_LIBS_UNPARSED_ARGUMENTS} COMPONENT ${INSTALL_LIBS_COMPONENT}
+			RUNTIME DESTINATION ${DLLDIR} 
+			ARCHIVE DESTINATION ${LIBDIR}/${INSTALL_LIBS_SUBDIR} 
+			LIBRARY DESTINATION ${LIBDIR}/${INSTALL_LIBS_SUBDIR})
+	endif()
 endfunction(install_libraries)
 
 #shorthand for linking multiple targets to a library or libraries.
@@ -49,47 +59,6 @@ macro(import_executable NAME PATH)
 	set_property(TARGET ${NAME} PROPERTY IMPORTED_LOCATION ${PATH})
 endmacro(import_executable)
 
-# shorthand for adding an imported library, with a path and include dirs.
-
-#usage: import_library(<library name> <library path> [include dir 1] [include dir 2]...)
-macro(import_library NAME PATH) #3rd arg: INCLUDE_DIRS
-
-	#Try to figure out whether it is shared or static.
-	is_static_library(${PATH} IS_STATIC)
-
-	if(IS_STATIC)
-		add_library(${NAME} STATIC IMPORTED GLOBAL)
-	else()
-		add_library(${NAME} SHARED IMPORTED GLOBAL)
-	endif()
-
-	set_property(TARGET ${NAME} PROPERTY IMPORTED_LOCATION ${PATH})
-	set_property(TARGET ${NAME} PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${ARGN})
-endmacro(import_library)
-
-# shorthand for adding one library target which corresponds to multiple library files
-
-#usage: import_libraries(<library name> LIBRARIES <library paths...> INCLUDES [include dir 1] [include dir 2]...)
-function(import_libraries NAME)
-
-	cmake_parse_arguments(IMP_LIBS "" "" "LIBRARIES;INCLUDES" ${ARGN})
-	
-	if("${IMP_LIBS_LIBRARIES}" STREQUAL "")
-		message(FATAL_ERROR "Incorrect usage.  At least one LIBRARY should be provided.")
-	endif()
-	
-	if(NOT "${IMP_LIBS_UNPARSED_ARGUMENTS}" STREQUAL "")
-		message(FATAL_ERROR "Incorrect usage.  Extra arguments provided.")
-	endif()
-	
-	# we actually don't use imported libraries at all; we just create an interface target and set its dependencies
-	add_library(${NAME} INTERFACE)
-	
-	set_property(TARGET ${NAME} PROPERTY INTERFACE_LINK_LIBRARIES ${IMP_LIBS_LIBRARIES})
-	set_property(TARGET ${NAME} PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${IMP_LIBS_INCLUDES})
-endfunction(import_libraries)
-
-
 #Add dependencies to a test
 #In other words, make TEST not be run until all tests in DEPENDENCIES have
 macro(test_depends TEST) #DEPENDENCIES...
@@ -98,7 +67,7 @@ endmacro(test_depends)
 
 # Shorthand for setting a boolean based on a logical expression
 #NOTE: does not work for testing if a string is empty because any empty strings ("") in the arguments get removed completely
-macro(test OUTPUT_VAR) #LOGICAL_EXPRESSION
+macro(test OUTPUT_VAR) #LOGICAL_EXPRESSION...
 	if(${ARGN})
 		set(${OUTPUT_VAR} TRUE)
 	else()
@@ -125,6 +94,7 @@ macro(not_empty_string OUTPUT_VARIABLE STRING)
 endmacro(not_empty_string)
 
 #sets OUTPUT_VAR to TRUE if LIST contains ELEMENT
+# If only we could use recent CMake versions this wouldn't be needed, sigh
 macro(list_contains OUTPUT ELEMENT) #3rd arg: LIST...
 	#change macro argument to variable
 	set(ARGN_LIST ${ARGN})
@@ -236,8 +206,12 @@ function(check_all_symbols HEADER)
 		test(${VAR_NAME}_EITHER ${VAR_NAME}_AS_SYMBOL OR ${VAR_NAME}_AS_CONSTANT)
 		
 		# create cache variable from results
-		set(${VAR_NAME} ${${VAR_NAME}_EITHER} CACHE BOOL "Whether ${SYMBOL} is available in ${HEADER} as a function, global variable, preprocessor constant, or enum value")
-		mark_as_advanced(${VAR_NAME})
+		set(${VAR_NAME} ${${VAR_NAME}_EITHER} CACHE INTERNAL "Whether ${SYMBOL} is available in ${HEADER} as a function, global variable, preprocessor constant, or enum value")
 		
 	endforeach()
 endfunction(check_all_symbols)
+
+# print a variable and its value.  Useful for debugging.
+function(printvar VARNAME)
+	message("${VARNAME}: ${${VARNAME}}")
+endfunction(printvar)
