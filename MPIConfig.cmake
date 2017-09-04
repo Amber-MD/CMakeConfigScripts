@@ -30,16 +30,6 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		
 	endforeach()
 	
-	# add MPI to the library tracker
-	# combine all languages' MPI libraries
-	set(ALL_MPI_LIBRARIES ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES})
-		
-	list(REMOVE_DUPLICATES ALL_MPI_LIBRARIES)
-	
-	foreach(LIB ${ALL_MPI_LIBRARIES})
-		using_external_library(${LIB})
-	endforeach()
-	
 	# the MinGW port-hack of MS-MPI needs to be compiled with -fno-range-check
 	if("${MPI_Fortran_LIBRARIES}" MATCHES "msmpi" AND ${CMAKE_Fortran_COMPILER_ID} STREQUAL GNU)
 		message(STATUS "MS-MPI range check workaround active")
@@ -76,14 +66,14 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 	macro(mpi_object_library TARGET LANGUAGE)
 		if(MCPAR_WORKAROUND_ENABLED)
 			# use generator expression
-			set_property(TARGET ${TARGET} PROPERTY COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:${LANG}>:${MPI_${LANG}_COMPILE_FLAGS}>)
+			set_property(TARGET ${TARGET} APPEND PROPERTY COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:${LANGUAGE}>:${MPI_${LANGUAGE}_COMPILE_FLAGS}>)
 		else()
-			set_property(TARGET ${TARGET} PROPERTY COMPILE_OPTIONS ${MPI_${LANG}_COMPILE_FLAGS})
+			set_property(TARGET ${TARGET} APPEND PROPERTY COMPILE_OPTIONS ${MPI_${LANGUAGE}_COMPILE_FLAGS})
 		endif()
+
+		target_include_directories(${TARGET} PUBLIC ${MPI_${LANGUAGE}_INCLUDE_PATH})
 		
-		target_include_directories(${TARGET} PUBLIC ${MPI_${LANG}_INCLUDE_PATH})
-		
-		if(NOT ${LANG} STREQUAL CXX)
+		if(NOT ${LANGUAGE} STREQUAL CXX)
 			target_compile_definitions(${TARGET} PRIVATE MPI)
 		endif()
 	endmacro()
@@ -127,6 +117,10 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		else()
 			copy_target(${TARGET} ${NEW_NAME} SWAP_SOURCES ${MAKE_MPI_SWAP_SOURCES} TO ${MAKE_MPI_TO})
 		endif()
+		
+		# this ensures that the MPI version builds after all of the target's dependencies have been satisfied.
+		# Yes it is a bit of an ugly hack, but since we can't copy dependencies, this is the next-best thing.
+		add_dependencies(${NEW_NAME} ${TARGET})
 		
 		# apply MPI flags
 		# --------------------------------------------------------------------

@@ -171,6 +171,8 @@ tool_depends(pytraj cpptraj)
 tool_depends(pysander sander)
 tool_depends(pymdgx mdgx)
 
+tool_depends(quick sqm)
+
 # extra dependencies if FFT is enabled
 if(USE_FFT)
 	tool_depends(sff rism)
@@ -266,7 +268,7 @@ if(MINGW)
 	disable_tool(pytraj "pytraj is not currently supported with MinGW. It must be built with MSVC.")
 endif() 
 
-disable_all_tools_except("Testing reasons" lib emil cpptraj sff rism pbsa sqm sander nab cifparse sebomd)
+disable_all_tools_except("Testing reasons" lib emil cpptraj sff rism pbsa sqm sander nab cifparse sebomd quick)
 
 # --------------------------------------------------------------------
 # Disable certain sets of programs due to the build type

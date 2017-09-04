@@ -74,6 +74,10 @@ if(OPENMP)
 			copy_target(${TARGET} ${NEW_NAME} SWAP_SOURCES ${MAKE_OPENMP_SWAP_SOURCES} TO ${MAKE_OPENMP_TO})
 		endif()
 		
+		# this ensures that the new version builds after all of the target's dependencies have been satisfied.
+		# Yes it is a bit of an ugly hack, but since we can't copy dependencies, this is the next-best thing.
+		add_dependencies(${NEW_NAME} ${TARGET})
+		
 		# apply OpenMP flags
 		# --------------------------------------------------------------------
 		foreach(LANG ${MAKE_OPENMP_LANGUAGES})
