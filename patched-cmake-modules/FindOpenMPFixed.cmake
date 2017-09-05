@@ -1,5 +1,5 @@
 # AMBER: backported CMake 3.9's FindOpenMP to work on CMake 3.1
-# Also renamed the targets to "openmp_<language>" for simplicity (I hate how verbose the normal names are)
+# Also renamed the targets to "openmp_<language>" for simplicity (I hate how verbose the normal names are), and added OpenMP_<lang>_OPTIONS
 
 # Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 # file Copyright.txt or https://cmake.org/licensing for details.
@@ -26,6 +26,8 @@
 #   Variable indicating if OpenMP support for ``<lang>`` was detected.
 # ``OpenMP_<lang>_FLAGS``
 #   OpenMP compiler flags for ``<lang>``, separated by spaces.
+# ``OpenMP_<lang>_OPTIONS``
+#   OpenMP compiler flags for ``<lang>``, separated by semicolons.
 #
 # For linking with OpenMP code written in ``<lang>``, the following
 # variables are provided:
@@ -420,10 +422,9 @@ foreach(LANG IN ITEMS C CXX Fortran)
 				add_library(openmp_${LANG_LC} INTERFACE IMPORTED)
 			endif()
 			if(OpenMP_${LANG}_FLAGS)
-				separate_arguments(_OpenMP_${LANG}_OPTIONS NATIVE_COMMAND "${OpenMP_${LANG}_FLAGS}")
+				separate_arguments(OpenMP_${LANG}_OPTIONS NATIVE_COMMAND "${OpenMP_${LANG}_FLAGS}")
 				set_property(TARGET openmp_${LANG_LC} PROPERTY
-					INTERFACE_COMPILE_OPTIONS "${_OpenMP_${LANG}_OPTIONS}")
-				unset(_OpenMP_${LANG}_OPTIONS)
+					INTERFACE_COMPILE_OPTIONS "${OpenMP_${LANG}_OPTIONS}")
 			endif()
 			if(OpenMP_${LANG}_LIBRARIES)
 				set_property(TARGET openmp_${LANG_LC} PROPERTY

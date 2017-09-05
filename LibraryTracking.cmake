@@ -144,11 +144,13 @@ function(using_external_library LIBPATH)
 			
 				if("${DLL_LOCATION_${LIBNAME}}" STREQUAL "")
 					message(WARNING "Could not locate dll file corresponding to the import library ${LIBPATH}. Please set DLL_LOCATION_${LIBNAME} to the correct DLL file.")
+					set(DLL_LOCATION_${LIBNAME} <unknown>)
 				endif()
 			
 				list(LENGTH DLL_LOCATION_${LIBNAME} NUM_POSSIBLE_PATHS)
 				if(${NUM_POSSIBLE_PATHS} GREATER 1)
 					message(WARNING "Found multiple dll files corresponding to the import library ${LIBPATH}. Please set DLL_LOCATION_${LIBNAME} to the correct DLL file.")
+					set(DLL_LOCATION_${LIBNAME} <unknown>)
 				endif()
 			endif()
 		endif()
@@ -157,8 +159,8 @@ function(using_external_library LIBPATH)
 		# --------------------------------------------------------------------
 	
 		if("${LIB_TYPE}" STREQUAL "IMPORT")
-			set(USED_LIB_LINKTIME_PATH ${USED_LIB_LINKTIME_PATH} ${LIBPATH} CACHE INTERNAL "" FORCE)
-			set(USED_LIB_RUNTIME_PATH ${USED_LIB_RUNTIME_PATH} ${DLL_LOCATION_${LIBNAME}} CACHE INTERNAL "" FORCE)
+			set(USED_LIB_LINKTIME_PATH ${USED_LIB_LINKTIME_PATH} "${LIBPATH}" CACHE INTERNAL "" FORCE)
+			set(USED_LIB_RUNTIME_PATH ${USED_LIB_RUNTIME_PATH} "${DLL_LOCATION_${LIBNAME}}" CACHE INTERNAL "" FORCE)
 		
 			message("Recorded DLL/implib combo ${LIBNAME}: import library at ${LIBPATH}, DLL at ${DLL_LOCATION_${LIBNAME}}")
 		

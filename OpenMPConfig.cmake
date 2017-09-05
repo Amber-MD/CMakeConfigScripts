@@ -21,17 +21,17 @@ if(OPENMP)
 		# add libraries to library tracker
 		using_external_libraries(${OpenMP_${LANG}_LIBRARIES})
 	endforeach()
-	
+		
 	# Add OpenMP support to an object library
 	macro(openmp_object_library TARGET LANGUAGE)
 		if(MCPAR_WORKAROUND_ENABLED)
 			# use generator expression
-			set_property(TARGET ${TARGET} PROPERTY COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:${LANG}>:${_OpenMP_${LANG}_OPTIONS}>)
+			set_property(TARGET ${TARGET} PROPERTY COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:${LANGUAGE}>:${OpenMP_${LANGUAGE}_OPTIONS}>)
 		else()
-			set_property(TARGET ${TARGET} PROPERTY COMPILE_OPTIONS ${_OpenMP_${LANG}_OPTIONS})
+			set_property(TARGET ${TARGET} PROPERTY COMPILE_OPTIONS ${OpenMP_${LANGUAGE}_OPTIONS})
 		endif()
 		
-		target_include_directories(${TARGET} PUBLIC ${MPI_${LANG}_INCLUDE_PATH})
+		target_include_directories(${TARGET} PUBLIC ${OpenMP_${LANGUAGE}_INCLUDE_PATH})
 	endmacro()
 	
 	# make an OpenMP version of the thing passed 
