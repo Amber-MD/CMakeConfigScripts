@@ -64,7 +64,7 @@ elseif(${PACKAGE_TYPE} STREQUAL NSIS)
 		get_filename_component(MINGW_BIN_DIR ${CMAKE_C_COMPILER} DIRECTORY)
 		
 		# Start with the system runtime libraries
-		set(DEFAULT_DLLS ${MINGW_BIN_DIR}/libgfortran-3.dll ${MINGW_BIN_DIR}/libquadmath-0.dll ${MINGW_BIN_DIR}/libgcc_s_seh-1.dll ${MINGW_BIN_DIR}/libwinpthread-1.dll ${MINGW_BIN_DIR}/libstdc++-6.dll)
+		set(DEFAULT_DLLS ${MINGW_BIN_DIR}/libgfortran-4.dll ${MINGW_BIN_DIR}/libquadmath-0.dll ${MINGW_BIN_DIR}/libgcc_s_seh-1.dll ${MINGW_BIN_DIR}/libwinpthread-1.dll ${MINGW_BIN_DIR}/libstdc++-6.dll)
 	
 		if(DEFINED OPENMP AND OPENMP)
 			list(APPEND DEFAULT_DLLS ${MINGW_BIN_DIR}/libgomp-1.dll)
@@ -258,7 +258,7 @@ function(print_packaging_report)
 		colormsg("Please ensure that all DLLs used by amber executables are included in this list.  If any more need to be added, list them in the variable EXTRA_DLLS_TO_BUNDLE.")
 		
 		colormsg("")
-		colormsg("Also, in order for the Nab compiler to work, all of the libraries required to link with Amber (besides DLLS that are already bundled and don't have import libraries) need to be in the Amber lib folder.")
+		colormsg("Also, in order for the Nab compiler to work, all of the libraries required to link with Amber (besides DLLS that are already bundled and don't have import libraries) need to be included in the installer.")
 		
 		if("${LIBS_TO_BUNDLE}" STREQUAL "")
 			colormsg("Currently, no libraries are bundled.")
