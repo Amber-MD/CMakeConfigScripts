@@ -829,7 +829,6 @@ if(netcdf-fortran_EXTERNAL)
 	set(NETCDF_FORTRAN_MOD_DIR ${NetCDF_INCLUDES})
 	
 elseif(netcdf-fortran_INTERNAL)
-
 	#TODO on Cray systems a static netcdf may be required
 
 	if(${COMPILER} STREQUAL cray)

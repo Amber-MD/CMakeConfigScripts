@@ -286,7 +286,7 @@ function(print_packaging_report)
 			colormsg("You will need to pass the Debian package dependency string in the CMake variable DEB_PACKAGE_DEPENDENCIES")
 			colormsg("Example: " HIBLUE "libarpack2 (>= 3.0.2-3), liblapack3gf (>= 3.3.1-1), libblas3gf (>= 1.2.20110419-2ubuntu1), libreadline6 (>= 6.3-4ubuntu2)")
 			colormsg("")
-			colormsg("Its current contents are:\"${DEB_PACKAGE_DEPENDENCIES}\"")
+			colormsg("Its current contents are: \"${DEB_PACKAGE_DEPENDENCIES}\"")
 		endif()
 		
 		colormsg("")

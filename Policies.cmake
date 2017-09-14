@@ -13,6 +13,11 @@ if(POLICY CMP0026)
 	cmake_policy(SET CMP0026 NEW)
 endif()
 
+if(POLICY CMP0053)
+	#NEW: use stricter and safer variable name rules
+	cmake_policy(SET CMP0053 NEW)
+endif()
+
 if(POLICY CMP0056)
 	#pass linker flags to compile tests
 	cmake_policy(SET CMP0056 NEW)

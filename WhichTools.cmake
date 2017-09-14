@@ -92,7 +92,6 @@ if(NOT AMBER_RELEASE)
 	list(APPEND AMBER_TOOLS 
 		chamber
 		ptraj
-		gleap
 		mtkpp)
 endif()
 
@@ -153,30 +152,35 @@ endmacro(tool_depends)
 
 
 # --------------------------------------------------------------------
-# tool dependencies
+# tool dependencies (manually determined by looking through every single CMake script)
 # --------------------------------------------------------------------
-
-tool_depends(pbsa sander lib)
-tool_depends(sander sqm pbsa sebomd emil lib)
-tool_depends(sqm sff lib)
-tool_depends(sebomd sander)
-
-tool_depends(sff pbsa)
+tool_depends(addles lib)
+tool_depends(amberlite nab)
+tool_depends(antechamber cifparse)
+tool_depends(etc nab)
+tool_depends(mm_pbsa nab lib)
+tool_depends(mmpbsa_py nab lib)
 tool_depends(nab sff pbsa cifparse)
-
-tool_depends(rism nab lib)
-
-# python programs
-tool_depends(pytraj cpptraj)
-tool_depends(pysander sander)
+tool_depends(nmode lib)
+tool_depends(nmr_aux cifparse lib)
+tool_depends(nss nab)
+tool_depends(pbsa sander lib)
 tool_depends(pymdgx mdgx)
-
+tool_depends(pysander sander)
+tool_depends(pytraj cpptraj)
 tool_depends(quick sqm)
+tool_depends(rism nab lib)
+tool_depends(sander sqm pbsa sebomd emil lib)
+tool_depends(sebomd sander lib)
+tool_depends(sff pbsa)
+tool_depends(sqm sff lib)
 
 # extra dependencies if FFT is enabled
 if(USE_FFT)
+	tool_depends(nab rism)
 	tool_depends(sff rism)
 	tool_depends(sander rism)
+	tool_depends(sebomd rism)
 endif()
 # --------------------------------------------------------------------
 # Now, the logic for deciding whether to use them
@@ -194,7 +198,7 @@ if(USE_FFT)
 		message(FATAL_ERROR "RISM and PBSA FFT solver currently not built with cray compilers.  Please disable USE_FFT.")
 	endif()
 else()
-	disable_tool(rism "Rism requires FFTW")
+	disable_tools("Requires FFTW, but USE_FFT is disabled." rism mdgx)
 endif()
 
 #Python programs (controlled by BUILD_PYTHON option in PythonConfig.cmake)
@@ -203,7 +207,7 @@ if(NOT BUILD_PYTHON)
 endif()
 
 if(STATIC)
-	disable_tools("Python programs cannot link to static libraries" pysander pytraj)
+	disable_tools("Python programs cannot link to static libsander" pysander pytraj)
 endif()
 
 if(MPI AND mpi4py_DISABLED)
@@ -230,14 +234,6 @@ endif()
 option(BUILD_INDEV "Build Amber programs which are still being developed.  These probably contain bugs, and may not be finished.")
 if(NOT BUILD_INDEV)
 	disable_tools("In-development programs are disabled." gleap quick pymdgx)
-endif()
-
-if(readline_DISABLED)
-	disable_tool(gleap "gleap requires the readline library.")
-endif()
-
-if(NOT HAVE_GLEAP_DEPENDENCIES)
-	disable_tool(gleap "You are missing the required GUI libraries for gleap, gtk2 and gtkglext")
 endif()
 
 if(NOT BUILD_SANDER_API)
@@ -268,8 +264,6 @@ if(MINGW)
 	disable_tool(pytraj "pytraj is not currently supported with MinGW. It must be built with MSVC.")
 endif() 
 
-disable_all_tools_except("Testing reasons" lib emil cpptraj sff rism pbsa sqm sander nab cifparse sebomd quick)
-
 # --------------------------------------------------------------------
 # Disable certain sets of programs due to the build type
 # --------------------------------------------------------------------
@@ -294,13 +288,20 @@ if(CRAY)
 	endif()
 endif()
 
+#------------------------------------------------------------------------------
+#  User Config
+#------------------------------------------------------------------------------
+set(DISABLE_TOOLS "" CACHE STRING "Tools to not build.  Accepts a semicolon-seperated list of directories in AmberTools/src.")
+disable_tools("Disabled by user" ${DISABLE_TOOLS})
+
+
 # --------------------------------------------------------------------
 # Disable tools whose dependencies have been disabled
 # --------------------------------------------------------------------
 
 # we have to go through this a couple times.  Lets say A depends on B, and B depends on C.
 # Early on, A checks if B is there, and it is, so A stays enabled.  Later, B checks if C is there, and it isn't, so
-# it disables itself. However, now A is enabled when it shouldn't
+# it disables itself. However, now A is enabled when it shouldn't be.
 # There are probably more sophisticated ways to solve this but they'd be difficult to implement in CMake
 
 # hopefully 3 iterations is enough
@@ -309,15 +310,12 @@ foreach(ITERATION RANGE 0 2)
 		
 		foreach(DEPENDENCY ${TOOL_DEPENDENCIES_${TOOL}})
 			list_contains(DEPEND_ENABLED ${DEPENDENCY} ${AMBER_TOOLS})
+			
+			#message("${TOOL} depends on ${DEPENDENCY}")
+			
 			if(NOT DEPEND_ENABLED)
 				disable_tool(${TOOL} "Its dependency ${DEPENDENCY} is disabled.")
 			endif()
 		endforeach()
 	endforeach()
 endforeach()
-
-#------------------------------------------------------------------------------
-#  User Config
-#------------------------------------------------------------------------------
-set(DISABLE_TOOLS "" CACHE STRING "Tools to not build.  Accepts a semicolon-seperated list of directories in AmberTools/src.")
-disable_tools("Disabled by user" ${DISABLE_TOOLS})
