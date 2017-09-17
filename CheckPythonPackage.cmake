@@ -6,7 +6,26 @@
 
 # set OUTPUT_VAR to whether PACKAGENAME was found
 function(check_python_package PACKAGENAME OUTPUT_VAR)
-	if(NOT (DEFINED ${OUTPUT_VAR} AND ${OUTPUT_VAR}))
+
+	message("PY_INTERP_FOR_${OUTPUT_VAR}: ${PY_INTERP_FOR_${OUTPUT_VAR}}")
+
+	set(NEED_TO_RUN_CHECK TRUE)
+	
+	if(DEFINED ${OUTPUT_VAR})
+		if(${OUTPUT_VAR})
+		
+			# if the python interpreter changed, we need to recheck	
+			if("${PY_INTERP_FOR_${OUTPUT_VAR}}" STREQUAL "${PYTHON_EXECUTABLE}")
+				set(NEED_TO_RUN_CHECK FALSE)
+			endif()
+			
+		endif()
+	endif()
+	
+	if(NEED_TO_RUN_CHECK)
+		
+		set(PY_INTERP_FOR_${OUTPUT_VAR} ${PYTHON_EXECUTABLE} CACHE INTERNAL "The python interpreter used to run the ${OUTPUT_VAR} check" FORCE)
+	
 		execute_process(COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/python_packagecheck.py ${PACKAGENAME}
 			RESULT_VARIABLE PACKAGECHECK_RESULT)
 		
