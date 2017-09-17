@@ -9,7 +9,7 @@
 
 # There are many, many reasons that you would want a tool not to build, and in some cases more than one can occur at the same time
 # For that reason, and because order matters, we use a blacklist model for deciding what tools to build.
-# We start with all of them enabled, and pare down this list for various reasons in the logic below.
+# We start with all of them enabled (except the ones not in release builds), and pare down this list for various reasons in the logic below.
 set(AMBER_TOOLS 
 #3rd party programs: see 3rdPartyTools.cmake
 #	utility routines and libraries:
@@ -85,17 +85,15 @@ pymsmt
 pysander
 pytraj
 pymdgx
-pdb4amber
-
-#  sort of a 2nd party program -- not written by us, but not a dependency either.
-mtkpp)
+pdb4amber)
 
 if(NOT AMBER_RELEASE)
 	# these tools are in the git version of amber, but not in the released source
 	list(APPEND AMBER_TOOLS 
 		chamber
 		ptraj
-		gleap)
+		gleap
+		mtkpp)
 endif()
 
 # save an unaltered copy for disable_all_tools_except()
@@ -188,7 +186,7 @@ endif()
 #deprecated programs
 option(BUILD_DEPRECATED "Build outdated and deprecated tools, such as ptraj" FALSE)
 if(NOT BUILD_DEPRECATED)
-	disable_tool(ptraj "Deprecated tools are disabled")
+	disable_tools("Deprecated tools are disabled" ptraj mtkpp)
 endif()
 
 # in-development programs
@@ -219,8 +217,14 @@ if(USE_HOST_TOOLS)
 endif()
 
 # PGI won't compile MTK++; see bug 219.
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL PGI)
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL PGI)
 	disable_tool(mtkpp "Not compatible with the PGI C++ compiler.")
+endif()
+
+# ...neither will AppleClang >= 8.0.  That Eigen library seems to be murder on compilers.
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL AppleClang AND ("${CMAKE_CXX_COMPILER_VERSION}" VERSION_GREATER 8.0 OR "${CMAKE_CXX_COMPILER_VERSION}" VERSION_EQUAL 8.0))
+
+	disable_tool(mtkpp "Not compatible with AppleClang >= 8.0.")
 endif()
 
 if(MINGW)
