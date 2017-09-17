@@ -45,14 +45,15 @@ function(download_and_use_miniconda)
 		return()
 	endif()
 	
-	if("${MINICONDA_WANTED_VERSION}" EQUAL 2)
-	    message(STATUS "Downloading Python 2.7 Miniconda")
-	elseif(${MINICONDA_WANTED_VERSION} EQUAL 3)
-	    message(STATUS "Downloading latest Python 3 Miniconda")
+	if(MINICONDA_PY3)
+		message(STATUS "Downloading Python 3 Miniconda")
+	    set(PYTHON_MAJOR_RELEASE 3)
+	    
 	else()
-	    message(FATAL_ERROR "Unknown wanted miniconda version: ${MINICONDA_WANTED_VERSION}")
+		message(STATUS "Downloading Python 2.7 Miniconda")
+	    set(PYTHON_MAJOR_RELEASE 2)
 	endif()
-	
+		
 	# Figure out the OS part of the URL
 	if(TARGET_OSX)
 	    message(STATUS "Detected Mac OS X operating system. Downloading the Mac installer")
@@ -91,7 +92,7 @@ function(download_and_use_miniconda)
 		endif()
 	endif()
 	
-	set(MINICONDA_INSTALLER_FILENAME "Miniconda${MINICONDA_WANTED_VERSION}-latest-${CONTINUUM_SYSTEM_NAME}-${CONTINUUM_BITS}.${INSTALLER_SUFFIX}")
+	set(MINICONDA_INSTALLER_FILENAME "Miniconda${PYTHON_MAJOR_RELEASE}-${MINICONDA_VERSION}-${CONTINUUM_SYSTEM_NAME}-${CONTINUUM_BITS}.${INSTALLER_SUFFIX}")
 	
 	# location to download the installer to
 	set(MINICONDA_INSTALLER ${MINICONDA_DOWNLOAD_DIR}/${MINICONDA_INSTALLER_FILENAME})
@@ -182,10 +183,6 @@ function(download_and_use_miniconda)
 		# see https://github.com/python/cpython/pull/880
 		configuretime_file_replace(${MINICONDA_INSTALL_DIR}/include/pyconfig.h ${MINICONDA_INSTALL_DIR}/include/pyconfig.h TO_REPLACE
 			"#define hypot _hypot" REPLACEMENT "//#define hypot _hypot")
-			
-		# remove archaic symbol exporting logic that breaks pytraj
-		configuretime_file_replace(${MINICONDA_INSTALL_DIR}/Lib/distutils/cygwinccompiler.py ${MINICONDA_INSTALL_DIR}/Lib/distutils/cygwinccompiler.py
-        	TO_REPLACE "if ((export_symbols is not None) and" REPLACEMENT "if (False and")
 		
 	endif()
 		
