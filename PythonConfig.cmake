@@ -163,7 +163,7 @@ if(BUILD_PYTHON)
 		    install -f ${PYTHON_PREFIX_ARG}
 		    \"--install-scripts=\${CMAKE_INSTALL_PREFIX_BS}${BINDIR}\"
 		    ${ARGN}
-		    WORKING_DIRECTORY \"${CMAKE_CURRENT_SOURCE_DIR}\")")
+		    WORKING_DIRECTORY \"${CMAKE_CURRENT_SOURCE_DIR}\")" COMPONENT Python)
 		    
 	endmacro(install_python_library)
 else()
