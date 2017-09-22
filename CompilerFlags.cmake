@@ -19,6 +19,37 @@ endif()
 # This makes them do that on Linux too.
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${NO_UNDEFINED_FLAG}")
 
+
+#-------------------------------------------------------------------------------
+#  Set default flags
+#-------------------------------------------------------------------------------
+
+set(NO_OPT_FFLAGS -O0)
+set(NO_OPT_CFLAGS -O0)
+set(NO_OPT_CXXFLAGS -O0)
+
+set(OPT_FFLAGS -O3)
+set(OPT_CFLAGS -O3)
+set(OPT_CXXFLAGS -O3)
+
+set(CMAKE_C_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_Fortran_FLAGS_DEBUG "-g")
+
+#blank cmake's default optimization flags, we can't use these because not everything should be built optimized.
+set(CMAKE_C_FLAGS_RELEASE "")
+set(CMAKE_CXX_FLAGS_RELEASE "")
+set(CMAKE_Fortran_FLAGS_RELEASE "")
+
+#a macro to make things a little cleaner
+#NOTE: we can't use add_compile_options because that will apply to all languages
+macro(add_flags LANGUAGE) # FLAGS...
+	foreach(FLAG ${ARGN})
+		set(CMAKE_${LANGUAGE}_FLAGS "${CMAKE_${LANGUAGE}_FLAGS} ${FLAG}")
+	endforeach()
+endmacro(add_flags)
+
+
 #-------------------------------------------------------------------------------
 #  Now, the If Statements of Doom...
 #-------------------------------------------------------------------------------
@@ -195,6 +226,7 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
 	add_flags(C /D_CRT_SECURE_NO_WARNINGS)
 	
 	set(OPT_CFLAGS "/Ox")
+	set(NO_OPT_CFLAGS "/Od")
 	
 	set(CMAKE_C_FLAGS_DEBUG "/Zi")
 endif()
@@ -202,6 +234,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	add_flags(CXX /D_CRT_SECURE_NO_WARNINGS)
 	
 	set(OPT_CXXFLAGS "/Ox")
+	set(NO_OPT_CFLAGS "/Od")
 	
 	set(CMAKE_CXX_FLAGS_DEBUG "/Zi")
 endif()
@@ -357,13 +390,13 @@ if(NOT OPTIMIZE)
 endif()
 
 #create space-separated versions of each flag set for use in PROPERTY COMPILE_FLAGS
-list_to_space_seperated(OPT_FFLAGS_SPC ${OPT_FFLAGS})
-list_to_space_seperated(OPT_CFLAGS_SPC ${OPT_CFLAGS})
-list_to_space_seperated(OPT_CXXFLAGS_SPC ${OPT_CXXFLAGS})
+list_to_space_separated(OPT_FFLAGS_SPC ${OPT_FFLAGS})
+list_to_space_separated(OPT_CFLAGS_SPC ${OPT_CFLAGS})
+list_to_space_separated(OPT_CXXFLAGS_SPC ${OPT_CXXFLAGS})
 
-list_to_space_seperated(NO_OPT_FFLAGS_SPC ${NO_OPT_FFLAGS})
-list_to_space_seperated(NO_OPT_CFLAGS_SPC ${NO_OPT_CFLAGS})
-list_to_space_seperated(NO_OPT_CXXFLAGS_SPC ${NO_OPT_CXXFLAGS})
+list_to_space_separated(NO_OPT_FFLAGS_SPC ${NO_OPT_FFLAGS})
+list_to_space_separated(NO_OPT_CFLAGS_SPC ${NO_OPT_CFLAGS})
+list_to_space_separated(NO_OPT_CXXFLAGS_SPC ${NO_OPT_CXXFLAGS})
 
 
 # When a library links to an imported library with interface include directories, CMake uses the -isystem flag to include  those directories

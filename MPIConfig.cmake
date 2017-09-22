@@ -1,6 +1,8 @@
 #CMake config file for MPI
 # MUST be included after OpenMPConfig, if OpenMPConfig is included at all
-option(MPI "Build Amber with MPI inter-machine parallelization support." FALSE)
+option(MPI "Build ${PROJECT_NAME} with MPI inter-machine parallelization support." FALSE)
+
+include(ParallelizationConfig)
 
 if(MPI)
 	find_package(MPI)
@@ -16,7 +18,9 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		endif()
 	endforeach()
 	
-	message("If these are not the correct MPI wrappers, then set MPI_<language>_COMPILER to the correct wrapper and reconfigure.")
+	if(FIRST_RUN)	
+		message("If these are not the correct MPI wrappers, then set MPI_<language>_COMPILER to the correct wrapper and reconfigure.")
+	endif()
 	
 	#Trim leading spaces from the compile flags.  They cause problems with PROPERTY COMPILE_OPTIONS
 	foreach(LANG C CXX Fortran)
@@ -26,16 +30,6 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		
 	endforeach()
 	
-	# add MPI to the library tracker
-	# combine all languages' MPI libraries
-	set(ALL_MPI_LIBRARIES ${MPI_C_LIBRARIES} ${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES})
-		
-	list(REMOVE_DUPLICATES ALL_MPI_LIBRARIES)
-	
-	foreach(LIB ${ALL_MPI_LIBRARIES})
-		using_external_library(${LIB})
-	endforeach()
-	
 	# the MinGW port-hack of MS-MPI needs to be compiled with -fno-range-check
 	if("${MPI_Fortran_LIBRARIES}" MATCHES "msmpi" AND ${CMAKE_Fortran_COMPILER_ID} STREQUAL GNU)
 		message(STATUS "MS-MPI range check workaround active")
@@ -43,38 +37,118 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		#create a non-cached variable with the contents of the cache variable plus one extra flag
 		set(MPI_Fortran_COMPILE_FLAGS ${MPI_Fortran_COMPILE_FLAGS} -fno-range-check)
 	endif()
-else()
-	#set these flags to empty string so that they can be used all the time without having to worry about wihether MPI is enabled
+	
+	message("MPI_C_COMPILE_FLAGS: ${MPI_C_COMPILE_FLAGS}")
+	
+	# create imported targets
+	# --------------------------------------------------------------------
 	foreach(LANG C CXX Fortran)
-		set(MPI_${LANG}_COMPILE_FLAGS "")
-		set(MPI_${LANG}_INCLUDE_PATH "")
-	endforeach()
-endif()
-
-
-#Link MPI to a target.  Does nothing if MPI is disabled.
-#the LANGUAGE arg is the language of the compiler used to link the target, ususally the language making up the largest percentage of source files.
-#This macro will set that to be the used linker language, so you'll find out if you guessed wrong!
-
-#NOTE: this will not overwrite the LINK_FLAGS property of the target.  Make sure nothing else does!
-macro(link_mpi TARGET LANGUAGE)
-	if(MPI)	
-		#link the MPI libraries
-		target_link_libraries(${TARGET} ${MPI_${LANGUAGE}_LIBRARIES})
+		string(TOLOWER ${LANG} LANG_LOWERCASE)
+		import_libraries(mpi_${LANG_LOWERCASE} LIBRARIES ${MPI_${LANG}_LINK_FLAGS} ${MPI_${LANG}_LIBRARIES} INCLUDES ${MPI_${LANG}_INCLUDE_PATH})
+		set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${MPI_${LANG}_INCLUDE_PATH})
 		
-		#Append the MPI link flags
-		get_property(CURRENT_LINK_FLAGS TARGET ${TARGET} PROPERTY LINK_FLAGS)
-				
-		set(NEW_LINK_FLAGS "${CURRENT_LINK_FLAGS} ${MPI_${LANGUAGE}_LINK_FLAGS}")		
-		set_property(TARGET ${TARGET} PROPERTY LINK_FLAGS ${NEW_LINK_FLAGS})
-				
-		#force the linker language
-		set_property(TARGET ${TARGET} PROPERTY LINKER_LANGUAGE ${LANGUAGE})
-	endif()
-endmacro()
+		if(MCPAR_WORKAROUND_ENABLED)
+			# use generator expression
+			set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:${LANG}>:${MPI_${LANG}_COMPILE_FLAGS}>)
+		else()
+			set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_COMPILE_OPTIONS ${MPI_${LANG}_COMPILE_FLAGS})
+		endif()
+		
+		# C++ MPI doesn't like having "MPI" defined, but it's what Amber uses as the MPI switch in most programs (though not EMIL)
+		if(NOT ${LANG} STREQUAL CXX)
+			set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_COMPILE_DEFINITIONS MPI)	
+		endif()
+			
+	endforeach()
+	
+	
+	# Add MPI support to an object library
+	macro(mpi_object_library TARGET LANGUAGE)
+		if(MCPAR_WORKAROUND_ENABLED)
+			# use generator expression
+			set_property(TARGET ${TARGET} APPEND PROPERTY COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:${LANGUAGE}>:${MPI_${LANGUAGE}_COMPILE_FLAGS}>)
+		else()
+			set_property(TARGET ${TARGET} APPEND PROPERTY COMPILE_OPTIONS ${MPI_${LANGUAGE}_COMPILE_FLAGS})
+		endif()
 
-if(DEFINED OPENMP AND (OPENMP OR MPI))
-	set(PARALLEL TRUE)
-else()
-	set(PARALLEL FALSE)
+		target_include_directories(${TARGET} PUBLIC ${MPI_${LANGUAGE}_INCLUDE_PATH})
+		
+		if(NOT ${LANGUAGE} STREQUAL CXX)
+			target_compile_definitions(${TARGET} PRIVATE MPI)
+		endif()
+	endmacro()
+
+	# make a MPI version of the thing passed 
+	# also allows switching out sources if needed
+	# INSTALL - causes the new target to get installed in the MPI component to the default location (BINDIR etc)
+	# usage: make_mpi_version(<target> <new name> LANGUAGES <language 1> [<language 2...>] [SWAP_SOURCES <source 1...> TO <replacement source 1...>] INSTALL)
+	function(make_mpi_version TARGET NEW_NAME) 
+	
+		# parse arguments
+		# --------------------------------------------------------------------	
+		cmake_parse_arguments(MAKE_MPI "INSTALL" "" "LANGUAGES;SWAP_SOURCES;TO" ${ARGN})
+	
+		if("${MAKE_MPI_LANGUAGES}" STREQUAL "")
+			message(FATAL_ERROR "Incorrect usage.  At least one LANGUAGE should be provided.")
+		endif()
+		
+		if(NOT "${MAKE_MPI_UNPARSED_ARGUMENTS}" STREQUAL "")
+			message(FATAL_ERROR "Incorrect usage.  Extra arguments provided.")
+		endif()
+	
+		
+		# figure out if it's an object library, and if so, use mpi_object_library()		
+		get_property(TARGET_TYPE TARGET ${TARGET} PROPERTY TYPE)
+		
+		if("${TARGET_TYPE}" STREQUAL "OBJECT_LIBRARY")
+			set(IS_OBJECT_LIBRARY TRUE)
+		else()
+			set(IS_OBJECT_LIBRARY FALSE)
+		endif()
+		
+		if("${ARGN}" STREQUAL "")
+			message(FATAL_ERROR "make_mpi_version(): you must specify at least one LANGUAGE") 
+		endif()
+		
+		# make a new one
+		# --------------------------------------------------------------------
+		if("${MAKE_MPI_SWAP_SOURCES}" STREQUAL "" AND "${MAKE_MPI_TO}" STREQUAL "")
+			copy_target(${TARGET} ${NEW_NAME})
+		else()
+			copy_target(${TARGET} ${NEW_NAME} SWAP_SOURCES ${MAKE_MPI_SWAP_SOURCES} TO ${MAKE_MPI_TO})
+		endif()
+		
+		# this ensures that the MPI version builds after all of the target's dependencies have been satisfied.
+		# Yes it is a bit of an ugly hack, but since we can't copy dependencies, this is the next-best thing.
+		add_dependencies(${NEW_NAME} ${TARGET})
+		
+		# apply MPI flags
+		# --------------------------------------------------------------------
+		foreach(LANG ${MAKE_MPI_LANGUAGES})
+			# validate arguments
+			if(NOT ("${LANG}" STREQUAL "C" OR "${LANG}" STREQUAL "CXX" OR "${LANG}" STREQUAL "Fortran"))
+				message(FATAL_ERROR "make_mpi_version(): invalid argument: ${LANG} is not a LANGUAGE")
+			endif()
+			
+			if(IS_OBJECT_LIBRARY)
+				mpi_object_library(${NEW_NAME} ${LANG})
+			else()
+				string(TOLOWER ${LANG} LANG_LOWERCASE)
+				target_link_libraries(${NEW_NAME} mpi_${LANG_LOWERCASE})
+			endif()
+			
+		endforeach()
+		
+		# install if necessary
+		# --------------------------------------------------------------------
+		if(MAKE_MPI_INSTALL)
+			if("${TARGET_TYPE}" STREQUAL "EXECUTABLE")
+				install(TARGETS ${NEW_NAME} DESTINATION ${BINDIR} COMPONENT MPI)
+			else()
+				install_libraries(${NEW_NAME} COMPONENT MPI)
+			endif()
+		endif()
+		
+	endfunction(make_mpi_version)
 endif()
+

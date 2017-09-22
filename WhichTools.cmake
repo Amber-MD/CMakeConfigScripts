@@ -92,7 +92,6 @@ if(NOT AMBER_RELEASE)
 	list(APPEND AMBER_TOOLS 
 		chamber
 		ptraj
-		gleap
 		mtkpp)
 endif()
 
@@ -139,13 +138,55 @@ macro(disable_all_tools_except REASON) # TOOLS...
 	endforeach()
 endmacro(disable_all_tools_except)
 
+# set the dependencies of a tool
+# if one of its dependencies is disabled, then TOOL will also be disabled.
+# NOTE: circular dependencies are OK (for example, SANDER and PBSA depend on each other)
+macro(tool_depends TOOL) #ARGN: other tools that TOOL depends on
+	if(DEFINED TOOL_DEPENDENCIES_${TOOL})
+		list(APPEND TOOL_DEPENDENCIES_${TOOL} ${ARGN})
+	else()
+		set(TOOL_DEPENDENCIES_${TOOL} ${ARGN})
+	endif()
+
+endmacro(tool_depends)
+
+
+# --------------------------------------------------------------------
+# tool dependencies (manually determined by looking through every single CMake script)
+# --------------------------------------------------------------------
+tool_depends(addles lib)
+tool_depends(amberlite nab)
+tool_depends(antechamber cifparse)
+tool_depends(etc nab)
+tool_depends(mm_pbsa nab lib)
+tool_depends(mmpbsa_py nab lib)
+tool_depends(nab sff pbsa cifparse)
+tool_depends(nmode lib)
+tool_depends(nmr_aux cifparse lib)
+tool_depends(nss nab)
+tool_depends(pbsa sander lib)
+tool_depends(pymdgx mdgx)
+tool_depends(pysander sander)
+tool_depends(pytraj cpptraj)
+tool_depends(quick sqm)
+tool_depends(rism nab lib)
+tool_depends(sander sqm pbsa sebomd emil lib)
+tool_depends(sebomd sander lib)
+tool_depends(sff pbsa)
+tool_depends(sqm sff lib)
+
+# extra dependencies if FFT is enabled
+if(USE_FFT)
+	tool_depends(nab rism)
+	tool_depends(sff rism)
+	tool_depends(sander rism)
+	tool_depends(sebomd rism)
+endif()
 # --------------------------------------------------------------------
 # Now, the logic for deciding whether to use them
 # --------------------------------------------------------------------
 
 # FFT programs
-option(USE_FFT "Whether to use the Fastest Fourier Transform in the West library and build RISM and the PBSA FFT solver." TRUE)
-
 if(USE_FFT)
 	if(${CMAKE_C_COMPILER_ID} STREQUAL PGI)
 
@@ -154,10 +195,10 @@ if(USE_FFT)
 			message(FATAL_ERROR "RISM and PBSA FFT solver require PGI compiler version 9.0-4 or higher. Please disable USE_FFT.")
 		endif()
 	elseif(${CMAKE_C_COMPILER_ID} STREQUAL Cray) 
-		message(FATAL_ERROR "RISM and PBSA FFT solver currently not built with cray compilers.  Please reconfigure with -DUSE_FFT=FALSE.")
+		message(FATAL_ERROR "RISM and PBSA FFT solver currently not built with cray compilers.  Please disable USE_FFT.")
 	endif()
 else()
-	disable_tool(rism "Rism requires FFTW")
+	disable_tools("Requires FFTW, but USE_FFT is disabled." rism mdgx)
 endif()
 
 #Python programs (controlled by BUILD_PYTHON option in PythonConfig.cmake)
@@ -166,7 +207,7 @@ if(NOT BUILD_PYTHON)
 endif()
 
 if(STATIC)
-	disable_tools("Python programs cannot link to static libraries" pysander pytraj)
+	disable_tools("Python programs cannot link to static libsander" pysander pytraj)
 endif()
 
 if(MPI AND mpi4py_DISABLED)
@@ -193,14 +234,6 @@ endif()
 option(BUILD_INDEV "Build Amber programs which are still being developed.  These probably contain bugs, and may not be finished.")
 if(NOT BUILD_INDEV)
 	disable_tools("In-development programs are disabled." gleap quick pymdgx)
-endif()
-
-if(readline_DISABLED)
-	disable_tool(gleap "gleap requires the readline library.")
-endif()
-
-if(NOT HAVE_GLEAP_DEPENDENCIES)
-	disable_tool(gleap "You are missing the required GUI libraries for gleap, gtk2 and gtkglext")
 endif()
 
 if(NOT BUILD_SANDER_API)
@@ -253,28 +286,36 @@ if(CRAY)
 			amberlite
 			quick)
 	endif()
-else()
-	if(OPENMP)
-		option(OPENMP_ONLY "Only build the tools with OpenMP support.  Use this to layer an OpenMP install on top of a regular install." FALSE)
-
-		if(OPENMP_ONLY)
-			disable_all_tools_except("Only OpenMP-enabled tools are being built" amber_common pytraj cpptraj saxs paramfit sff)
-		endif()
-	elseif(MPI)
-		option(MPI_ONLY "Only build the tools and libraries with MPI support.  Use this to layer an MPI install on top of a regular install." FALSE)
-
-		if(MPI_ONLY)
-			disable_all_tools_except("Only MPI-enabled tools are being built" amber_common etc sff pbsa cpptraj mdgx nab rism)
-		endif()
-	endif()
-	
-	if(OPENMP_ONLY AND MPI_ONLY)
-		message(SEND_ERROR "...What?  You can't have BOTH an MPI_ONLY and an OPENMP_ONLY install!")
-	endif()
 endif()
 
 #------------------------------------------------------------------------------
 #  User Config
 #------------------------------------------------------------------------------
-set(FORCE_DISABLE_TOOLS "" CACHE STRING "Tools to force to not build.  This may cause errors if you disable something that other things depend on, so use it wisely and as a last resort.  Accepts a semicolon-seperated list of directories in AmberTools/src.")
-disable_tools("Disabled by user" ${FORCE_DISABLE_TOOLS})
+set(DISABLE_TOOLS "" CACHE STRING "Tools to not build.  Accepts a semicolon-seperated list of directories in AmberTools/src.")
+disable_tools("Disabled by user" ${DISABLE_TOOLS})
+
+
+# --------------------------------------------------------------------
+# Disable tools whose dependencies have been disabled
+# --------------------------------------------------------------------
+
+# we have to go through this a couple times.  Lets say A depends on B, and B depends on C.
+# Early on, A checks if B is there, and it is, so A stays enabled.  Later, B checks if C is there, and it isn't, so
+# it disables itself. However, now A is enabled when it shouldn't be.
+# There are probably more sophisticated ways to solve this but they'd be difficult to implement in CMake
+
+# hopefully 3 iterations is enough
+foreach(ITERATION RANGE 0 2)
+	foreach(TOOL ${AMBER_TOOLS})
+		
+		foreach(DEPENDENCY ${TOOL_DEPENDENCIES_${TOOL}})
+			list_contains(DEPEND_ENABLED ${DEPENDENCY} ${AMBER_TOOLS})
+			
+			#message("${TOOL} depends on ${DEPENDENCY}")
+			
+			if(NOT DEPEND_ENABLED)
+				disable_tool(${TOOL} "Its dependency ${DEPENDENCY} is disabled.")
+			endif()
+		endforeach()
+	endforeach()
+endforeach()

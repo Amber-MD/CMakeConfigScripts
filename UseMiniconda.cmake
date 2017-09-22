@@ -33,7 +33,7 @@ function(download_and_use_miniconda)
 	
 	# set up miniconda interpreter to be installed
 	install(CODE "message(\"Copying miniconda runtime... (this can take a few minutes)\")
-	file(COPY ${MINICONDA_INSTALL_DIR}/ DESTINATION \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/miniconda)")
+	file(COPY ${MINICONDA_INSTALL_DIR}/ DESTINATION \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/miniconda)" COMPONENT Python)
 	
 	# we don't do this because it prints a bajillion filenames to the console
 	# install(DIRECTORY ${MINICONDA_INSTALL_DIR}/ DESTINATION miniconda USE_SOURCE_PERMISSIONS)
@@ -156,7 +156,7 @@ function(download_and_use_miniconda)
 		execute_process(COMMAND ${CONDA} install -y nomkl)
 	endif()
 	
-	execute_process(COMMAND ${CONDA} install -y conda-build numpy scipy cython=0.25 ipython notebook RESULT_VARIABLE PACKAGE_INSTALLL_RETVAL)
+	execute_process(COMMAND ${CONDA} install -y -q conda-build numpy scipy cython=0.25 ipython notebook RESULT_VARIABLE PACKAGE_INSTALLL_RETVAL)
 	if(NOT ${PACKAGE_INSTALL_RETVAL} EQUAL 0)
 		message(FATAL_ERROR "Installation of packages failed!  Please fix what's wrong, or disable Miniconda.")
 	endif()
@@ -167,7 +167,7 @@ function(download_and_use_miniconda)
 	execute_process(COMMAND ${PIP} --cache-dir=${MINICONDA_INSTALL_DIR}/pkgs install matplotlib RESULT_VARIABLE MATPLOTLIB_RETVAL)
 	if(NOT ${MATPLOTLIB_RETVAL} EQUAL 0)
 		# try again with conda
-		execute_process(COMMAND ${CONDA} install -y matplotlib RESULT_VARIABLE MATPLOTLIB_RETVAL)
+		execute_process(COMMAND ${CONDA} install -y -q matplotlib RESULT_VARIABLE MATPLOTLIB_RETVAL)
 		if(NOT ${MATPLOTLIB_RETVAL} EQUAL 0)
 			message(FATAL_ERROR "Failed to install matplotlib!  Please fix what's wrong, or disable Miniconda.")
 		endif()
@@ -177,7 +177,7 @@ function(download_and_use_miniconda)
 	# the loser is always your own sanity!
 	if(TARGET_WINDOWS AND MINGW)
 		# fix strange link error with Amber's python c extensions (discussed at https://github.com/Theano/Theano/issues/2087)
-		execute_process(COMMAND ${CONDA} install -y -c anaconda libpython)
+		execute_process(COMMAND ${CONDA} install -y -q -c anaconda libpython)
 		
 		# die, preprocessor define that breaks the <cmath> header!
 		# see https://github.com/python/cpython/pull/880

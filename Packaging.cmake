@@ -33,26 +33,31 @@ validate_configuration_enum(PACKAGE_TYPE TBZ2 ZIP NSIS Bundle DEB RPM)
 
 set(CPACK_GENERATOR ${PACKAGE_TYPE})
 
+set(CPACK_COMPONENTS_GROUPING IGNORE) # Generate one package per component, not per group
+
 set(CPACK_STRIP_FILES TRUE)
 
 
 # --------------------------------------------------------------------
 # figure out package category
 
-if(${PACKAGE_TYPE} STREQUAL TBZ2 OR ${PACKAGE_TYPE} STREQUAL TBZ2)
+if(${PACKAGE_TYPE} STREQUAL TBZ2 OR ${PACKAGE_TYPE} STREQUAL ZIP)
 	#archives are simple.  No dependencies, no metadata.
 	set(PACK_TYPE_CATEGORY archive)
+	
+	set(CPACK_ARCHIVE_COMPONENT_INSTALL TRUE)
+	
 elseif(${PACKAGE_TYPE} STREQUAL NSIS)
 	#Windows installer. Needed libraries must be bundled.
 	set(PACK_TYPE_CATEGORY windows-installer)
 	
 	set(DEFAULT_DLLS "")
 	#the CPack way of creating a desktop shortcut seems to be bugged and not work.
-	set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
+	set(CPACK_NSIS_CREATE_ICONS_EXTRA "
 	    CreateShortCut \\\"$DESKTOP\\\\${CPACK_PACKAGE_FILE_NAME} ${${PROJECT_NAME}_MAJOR_VERSION}.lnk\\\" \\\"$INSTDIR\\\\amber-interactive.bat\\\"
 	")
 
-	set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
+	set(CPACK_NSIS_DELETE_ICONS_EXTRA "
 	    Delete \\\"$DESKTOP\\\\${CPACK_PACKAGE_FILE_NAME} ${${PROJECT_NAME}_MAJOR_VERSION}.lnk\\\"
 	")
 
@@ -61,11 +66,7 @@ elseif(${PACKAGE_TYPE} STREQUAL NSIS)
 		get_filename_component(MINGW_BIN_DIR ${CMAKE_C_COMPILER} DIRECTORY)
 		
 		# Start with the system runtime libraries
-		set(DEFAULT_DLLS ${MINGW_BIN_DIR}/libgfortran-3.dll ${MINGW_BIN_DIR}/libquadmath-0.dll ${MINGW_BIN_DIR}/libgcc_s_seh-1.dll ${MINGW_BIN_DIR}/libwinpthread-1.dll ${MINGW_BIN_DIR}/libstdc++-6.dll)
-	
-		if(DEFINED OPENMP AND OPENMP)
-			list(APPEND DEFAULT_DLLS ${MINGW_BIN_DIR}/libgomp-1.dll)
-		endif()
+		set(DEFAULT_DLLS ${MINGW_BIN_DIR}/libgfortran-4.dll ${MINGW_BIN_DIR}/libquadmath-0.dll ${MINGW_BIN_DIR}/libgcc_s_seh-1.dll ${MINGW_BIN_DIR}/libwinpthread-1.dll ${MINGW_BIN_DIR}/libstdc++-6.dll)
 	endif()
 	# NOTE: InstallRequiredSystemLibraries takes care of the MSVC runtime libraries, so we don;t need to add them to DEFAULT_DLLS
 	
@@ -107,7 +108,16 @@ elseif(${PACKAGE_TYPE} STREQUAL NSIS)
 	set(CPACK_NSIS_HELP_LINK "http://ambermd.org/doc12/")
 	set(CPACK_NSIS_URL_INFO_ABOUT "http://ambermd.org/")
 	set(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
-
+	
+	set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
+	set(CPACK_NSIS_MUI_FINISHPAGE_RUN "amber-interactive.bat")
+	
+	# Miniconda warning
+	# --------------------------------------------------------------------
+	if(USE_MINICONDA)
+		message(WARNING "You are using Miniconda and are trying to build a NSIS windows installer package.  Miniconda drives the installer over the 1GB limit and \
+this will cause the packaging process to fail.  Please disable USE_MINICONDA  and use a system Python, or, if miniconda is absolutely required, switch to an ARCHIVE package.")
+	endif()
 elseif(${PACKAGE_TYPE} STREQUAL Bundle)
 	# OS X .app package.
 	set(PACK_TYPE_CATEGORY mac-app)
@@ -174,11 +184,15 @@ else()
 		# However, for this to work it needs CMake >= 3.7
 		set(CPACK_DEBIAN_ARCHIVE_TYPE "gnutar")
 		
+		# autodiscover dependencies
+		set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS TRUE)
+		
 		if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_LESS 3.7)
 			message(FATAL_ERROR "Building DEB packages requires CMake >= 3.7 due to CMake bug #14332.  Either change PACKAGE_TYPE to something else (e.g. TBZ2), or \
 upgrade CMake.  Sorry, I know this is a pain, but there's no other fix.")
 		endif()
 		
+		set(CPACK_DEB_COMPONENT_INSTALL TRUE)
 		
 	elseif(${PACKAGE_TYPE} STREQUAL RPM)	
 		#RPM package
@@ -191,6 +205,8 @@ upgrade CMake.  Sorry, I know this is a pain, but there's no other fix.")
 		# tell CPack to autocreate the package names following distro standards
 		# these don't work prior to CMake 3.6, so when those versions are used the package will get named according to PACKAGE_NAME
 		set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
+		
+		set(CPACK_RPM_COMPONENT_INSTALL TRUE)
 	endif()
 		
 endif()
@@ -214,8 +230,16 @@ function(print_packaging_report)
 	colormsg(HIGREEN "**************************************************************************")
 	colormsg("                             " _WHITE_ "Packaging Report")
 	colormsg(HIGREEN "**************************************************************************")
-	colormsg("Package type:         " HIBLUE "${PACKAGE_TYPE}")
-	colormsg("Package category:     " HIBLUE "${PACK_TYPE_CATEGORY}")
+	colormsg("Package type:              " HIBLUE "${PACKAGE_TYPE}")
+	colormsg("Package category:          " HIBLUE "${PACK_TYPE_CATEGORY}")
+	
+
+	if(DEFINED AMBER_INSTALL_COMPONENTS)
+		list_to_space_separated(AMBER_INSTALL_COMPONENTS_SPC ${AMBER_INSTALL_COMPONENTS})
+		colormsg("Packaging these components:" HIBLUE "${AMBER_INSTALL_COMPONENTS_SPC}")
+	endif()
+	
+	colormsg("")
 	colormsg("External libraries used by ${PROJECT_NAME}:")
 	colormsg(HIGREEN "--------------------------------------------------------------------------")
 	foreach(LIBNAME ${USED_LIB_NAME})
@@ -227,7 +251,7 @@ function(print_packaging_report)
 		if("${RUNTIME_PATH}" STREQUAL "<none>" OR "${RUNTIME_PATH}" STREQUAL "${LINKTIME_PATH}")
 			colormsg("${LIBNAME} -" YELLOW "${LINKTIME_PATH}")
 		else()
-			colormsg("${LIBNAME} -" YELLOW "${LINKTIME_PATH} (link time)," MAG "${RUNTIME_PATH} (runtime)")
+			colormsg("${LIBNAME} -" YELLOW "${LINKTIME_PATH} (link time), ${RUNTIME_PATH} (runtime)")
 		endif()	
 	endforeach()
 	colormsg(HIGREEN "**************************************************************************")
@@ -244,7 +268,7 @@ function(print_packaging_report)
 		colormsg("Please ensure that all DLLs used by amber executables are included in this list.  If any more need to be added, list them in the variable EXTRA_DLLS_TO_BUNDLE.")
 		
 		colormsg("")
-		colormsg("Also, in order for the Nab compiler to work, all of the libraries required to link with Amber (besides DLLS that are already bundled and don't have import libraries) need to be in the Amber lib folder.")
+		colormsg("Also, in order for the Nab compiler to work, all of the libraries required to link with Amber (besides DLLS that are already bundled and don't have import libraries) need to be included in the installer.")
 		
 		if("${LIBS_TO_BUNDLE}" STREQUAL "")
 			colormsg("Currently, no libraries are bundled.")
@@ -266,7 +290,15 @@ function(print_packaging_report)
 		colormsg("Please ensure that all libraries used by Amber's executables are included in this list.")
 		colormsg("If any libraries are missing, please list them in the variable EXTRA_LIBS_TO_BUNDLE")
 	elseif(${PACK_TYPE_CATEGORY} STREQUAL linux-package)
-		colormsg("This is a Linux package, so dependencies will be automatically calculated for the current distro you are building on.")
+		if(${PACKAGE_TYPE} STREQUAL "RPM")
+			colormsg("This is an RPM package, so dependencies will be automatically calculated for the current distro you are building on.")
+		else()
+			colormsg("You will need to pass the Debian package dependency string in the CMake variable DEB_PACKAGE_DEPENDENCIES")
+			colormsg("Example: " HIBLUE "libarpack2 (>= 3.0.2-3), liblapack3gf (>= 3.3.1-1), libblas3gf (>= 1.2.20110419-2ubuntu1), libreadline6 (>= 6.3-4ubuntu2)")
+			colormsg("")
+			colormsg("Its current contents are: \"${DEB_PACKAGE_DEPENDENCIES}\"")
+		endif()
+		
 		colormsg("")
 		colormsg("${PROJECT_NAME} will be installed by the package to: " HIBLUE "${CMAKE_INSTALL_PREFIX}")
 	endif()

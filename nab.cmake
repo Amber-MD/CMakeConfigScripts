@@ -35,7 +35,7 @@ macro(nab_compile GENERATED_C_FILES) #2nd argument: NAB_FILES...
 	foreach(NAB_FILE ${ARGN})
 		get_filename_component(NAB_FILENAME ${NAB_FILE} NAME)
 			
-		strip_shortest_extension(NAB_FILE_BASENAME ${NAB_FILENAME})	
+		strip_last_extension(NAB_FILE_BASENAME ${NAB_FILENAME})	
 		#we use .i because it is the extension GCC uses for preprocessed intermediates
 		set(PREPROCESSED_INTERMEDIATE ${C_FILES_DIR}/${NAB_FILENAME}.i)
 	
@@ -86,9 +86,8 @@ function(add_nab_executable EXE_NAME)
 	endif()
 	
 	#create the executable
-	include_directories(${NAB_HEADER_DIR})
     nab_compile(${EXE_NAME}_COMPILED_NAB ${ADD_NABEXE_NAB_SOURCES})
     add_executable(${EXE_NAME} ${${EXE_NAME}_COMPILED_NAB} ${ADD_NABEXE_C_SOURCES})
-    target_link_libraries(${EXE_NAME} libnab)
+    target_link_libraries(${EXE_NAME} libnab)    
     
 endfunction(add_nab_executable)
