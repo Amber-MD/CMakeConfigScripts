@@ -976,7 +976,7 @@ endif()
 # zlib
 #------------------------------------------------------------------------------
 if(zlib_EXTERNAL)
-	import_library(zlib "${ZLIB_LIBRARIES}" "${ZLIB_INCLUDE_DIR}")
+	import_libraries(zlib LIBRARIES ${ZLIB_LIBRARIES} INCLUDES ${ZLIB_INCLUDE_DIR})
 endif()
 
 #------------------------------------------------------------------------------

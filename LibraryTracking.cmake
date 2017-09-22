@@ -237,7 +237,7 @@ function(import_libraries NAME)
 	set_property(TARGET ${NAME} PROPERTY INTERFACE_LINK_LIBRARIES ${IMP_LIBS_LIBRARIES})
 	set_property(TARGET ${NAME} PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${IMP_LIBS_INCLUDES})
 	
-	# we don;t want to add generator expressions to the library tracker...
+	# we don't want to add generator expressions to the library tracker...
 	string(GENEX_STRIP "${IMP_LIBS_LIBRARIES}" IMP_LIBS_LIBRARIES_NO_GENEX)
 	
 	# add to library tracker

@@ -33,6 +33,8 @@ validate_configuration_enum(PACKAGE_TYPE TBZ2 ZIP NSIS Bundle DEB RPM)
 
 set(CPACK_GENERATOR ${PACKAGE_TYPE})
 
+set(CPACK_COMPONENTS_GROUPING IGNORE) # Generate one package per component, not per group
+
 set(CPACK_STRIP_FILES TRUE)
 
 
@@ -51,11 +53,11 @@ elseif(${PACKAGE_TYPE} STREQUAL NSIS)
 	
 	set(DEFAULT_DLLS "")
 	#the CPack way of creating a desktop shortcut seems to be bugged and not work.
-	set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
+	set(CPACK_NSIS_CREATE_ICONS_EXTRA "
 	    CreateShortCut \\\"$DESKTOP\\\\${CPACK_PACKAGE_FILE_NAME} ${${PROJECT_NAME}_MAJOR_VERSION}.lnk\\\" \\\"$INSTDIR\\\\amber-interactive.bat\\\"
 	")
 
-	set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
+	set(CPACK_NSIS_DELETE_ICONS_EXTRA "
 	    Delete \\\"$DESKTOP\\\\${CPACK_PACKAGE_FILE_NAME} ${${PROJECT_NAME}_MAJOR_VERSION}.lnk\\\"
 	")
 
@@ -65,10 +67,6 @@ elseif(${PACKAGE_TYPE} STREQUAL NSIS)
 		
 		# Start with the system runtime libraries
 		set(DEFAULT_DLLS ${MINGW_BIN_DIR}/libgfortran-4.dll ${MINGW_BIN_DIR}/libquadmath-0.dll ${MINGW_BIN_DIR}/libgcc_s_seh-1.dll ${MINGW_BIN_DIR}/libwinpthread-1.dll ${MINGW_BIN_DIR}/libstdc++-6.dll)
-	
-		if(DEFINED OPENMP AND OPENMP)
-			list(APPEND DEFAULT_DLLS ${MINGW_BIN_DIR}/libgomp-1.dll)
-		endif()
 	endif()
 	# NOTE: InstallRequiredSystemLibraries takes care of the MSVC runtime libraries, so we don;t need to add them to DEFAULT_DLLS
 	
@@ -111,6 +109,15 @@ elseif(${PACKAGE_TYPE} STREQUAL NSIS)
 	set(CPACK_NSIS_URL_INFO_ABOUT "http://ambermd.org/")
 	set(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
 	
+	set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
+	set(CPACK_NSIS_MUI_FINISHPAGE_RUN "amber-interactive.bat")
+	
+	# Miniconda warning
+	# --------------------------------------------------------------------
+	if(USE_MINICONDA)
+		message(WARNING "You are using Miniconda and are trying to build a NSIS windows installer package.  Miniconda drives the installer over the 1GB limit and \
+this will cause the packaging process to fail.  Please disable USE_MINICONDA  and use a system Python, or, if miniconda is absolutely required, switch to an ARCHIVE package.")
+	endif()
 elseif(${PACKAGE_TYPE} STREQUAL Bundle)
 	# OS X .app package.
 	set(PACK_TYPE_CATEGORY mac-app)
@@ -177,6 +184,8 @@ else()
 		# However, for this to work it needs CMake >= 3.7
 		set(CPACK_DEBIAN_ARCHIVE_TYPE "gnutar")
 		
+		# autodiscover dependencies
+		set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS TRUE)
 		
 		if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_LESS 3.7)
 			message(FATAL_ERROR "Building DEB packages requires CMake >= 3.7 due to CMake bug #14332.  Either change PACKAGE_TYPE to something else (e.g. TBZ2), or \
@@ -223,10 +232,11 @@ function(print_packaging_report)
 	colormsg(HIGREEN "**************************************************************************")
 	colormsg("Package type:              " HIBLUE "${PACKAGE_TYPE}")
 	colormsg("Package category:          " HIBLUE "${PACK_TYPE_CATEGORY}")
-		
-	if(DEFINED CPACK_COMPONENTS_ALL)
-	list_to_space_separated(CPACK_COMPONENTS_ALL_SPC ${CPACK_COMPONENTS_ALL})
-	colormsg("Packaging these components:" HIBLUE "${CPACK_COMPONENTS_ALL_SPC}")
+	
+
+	if(DEFINED AMBER_INSTALL_COMPONENTS)
+		list_to_space_separated(AMBER_INSTALL_COMPONENTS_SPC ${AMBER_INSTALL_COMPONENTS})
+		colormsg("Packaging these components:" HIBLUE "${AMBER_INSTALL_COMPONENTS_SPC}")
 	endif()
 	
 	colormsg("")

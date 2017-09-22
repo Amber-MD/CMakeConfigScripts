@@ -8,7 +8,7 @@ endmacro(list_to_space_separated)
 #causes a symlink between FILE and SYMLINK to be created at install time.
 # the paths of FILE and SYMLINK are appended to the install prefix
 #only works on UNIX
-macro(installtime_create_symlink FILE SYMLINK)
+macro(installtime_create_symlink FILE SYMLINK) # 3rd optional arg: COMPONENT
 	#cmake -E create_symlink doesn't work on non-UNIX OS's
 	#being able to build automake programs is a good indicator of unix-ness
 	
@@ -16,7 +16,12 @@ macro(installtime_create_symlink FILE SYMLINK)
 		message(FATAL_ERROR "installtime_create_symlink called on a non-UNIX platform")
 	endif()
 	
-	install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${FILE} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${SYMLINK})")
+	if("${ARGN}" STREQUAL "")
+		install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${FILE} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${SYMLINK})")
+	else()
+		install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${FILE} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${SYMLINK})" COMPONENT ${ARGN})
+	endif()
+	
 endmacro(installtime_create_symlink)
 
 #creates a rule to make OUTPUTFILE from the output of running m4 on INPUTFILE
@@ -77,29 +82,3 @@ macro(append_compile_flags NEW_FLAGS) # SOURCE...
 		set_property(SOURCE ${SOURCE_FILE} PROPERTY COMPILE_FLAGS ${NEW_COMPILE_FLAGS})
 	endforeach()
 endmacro(append_compile_flags)
-	
-# defines a component, and creates a "make install_<name>" target
-# NAME - the name as used in install commands
-# DESCRIPTION - description of the component
-macro(define_component NAME DESCRIPTION)
-	
-	# create component list for CPack if it doesn't yet exist
-	if(NOT DEFINED CPACK_COMPONENTS_ALL)
-		set(CPACK_COMPONENTS_ALL "")
-	endif()
-	
-	list(APPEND CPACK_COMPONENTS_ALL ${NAME})
-	
-	string(TOUPPER ${NAME} COMPONENT_NAME_UCASE)
-	string(TOLOWER ${NAME} COMPONENT_NAME_LCASE)
-	
-	set(CPACK_COMPONENT_${COMPONENT_NAME_UCASE}_DISPLAY_NAME ${NAME})
-	set(CPACK_COMPONENT_${COMPONENT_NAME_UCASE}_DESCRIPTION ${DESCRIPTION})
-	
-	# add "make install" target	
-	ADD_CUSTOM_TARGET(install_${COMPONENT_NAME_LCASE}
-	  ${CMAKE_COMMAND}
-	  -D "CMAKE_INSTALL_COMPONENT=${NAME}"
-	  -P "${CMAKE_BINARY_DIR}/cmake_install.cmake"
-	  )
-endmacro()
