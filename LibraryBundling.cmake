@@ -89,10 +89,22 @@ endif()
 # Mac
 # --------------------------------------------------------------------	
 	
-#if(TARGET_OSX)
+if(TARGET_OSX)
+	set(LIBS_TO_BUNDLE "")
 
-#	set(EXTRA_LIBS_TO_BUNDLE "" CACHE STRING "Additional libraries to bundle with the OS X distribution.  Accepts a semicolon-seperated list.")
+	# filter libraries to remove frameworks (which can't be easily bundled)
+	foreach(LIB ${USED_LIB_RUNTIME_PATH})
+		
+		if(NOT "${LIB}" MATCHES ".framework$" AND NOT "${LIB}" MATCHES "<none>")
+
+			list(APPEND LIBS_TO_BUNDLE ${LIB})
+		endif()
+	endforeach()
+
+	set(EXTRA_LIBS_TO_BUNDLE "" CACHE STRING "Additional libraries to bundle with the OS X distribution.  Accepts a semicolon-seperated list.")
 	
-#	install(FILES ${USED_LIBS_MINUS_DUPLICATES} ${EXTRA_LIBS_TO_BUNDLE} DESTINATION ${LIBDIR}) # this one we handle ourselves, because it needs to go into lib instead of bin
+	list(APPEND LIBS_TO_BUNDLE ${EXTRA_LIBS_TO_BUNDLE})
+	
+	install(FILES ${LIBS_TO_BUNDLE} DESTINATION ${LIBDIR})
 
-#endif()
+endif()

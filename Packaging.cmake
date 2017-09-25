@@ -93,7 +93,7 @@ this will cause the packaging process to fail.  Please disable USE_MINICONDA  an
 	endif()
 		
 	
-elseif(${PACKAGE_TYPE} STREQUAL BUNDLE OR ${PACKAGE_TYPE} STREQUAL MAC_INSTALLER)
+elseif(${PACKAGE_TYPE} STREQUAL BUNDLE)
 
 	#OS X bundle
 	# --------------------------------------------------------------------
@@ -243,7 +243,7 @@ function(print_packaging_report)
 		colormsg("Please ensure that all libraries used by amber are included in this list.  If any more need to be added, list them in the variable EXTRA_LIBS_TO_BUNDLE.")
 	elseif(TARGET_OSX)
 		colormsg("This is an OS X application, so it needs to bundle the libraries it uses. Currently, the following libraries will be bundled:")
-		foreach(LIBRARY ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS})
+		foreach(LIBRARY ${LIBS_TO_BUNDLE})
 			colormsg(HIGREEN ${LIBRARY})
 		endforeach()
 		
