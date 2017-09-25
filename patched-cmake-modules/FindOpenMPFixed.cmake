@@ -422,7 +422,12 @@ foreach(LANG IN ITEMS C CXX Fortran)
 				add_library(openmp_${LANG_LC} INTERFACE IMPORTED)
 			endif()
 			if(OpenMP_${LANG}_FLAGS)
-				separate_arguments(OpenMP_${LANG}_OPTIONS NATIVE_COMMAND "${OpenMP_${LANG}_FLAGS}")
+				if(HOST_WINDOWS)
+					separate_arguments(OpenMP_${LANG}_OPTIONS WINDOWS_COMMAND "${OpenMP_${LANG}_FLAGS}")
+				else()
+					separate_arguments(OpenMP_${LANG}_OPTIONS UNIX_COMMAND "${OpenMP_${LANG}_FLAGS}")
+				endif()
+				
 				set_property(TARGET openmp_${LANG_LC} PROPERTY
 					INTERFACE_COMPILE_OPTIONS "${OpenMP_${LANG}_OPTIONS}")
 			endif()
