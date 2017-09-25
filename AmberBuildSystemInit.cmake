@@ -18,13 +18,13 @@ message(STATUS "Starting configuration of ${PROJECT_NAME} version ${${PROJECT_NA
 message(STATUS "CMake Version: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
 
 
-# fix search path
+# fix search path so that libraries from the install tree are not used
 # --------------------------------------------------------------------
 list(REMOVE_ITEM CMAKE_SYSTEM_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
 
 # eliminate extraneous install messages
 # --------------------------------------------------------------------
-set(CMAKE_INSTALL_MESSAGE Lazy)
+set(CMAKE_INSTALL_MESSAGE LAZY)
 
 # configure module path
 # --------------------------------------------------------------------
@@ -62,10 +62,6 @@ if(WIN32)
 	set(DLLDIR ${BINDIR}) #put on PATH
 else()
 	set(DLLDIR ${LIBDIR})
-	
-	#set runtime library search path
-	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIBDIR}")
-	set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif()
 
 #control default build type.

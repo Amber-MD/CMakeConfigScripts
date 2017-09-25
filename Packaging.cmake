@@ -5,7 +5,7 @@
 # ICO_ICON - icon of the package, in ICO format.  Can be left undefined.
 # ICO_UNINSTALL_ICON - icon for the Windows uninstaller, in ICO format.  Can be left undefined
 # ICNS_ICON - icon for the Mac package, in icns format.  Can be left undefined.
-# OSX_STARTUP_SCRIPT - shell script to start when double-clicking the file on a Mac. Can be left undefined.
+# STARTUP_FILE - script or program name to start when double-clicking the package on Windows or Mac.  This is the path to it at __build__ time; Packaging will install it.
 # BUNDLE_IDENTIFIER - OS X bundle identifier string
 # BUNDLE_SIGNATURE - four character OS X bundle signature string
 
@@ -27,72 +27,26 @@ set(CPACK_PACKAGE_VERSION_TWEAK 0)
 
 set(CPACK_PACKAGE_CONTACT "amber@ambermd.org")
 
-set(PACKAGE_TYPE "TBZ2" CACHE STRING "CPack package format to create in packaging mode. Allowed types:
-TBZ2 (.tar.bz2 archive), ZIP (.zip archive), NSIS (Windows installer), Bundle (OS X DMG), DEB (Debian package), RPM (RPM package), ")
-validate_configuration_enum(PACKAGE_TYPE TBZ2 ZIP NSIS Bundle DEB RPM)
-
 set(CPACK_GENERATOR ${PACKAGE_TYPE})
 
 set(CPACK_COMPONENTS_GROUPING IGNORE) # Generate one package per component, not per group
 
-set(CPACK_STRIP_FILES TRUE)
+set(CPACK_STRIP_FILES TRUE) # Strip binaries of symbols to save space
 
+include(PackageTypes)
+include(LibraryBundling)
 
 # --------------------------------------------------------------------
 # figure out package category
 
-if(${PACKAGE_TYPE} STREQUAL TBZ2 OR ${PACKAGE_TYPE} STREQUAL ZIP)
-	#archives are simple.  No dependencies, no metadata.
-	set(PACK_TYPE_CATEGORY archive)
-	
-	set(CPACK_ARCHIVE_COMPONENT_INSTALL TRUE)
-	
-elseif(${PACKAGE_TYPE} STREQUAL NSIS)
-	#Windows installer. Needed libraries must be bundled.
-	set(PACK_TYPE_CATEGORY windows-installer)
-	
-	set(DEFAULT_DLLS "")
-	#the CPack way of creating a desktop shortcut seems to be bugged and not work.
-	set(CPACK_NSIS_CREATE_ICONS_EXTRA "
-	    CreateShortCut \\\"$DESKTOP\\\\${CPACK_PACKAGE_FILE_NAME} ${${PROJECT_NAME}_MAJOR_VERSION}.lnk\\\" \\\"$INSTDIR\\\\amber-interactive.bat\\\"
-	")
+if("${PACKAGE_TYPE}" STREQUAL "ARCHIVE")
 
-	set(CPACK_NSIS_DELETE_ICONS_EXTRA "
-	    Delete \\\"$DESKTOP\\\\${CPACK_PACKAGE_FILE_NAME} ${${PROJECT_NAME}_MAJOR_VERSION}.lnk\\\"
-	")
-
+	option(ARCHIVE_MONOLITHIC "If PACKAGE_TYPE is set to ARCHIVE, this controls whether or not to build all components of Amber into the same package.  If false, they'll be split into a few different archives." TRUE)
+	test(CPACK_ARCHIVE_COMPONENT_INSTALL NOT ARCHIVE_MONOLITHIC)
 	
-	if(MINGW)
-		get_filename_component(MINGW_BIN_DIR ${CMAKE_C_COMPILER} DIRECTORY)
-		
-		# Start with the system runtime libraries
-		set(DEFAULT_DLLS ${MINGW_BIN_DIR}/libgfortran-4.dll ${MINGW_BIN_DIR}/libquadmath-0.dll ${MINGW_BIN_DIR}/libgcc_s_seh-1.dll ${MINGW_BIN_DIR}/libwinpthread-1.dll ${MINGW_BIN_DIR}/libstdc++-6.dll)
-	endif()
-	# NOTE: InstallRequiredSystemLibraries takes care of the MSVC runtime libraries, so we don;t need to add them to DEFAULT_DLLS
+elseif(${PACKAGE_TYPE} STREQUAL WINDOWS_INSTALLER)
 	
-	#When we link directly to a DLL, it ends up in both USED_LIB_RUNTIME_PATH and USED_LIB_LINKTIME_PATH
-	#here we filter these out
-	set(EXTRA_USED_LIBS "")
-	foreach(LIB ${USED_LIB_LINKTIME_PATH})
-		list_contains(ALREADY_IN_DLLS_LIST ${LIB} ${USED_LIB_RUNTIME_PATH})
-		if(NOT ALREADY_IN_DLLS_LIST)
-			list(APPEND EXTRA_USED_LIBS ${LIB})
-		endif()
-	endforeach()
-	
-	# get rid of any "<none>" elements in the runtime path list	
-	set(USED_DLLS ${USED_LIB_RUNTIME_PATH})
-	list(REMOVE_ITEM USED_DLLS <none>)
-	
-	set(EXTRA_LIBS_TO_BUNDLE "" CACHE STRING "Additional libraries to bundle with the Windows installer for linking with Amber (e.g. from nab programs).  Accepts a semicolon-seperated list.")
-	set(EXTRA_DLLS_TO_BUNDLE "" CACHE STRING "Additional DLL files to include with the Windows installer.  Accepts a semicolon-seperated list.")
-
-	set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS ${DEFAULT_DLLS} ${USED_DLLS} ${EXTRA_DLLS_TO_BUNDLE}) #this one gets handled by CMake
-	set(LIBS_TO_BUNDLE ${USED_LIBS_MINUS_DUPLICATES} ${EXTRA_LIBS_TO_BUNDLE}) # this one we handle ourselves, because it needs to go into lib instead of bin
-	
-	install(FILES ${LIBS_TO_BUNDLE} DESTINATION ${LIBDIR})
-	
-	#NSIS variables
+	# NSIS variables
 	# --------------------------------------------------------------------
 	if(DEFINED ICO_ICON)
 		set(CPACK_NSIS_MUI_ICON ${ICO_ICON})
@@ -104,13 +58,11 @@ elseif(${PACKAGE_TYPE} STREQUAL NSIS)
 	
 	set(CPACK_NSIS_COMPRESSOR "/SOLID lzma" )
 	set(CPACK_NSIS_MODIFY_PATH TRUE)
-	set(CPACK_NSIS_INSTALLED_ICON_NAME ${CMAKE_SOURCE_DIR}/amber.ico)
 	set(CPACK_NSIS_HELP_LINK "http://ambermd.org/doc12/")
 	set(CPACK_NSIS_URL_INFO_ABOUT "http://ambermd.org/")
 	set(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
 	
 	set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
-	set(CPACK_NSIS_MUI_FINISHPAGE_RUN "amber-interactive.bat")
 	
 	# Miniconda warning
 	# --------------------------------------------------------------------
@@ -118,10 +70,31 @@ elseif(${PACKAGE_TYPE} STREQUAL NSIS)
 		message(WARNING "You are using Miniconda and are trying to build a NSIS windows installer package.  Miniconda drives the installer over the 1GB limit and \
 this will cause the packaging process to fail.  Please disable USE_MINICONDA  and use a system Python, or, if miniconda is absolutely required, switch to an ARCHIVE package.")
 	endif()
-elseif(${PACKAGE_TYPE} STREQUAL Bundle)
-	# OS X .app package.
-	set(PACK_TYPE_CATEGORY mac-app)
 	
+	# startup file
+	# --------------------------------------------------------------------
+	
+	if(DEFINED STARTUP_FILE)
+	
+		install(PROGRAMS ${STARTUP_FILE} DESTINATION .)
+	
+		get_filename_component(STARTUP_FILE_NAME ${STARTUP_FILE} NAME)
+		
+		#the CPack way of creating a desktop shortcut seems to be bugged and not work.
+		set(CPACK_NSIS_CREATE_ICONS_EXTRA "
+		    CreateShortCut \\\"$DESKTOP\\\\${CPACK_PACKAGE_FILE_NAME} ${${PROJECT_NAME}_MAJOR_VERSION}.lnk\\\" \\\"$INSTDIR\\\\${STARTUP_FILE_NAME}\\\"
+		")
+	
+		set(CPACK_NSIS_DELETE_ICONS_EXTRA "
+		    Delete \\\"$DESKTOP\\\\${CPACK_PACKAGE_FILE_NAME} ${${PROJECT_NAME}_MAJOR_VERSION}.lnk\\\"
+		")
+		
+		set(CPACK_NSIS_MUI_FINISHPAGE_RUN "${STARTUP_FILE_NAME}")
+	endif()
+		
+	
+elseif(${PACKAGE_TYPE} STREQUAL BUNDLE OR ${PACKAGE_TYPE} STREQUAL MAC_INSTALLER)
+
 	#OS X bundle
 	# --------------------------------------------------------------------
 	set(CPACK_BUNDLE_NAME ${CPACK_PACKAGE_FILE_NAME})
@@ -131,7 +104,7 @@ elseif(${PACKAGE_TYPE} STREQUAL Bundle)
 	endif()
 	
 	if(DEFINED OSX_STARTUP_SCRIPT)
-		set(CPACK_BUNDLE_STARTUP_COMMAND ${OSX_STARTUP_SCRIPT})
+		set(CPACK_BUNDLE_STARTUP_COMMAND ${STARTUP_FILE})
 	endif()
 	
    	set(ICON_FILE_NAME "${CPACK_BUNDLE_NAME}")
@@ -148,18 +121,10 @@ elseif(${PACKAGE_TYPE} STREQUAL Bundle)
 	
 	configure_file(${CMAKE_CURRENT_LIST_DIR}/packaging/Info.in.plist ${CONFIGURED_PLIST_PATH} @ONLY)
 	set(CPACK_BUNDLE_PLIST ${CONFIGURED_PLIST_PATH})
-		
-	# Find libraries to bundle
-	# --------------------------------------------------------------------
-	set(EXTRA_LIBS_TO_BUNDLE "" CACHE STRING "Additional libraries to bundle with the OS X distribution.  Accepts a semicolon-seperated list.")
 	
-	set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS ${USED_LIB_RUNTIME_PATH} ${EXTRA_LIBS_TO_BUNDLE}) # RUNTIME and LINKTIME paths are the same on Macs, so we don't need to bother with USED_LIB_LINKTIME_PATH
-	list(REMOVE_ITEM CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS "<none>")
 	
 else()
-	# Linux package
-	set(PACK_TYPE_CATEGORY linux-package)
-	
+
 	# install to install prefix, rather than root directory as with every other package
 	set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 	set(CPACK_PACKAGE_DEFAULT_LOCATION ${CMAKE_INSTALL_PREFIX})
@@ -213,9 +178,6 @@ endif()
 
 # --------------------------------------------------------------------
 
-
-include(InstallRequiredSystemLibraries)
-
 include(CPack)
 
 # --------------------------------------------------------------------
@@ -230,9 +192,7 @@ function(print_packaging_report)
 	colormsg(HIGREEN "**************************************************************************")
 	colormsg("                             " _WHITE_ "Packaging Report")
 	colormsg(HIGREEN "**************************************************************************")
-	colormsg("Package type:              " HIBLUE "${PACKAGE_TYPE}")
-	colormsg("Package category:          " HIBLUE "${PACK_TYPE_CATEGORY}")
-	
+	colormsg("Package type:              " HIBLUE "${PACKAGE_TYPE}")	
 
 	if(DEFINED AMBER_INSTALL_COMPONENTS)
 		list_to_space_separated(AMBER_INSTALL_COMPONENTS_SPC ${AMBER_INSTALL_COMPONENTS})
@@ -258,10 +218,10 @@ function(print_packaging_report)
 	
 	colormsg("")
 	
-	if(${PACK_TYPE_CATEGORY} STREQUAL windows-installer)
+	if(TARGET_WINDOWS)
 		colormsg("Since this is a Windows installer, it needs to bundle all of the DLLs that Amber needs with it (besides the Microsoft runtime libraries).  Currently, the following DLLs will be bundled:")
 		colormsg("")
-		foreach(LIBRARY ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS})
+		foreach(LIBRARY ${DLLS_TO_BUNDLE})
 			colormsg(HIGREEN ${LIBRARY})
 		endforeach()
 		colormsg("")
@@ -281,7 +241,7 @@ function(print_packaging_report)
 			colormsg("")
 		endif()
 		colormsg("Please ensure that all libraries used by amber are included in this list.  If any more need to be added, list them in the variable EXTRA_LIBS_TO_BUNDLE.")
-	elseif(${PACK_TYPE_CATEGORY} STREQUAL mac-app)
+	elseif(TARGET_OSX)
 		colormsg("This is an OS X application, so it needs to bundle the libraries it uses. Currently, the following libraries will be bundled:")
 		foreach(LIBRARY ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS})
 			colormsg(HIGREEN ${LIBRARY})
@@ -289,10 +249,11 @@ function(print_packaging_report)
 		
 		colormsg("Please ensure that all libraries used by Amber's executables are included in this list.")
 		colormsg("If any libraries are missing, please list them in the variable EXTRA_LIBS_TO_BUNDLE")
-	elseif(${PACK_TYPE_CATEGORY} STREQUAL linux-package)
-		if(${PACKAGE_TYPE} STREQUAL "RPM")
+	elseif(TARGET_LINUX)
+	
+		if("${PACKAGE_TYPE}" STREQUAL "RPM")
 			colormsg("This is an RPM package, so dependencies will be automatically calculated for the current distro you are building on.")
-		else()
+		elseif("${PACKAGE_TYPE}" STREQUAL "DEB")
 			colormsg("You will need to pass the Debian package dependency string in the CMake variable DEB_PACKAGE_DEPENDENCIES")
 			colormsg("Example: " HIBLUE "libarpack2 (>= 3.0.2-3), liblapack3gf (>= 3.3.1-1), libblas3gf (>= 1.2.20110419-2ubuntu1), libreadline6 (>= 6.3-4ubuntu2)")
 			colormsg("")

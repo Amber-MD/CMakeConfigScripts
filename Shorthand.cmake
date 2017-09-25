@@ -99,7 +99,7 @@ macro(list_contains OUTPUT ELEMENT) #3rd arg: LIST...
 	#change macro argument to variable
 	set(ARGN_LIST ${ARGN})
 	
-	list(FIND ARGN_LIST ${ELEMENT} ELEMENT_INDEX)
+	list(FIND ARGN_LIST "${ELEMENT}" ELEMENT_INDEX)
 	
 	if(${ELEMENT_INDEX} EQUAL -1)
 		set(${OUTPUT} FALSE)

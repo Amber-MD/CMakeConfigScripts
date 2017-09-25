@@ -7,8 +7,6 @@
 # set OUTPUT_VAR to whether PACKAGENAME was found
 function(check_python_package PACKAGENAME OUTPUT_VAR)
 
-	message("PY_INTERP_FOR_${OUTPUT_VAR}: ${PY_INTERP_FOR_${OUTPUT_VAR}}")
-
 	set(NEED_TO_RUN_CHECK TRUE)
 	
 	if(DEFINED ${OUTPUT_VAR})

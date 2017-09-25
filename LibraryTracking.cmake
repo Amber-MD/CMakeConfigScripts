@@ -47,7 +47,7 @@ function(get_lib_type LIBRARY OUTPUT_VARIABLE)
 			endif()
 		else() # MSVC, Intel, or some other Windows compiler
 			
-			# we have to work a little harder, and use Dumpbin to check the library type.
+			# we have to work a little harder, and use Dumpbin to check the library type, since import and static libraries have the same extensions
 			find_program(DUMPBIN dumpbin)
 			
 			if(NOT DUMPBIN)
@@ -58,7 +58,7 @@ function(get_lib_type LIBRARY OUTPUT_VARIABLE)
 			
 			# sanity check
 			if(NOT ${DUMPBIN_RESULT} EQUAL 0)
-				message(FATAL_ERROR "Could not analyze the type of library ${LIBRARY}: dumpbin failed to execute with error ${DUMPBIN_ERROUT}")
+				message(FATAL_ERROR "Could not analyze the type of library ${LIBRARY}: dumpbin failed to execute with error message ${DUMPBIN_ERROUT}")
 			endif()
 			
 			# check for dynamic symbol entries
@@ -66,8 +66,12 @@ function(get_lib_type LIBRARY OUTPUT_VARIABLE)
 			if("${DUMPBIN_OUTPUT}" MATCHES "Symbol name  :")
 				# found one!  It's an import library!
 				set(${OUTPUT_VARIABLE} IMPORT PARENT_SCOPE)
-				return()
+			else()
+				# by process of elimination, it's a static library
+				set(${OUTPUT_VARIABLE} STATIC PARENT_SCOPE)
 			endif()
+			
+			return()
 		endif()
 	endif()
 	
