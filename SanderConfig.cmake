@@ -3,15 +3,7 @@
 
 option(BUILD_SANDER_LES "Build another version of sander with LES support compiled in" TRUE)
 
-test(SANDERAPI_DEFAULT NOT MPI)
-option(BUILD_SANDER_API "Build the Sander API. Not compatible with MPI." ${SANDERAPI_DEFAULT})
-
-# check if user has changed either setting
-if(MPI AND BUILD_SANDER_API)
-	message(WARNING "The Sander API is enabled, but MPI is also enabled and the API is incompatible with MPI.  The Sander API will be disabled.")
-	set(BUILD_SANDER_API FALSE CACHE BOOL "" FORCE)
-endif()
-	
+option(BUILD_SANDER_API "Build the Sander API. Not compatible with MPI." TRUE)
 # -------------------------------------------------------------
 # APBS
 
