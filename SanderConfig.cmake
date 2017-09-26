@@ -3,7 +3,7 @@
 
 option(BUILD_SANDER_LES "Build another version of sander with LES support compiled in" TRUE)
 
-option(BUILD_SANDER_API "Build the Sander API. Not compatible with MPI." TRUE)
+option(BUILD_SANDER_API "Build the Sander API" TRUE)
 # -------------------------------------------------------------
 # APBS
 
