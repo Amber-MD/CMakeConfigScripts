@@ -35,6 +35,12 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}
 	"${CMAKE_CURRENT_LIST_DIR}/rpavlik" 
 	"${CMAKE_CURRENT_LIST_DIR}/patched-cmake-modules")
 	
+# prevent obliteration of the old build system's makefiles
+# --------------------------------------------------------------------
+if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+	message(FATAL_ERROR "You are building in the source directory.  Amber does not support this, since it would obliterate the Makefile build system.")
+endif()
+
 # includes
 # --------------------------------------------------------------------
 

@@ -1,16 +1,21 @@
 if(POLICY CMP0018)
-	#enable PROPERTY POSITION_INDEPENDENT_CODE
+	#NEW: enable PROPERTY POSITION_INDEPENDENT_CODE
 	cmake_policy(SET CMP0018 NEW)
 endif()
 
 if(POLICY CMP0025)
-	#report OS X version of Clang as "AppleClang"
+	#NEW: report OS X version of Clang as "AppleClang"
 	cmake_policy(SET CMP0025 NEW)
 endif()
 
 if(POLICY CMP0026)
-	#disable deprecated LOCATION property. 
+	#NEW: disable deprecated LOCATION property. 
 	cmake_policy(SET CMP0026 NEW)
+endif()
+
+if(POLICY CMP0042)
+	#NEW: set TARGET PROPERTY MACOSX_RPATH to on by default
+	cmake_policy(SET CMP0042 NEW)
 endif()
 
 if(POLICY CMP0053)
