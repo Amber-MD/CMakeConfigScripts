@@ -103,3 +103,15 @@ if(("${CMAKE_C_COMPILER_ID}" STREQUAL "" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL 
 	endif()
 endif()
 
+# --------------------------------------------------------------------
+# Find all enabled languages
+# --------------------------------------------------------------------
+get_property(ALL_ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
+
+set(ENABLED_LANGUAGES "")
+# filter out ancillary languages (RC, NONE, etc.)
+foreach(LANG ${ALL_ENABLED_LANGUAGES})
+	if("${LANG}" STREQUAL "C" OR "${LANG}" STREQUAL "CXX" OR "${LANG}" STREQUAL "Fortran")
+		list(APPEND ENABLED_LANGUAGES ${LANG})
+	endif()
+endforeach()

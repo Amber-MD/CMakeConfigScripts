@@ -7,9 +7,9 @@ include(ParallelizationConfig)
 if(MPI)
 	find_package(MPI)
 	
-	foreach(LANG C CXX Fortran)
+	foreach(LANG ${ENABLED_LANGUAGES})
 		if(NOT MPI_${LANG}_FOUND)
-			message(FATAL_ERROR "You requested MPI, but the MPI ${LANG} library as not found.  \
+			message(FATAL_ERROR "You requested MPI, but the MPI ${LANG} library was not found.  \
 Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG}_LIBRARIES to point to your MPI.")
 		endif()
 	
@@ -31,7 +31,7 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 	endforeach()
 	
 	# the MinGW port-hack of MS-MPI needs to be compiled with -fno-range-check
-	if("${MPI_Fortran_LIBRARIES}" MATCHES "msmpi" AND ${CMAKE_Fortran_COMPILER_ID} STREQUAL GNU)
+	if("${MPI_Fortran_LIBRARIES}" MATCHES "msmpi" AND "${CMAKE_Fortran_COMPILER_ID}" STREQUAL GNU)
 		message(STATUS "MS-MPI range check workaround active")
 		
 		#create a non-cached variable with the contents of the cache variable plus one extra flag
@@ -42,7 +42,7 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 	
 	# create imported targets
 	# --------------------------------------------------------------------
-	foreach(LANG C CXX Fortran)
+	foreach(LANG ${ENABLED_LANGUAGES})
 		string(TOLOWER ${LANG} LANG_LOWERCASE)
 		import_libraries(mpi_${LANG_LOWERCASE} LIBRARIES ${MPI_${LANG}_LINK_FLAGS} ${MPI_${LANG}_LIBRARIES} INCLUDES ${MPI_${LANG}_INCLUDE_PATH})
 		set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${MPI_${LANG}_INCLUDE_PATH})

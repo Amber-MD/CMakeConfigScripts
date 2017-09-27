@@ -166,18 +166,18 @@ function(using_external_library LIBPATH)
 			set(USED_LIB_LINKTIME_PATH ${USED_LIB_LINKTIME_PATH} "${LIBPATH}" CACHE INTERNAL "" FORCE)
 			set(USED_LIB_RUNTIME_PATH ${USED_LIB_RUNTIME_PATH} "${DLL_LOCATION_${LIBNAME}}" CACHE INTERNAL "" FORCE)
 		
-			message("Recorded DLL/implib combo ${LIBNAME}: import library at ${LIBPATH}, DLL at ${DLL_LOCATION_${LIBNAME}}")
+			#message("Recorded DLL/implib combo ${LIBNAME}: import library at ${LIBPATH}, DLL at ${DLL_LOCATION_${LIBNAME}}")
 		
 		elseif("${LIB_TYPE}" STREQUAL "STATIC")
 			set(USED_LIB_LINKTIME_PATH ${USED_LIB_LINKTIME_PATH} ${LIBPATH} CACHE INTERNAL "" FORCE)
 			set(USED_LIB_RUNTIME_PATH ${USED_LIB_RUNTIME_PATH} "<none>" CACHE INTERNAL "" FORCE)
 		
-			message("Recorded static library ${LIBNAME} at ${LIBPATH}")
+			#message("Recorded static library ${LIBNAME} at ${LIBPATH}")
 		elseif("${LIB_TYPE}" STREQUAL "SHARED") 
 			set(USED_LIB_LINKTIME_PATH ${USED_LIB_LINKTIME_PATH} ${LIBPATH} CACHE INTERNAL "" FORCE)
 			set(USED_LIB_RUNTIME_PATH ${USED_LIB_RUNTIME_PATH} ${LIBPATH} CACHE INTERNAL "" FORCE)
 		
-			message("Recorded shared library ${LIBNAME} at ${LIBPATH}")
+			#message("Recorded shared library ${LIBNAME} at ${LIBPATH}")
 		else()
 			message(FATAL_ERROR "Shouldn't get here!")
 		endif()
