@@ -722,8 +722,8 @@ if(readline_EXTERNAL)
 	# Configure dll imports if neccesary
 	# It's not like this is, y'know, DOCUMENTED anywhere
 	if(TARGET_WINDOWS)
-		is_static_library(${READLINE_LIBRARY} READLINE_STATIC)
-		if(READLINE_STATIC)
+		get_lib_type(${READLINE_LIBRARY} READLINE_LIB_TYPE)
+		if("${READLINE_LIB_TYPE}" STREQUAL "STATIC")
 			set_property(TARGET readline PROPERTY INTERFACE_COMPILE_DEFINITIONS USE_READLINE_STATIC)
 		else()
 			set_property(TARGET readline PROPERTY INTERFACE_COMPILE_DEFINITIONS USE_READLINE_DLL)
@@ -772,10 +772,11 @@ if(fftw_EXTERNAL)
 	# Import the system fftw as a library
 	import_library(fftw ${FFTW_LIBRARIES} ${FFTW_INCLUDES})
 	
-	is_static_library("${FFTW_LIBRARIES}" EXT_FFTW_IS_STATIC)
+	list(GET FFTW_LIBRARIES 0 FIRST_FFTW_LIBRARY)
+	get_lib_type(${FIRST_FFTW_LIBRARY} EXT_FFTW_LIB_TYPE)
 	
 	# if we are using a Windows DLL, define the correct import macros
-	if(TARGET_WINDOWS AND (NOT EXT_FFTW_IS_STATIC))
+	if(TARGET_WINDOWS AND NOT ("${EXT_FFTW_LIB_TYPE}" STREQUAL "TATIC"))
 		set_property(TARGET fftw PROPERTY INTERFACE_COMPILE_DEFINITIONS FFTW_DLL CALLING_FFTW)
 	endif()
 

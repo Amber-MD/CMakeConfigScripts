@@ -1,4 +1,5 @@
 #CMake file which creates amber.sh and amber.csh, which are sourced by users to set all of the variables for using amber.
+# Must be included after PythonConfig, PerlConfig, and Packaging.
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
 	#create batch file
