@@ -11,7 +11,7 @@ if(BUILD_PYTHON)
 	if(USE_MINICONDA)
 	
 		set(MINICONDA_VERSION 4.3.21) 
-		set(MINICONDA_PY3 FALSE)
+		option(MINICONDA_USE_PY3 "If true, Amber will download a Python 3 miniconda when USE_MINICONDA is enabled.  Otherwise, Python 2.7 Miniconda will get downloaded." FALSE)
 		
 		include(UseMiniconda)
 		download_and_use_miniconda()
@@ -149,7 +149,7 @@ Either disable BUILD_PYTHON, or set PYTHON_EXECUTABLE to point to a compatible P
 	#Args: arguments to pass to the python script
 	macro(install_python_library) # ARGUMENTS
 	
-		list_to_space_seperated(ARGN_SPC ${ARGN})
+		list_to_space_separated(ARGN_SPC ${ARGN})
 				
         install(CODE "
         ${FIX_BACKSLASHES_CMD}

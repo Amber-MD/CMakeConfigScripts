@@ -14,7 +14,13 @@ function(download_and_use_miniconda)
 	set(MINICONDA_DOWNLOAD_DIR ${MINICONDA_TEMP_DIR}/download)
 	set(MINICONDA_INSTALL_DIR ${MINICONDA_TEMP_DIR}/install)	
 	
-	set(MINICONDA_STAMP_FILE ${CMAKE_BINARY_DIR}/CMakeFiles/minconda-setup.stamp)
+	if(MINICONDA_USE_PY3)
+	    set(PYTHON_MAJOR_RELEASE 3)	    
+	else()
+	    set(PYTHON_MAJOR_RELEASE 2)
+	endif()
+	
+	set(MINICONDA_STAMP_FILE ${CMAKE_BINARY_DIR}/CMakeFiles/minconda-setup-py${PYTHON_MAJOR_RELEASE}-v${MINICONDA_VERSION}.stamp)
 	
 	# figure out executable paths
 	if(TARGET_WINDOWS)
@@ -45,13 +51,10 @@ function(download_and_use_miniconda)
 		return()
 	endif()
 	
-	if(MINICONDA_PY3)
-		message(STATUS "Downloading Python 3 Miniconda")
-	    set(PYTHON_MAJOR_RELEASE 3)
-	    
+	if(MINICONDA_USE_PY3)
+		message(STATUS "Downloading Python 3 Miniconda")	    
 	else()
 		message(STATUS "Downloading Python 2.7 Miniconda")
-	    set(PYTHON_MAJOR_RELEASE 2)
 	endif()
 		
 	# Figure out the OS part of the URL
