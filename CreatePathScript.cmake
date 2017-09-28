@@ -107,7 +107,7 @@ setenv PATH \"\${AMBERHOME}/bin:${MINICONDA_PATH_PART}\${PATH}\"
 setenv LD_LIBRARY_PATH \"\${LD_LIBRARY_PATH}:\${AMBERHOME}/\"")
 	
 	#add the python path setting argument
-	if(${BUILD_PYTHON} AND ("${PYTHON_INSTALL}" STREQUAL LOCAL))
+	if(BUILD_PYTHON)
 	file(APPEND ${SOURCE_FILE_SH} "
 	
 # Add location of Amber Python modules to default Python search path
