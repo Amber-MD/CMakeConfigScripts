@@ -3,10 +3,10 @@
 
 
 if(TARGET_OSX)
-	# recent macOS versions have disabled DYLD_LIBRARY_PATH for secutiry reasons.
-	# so, we set the RPATH to '../lib', which is interpereted relative the the executable or library's current location
+	# recent macOS versions have disabled DYLD_LIBRARY_PATH for security reasons.
+	# so, we set the RPATH to '<executable path>/../lib', which is interpereted relative the the executable or library's current location
 	
-	set(CMAKE_INSTALL_RPATH "../${LIBDIR}")
+	set(CMAKE_INSTALL_RPATH "@loader_path/../${LIBDIR}")
 	set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 else()
 	
