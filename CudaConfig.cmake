@@ -37,18 +37,16 @@ else()
 		set(SM35FLAGS "-gencode arch=compute_35,code=sm_35")
 		#SM3.0 = GK104 = K10, GTX680, 690 etc.
 		set(SM30FLAGS "-gencode arch=compute_30,code=sm_30")
-		#SM2.0 = All GF variants = C2050, 2075, M2090, GTX480, GTX580 etc.
-		set(SM20FLAGS "-gencode arch=compute_20,code=sm_20")
 	
 		message(STATUS "CUDA version ${CUDA_VERSION} detected")
 		
 		if(${CUDA_VERSION} VERSION_EQUAL 7.5)
-			message("Configuring CUDA for SM2.0, SM3.0, SM5.0, SM5.2 and SM5.3")
+			message("Configuring CUDA for SM3.0, SM5.0, SM5.2 and SM5.3")
 			message("BE AWARE: CUDA 7.5 does not support GTX-1080, DGX-1 or other Pascal based GPUs.")
-		  	list(APPEND CUDA_NVCC_FLAGS ${SM20FLAGS} ${SM30FLAGS} ${SM50FLAGS} ${SM52FLAGS} ${SM53FLAGS})
+		  	list(APPEND CUDA_NVCC_FLAGS ${SM30FLAGS} ${SM50FLAGS} ${SM52FLAGS} ${SM53FLAGS})
 		elseif((${CUDA_VERSION} VERSION_EQUAL 8.0) OR (${CUDA_VERSION} VERSION_GREATER 8.0))
-			message("Configuring CUDA for SM2.0, SM3.0, SM5.0, SM5.2, SM5.3, SM6.0, SM6.1 and SM6.2")
-		  	list(APPEND CUDA_NVCC_FLAGS ${SM20FLAGS} ${SM30FLAGS} ${SM50FLAGS} ${SM52FLAGS} ${SM53FLAGS} ${SM60FLAGS} ${SM61FLAGS} ${SM62FLAGS} -Wno-deprecated-gpu-targets)
+			message("Configuring CUDA for SM3.0, SM5.0, SM5.2, SM5.3, SM6.0, SM6.1 and SM6.2")
+		  	list(APPEND CUDA_NVCC_FLAGS ${SM30FLAGS} ${SM50FLAGS} ${SM52FLAGS} ${SM53FLAGS} ${SM60FLAGS} ${SM61FLAGS} ${SM62FLAGS} -Wno-deprecated-gpu-targets)
 		else()
 			message(FATAL_ERROR "Error: Unsupported CUDA version. AMBER requires CUDA version >= 7.5.
 				Please upgrade your CUDA installation or disable building with CUDA.")
