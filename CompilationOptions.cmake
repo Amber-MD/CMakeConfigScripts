@@ -49,10 +49,6 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
 # I can't think of any better place to put this...
-option(INSTALL_TESTS "Whether or not to install ${PROJECT_NAME}'s tests, examples, and benchmarks.  Be warned, they take up over a gigabyte. \
-For the Tests, Examples, and Benchmarks packages to be generated, this option must be enabled.  Note that you can run the tests out of the source \
-directory so you would only really use this option if you wanted to move the install directory to a different machine or generate packages." FALSE)
-# It would have been really nice to use install(EXCLUDE_FROM_ALL) to get this functionality, but it doesn't exist until CMake 3.6, sadly.
 
 #------------------------------------------------------------------------------
 #  Now that we have our compiler, detect target architecture.

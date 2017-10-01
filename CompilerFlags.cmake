@@ -347,7 +347,7 @@ endif()
 #  Add some non-compiler-dependent items
 #-------------------------------------------------------------------------------
 if(LARGE_FILE_SUPPORT)
-	add_definitions(-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE)
+	add_definitions(-D_FILE_OFFSET_BITS=64)
 endif()
 
 check_symbol_exists(mkstemp stdlib.h HAVE_MKSTEMP)
