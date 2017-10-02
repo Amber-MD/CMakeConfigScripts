@@ -116,7 +116,11 @@ Either disable BUILD_PYTHON, or set PYTHON_EXECUTABLE to point to a compatible P
 	
 	# Amber's Python programs must be installed with the PYTHONPATH set to the install directory
 	# pass this arg to cmake -E env to make it so
-	set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages\"")
+	if(WIN32)
+		set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/site-packages\"")
+	else()
+		set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages\"")
+	endif()
 	
 	# argument to force Python packages to get installed into the Amber install dir
 	set(PYTHON_PREFIX_ARG \"--prefix=\${CMAKE_INSTALL_PREFIX_BS}\")
