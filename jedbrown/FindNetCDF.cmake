@@ -85,12 +85,12 @@ if("${NetCDF_FIND_COMPONENTS}" MATCHES F90)
 		set(CMAKE_REQUIRED_LIBRARIES ${NetCDF_LIBS})
 		# Test NetCDF Fortran
 		check_fortran_source_runs(
-	"program testf
-	  use netcdf
-	  write(6,*) nf90_strerror(0)
-	  write(6,*) 'testing a Fortran program'
-	end program testf"
-				NETCDF_F90_WORKS)
+"program testf
+  use netcdf
+  write(6,*) nf90_strerror(0)
+  write(6,*) 'testing a Fortran program'
+end program testf"
+	NETCDF_F90_WORKS)
 		unset(CMAKE_REQUIRED_INCLUDES)
 		unset(CMAKE_REQUIRED_LIBRARIES)
 	

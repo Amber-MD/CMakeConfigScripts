@@ -194,7 +194,7 @@ endfunction(using_external_library)
 
 #usage: import_library(<library name> <library path> [include dir 1] [include dir 2]...)
 function(import_library NAME PATH) #3rd arg: INCLUDE_DIRS
-
+	
 	#Try to figure out whether it is shared or static.
 	get_lib_type(${PATH} LIB_TYPE)
 

@@ -209,7 +209,7 @@ endif()
 if(NEED_mkl)
 
 	# We assume that most 3rd party compilers (like clang) attempt compatibility with GNU's OpenMP ABI
-	test(MKL_USE_GNU_COMPAT NOT ("${CMAKE_C_COMPILER_ID}" STREQUAL Intel OR "${CMAKE_C_COMPILER_ID}" STREQUAL MSVC))
+	test(MKL_USE_GNU_COMPAT NOT ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC"))
 	set(MKL_MULTI_THREADED ${OPENMP})
 	
 	# Static MKL is not supported at this time.
@@ -240,18 +240,14 @@ if(NEED_fftw)
 
 	if(DEFINED USE_FFT AND NOT USE_FFT)
 		set_3rdparty(fftw DISABLED)
-	else()
-		find_package(FFTW)
-		
+	else()		
 		if(MPI)
-			find_package(FFTW_MPI)
-			if(NOT FFTW_MPI_FOUND)
-				message(STATUS "libfftw was found on your machine, but the MPI version libfftw_mpi was not found and you enabled MPI, \
-so it cannot be used.  To build an MPI version of libfftw, configure it with --enable-mpi.")
-			endif()
+			find_package(FFTW COMPONENTS MPI Fortran)
+		else()
+			find_package(FFTW COMPONENTS Fortran)
 		endif()
 	
-		if(FFTW_FOUND AND ( (NOT MPI) OR FFTW_MPI_FOUND))
+		if(FFTW_FOUND)
 			set_3rdparty(fftw EXTERNAL)
 		else()
 			set_3rdparty(fftw INTERNAL)
@@ -770,19 +766,18 @@ if(fftw_EXTERNAL)
 	endif()
 
 	# Import the system fftw as a library
-	import_library(fftw ${FFTW_LIBRARIES} ${FFTW_INCLUDES})
+	import_library(fftw ${FFTW_LIBRARIES_SERIAL} ${FFTW_INCLUDES_SERIAL})
 	
-	list(GET FFTW_LIBRARIES 0 FIRST_FFTW_LIBRARY)
-	get_lib_type(${FIRST_FFTW_LIBRARY} EXT_FFTW_LIB_TYPE)
+	get_lib_type(${FFTW_LIBRARIES_SERIAL} EXT_FFTW_LIB_TYPE)
 	
 	# if we are using a Windows DLL, define the correct import macros
-	if(TARGET_WINDOWS AND NOT ("${EXT_FFTW_LIB_TYPE}" STREQUAL "TATIC"))
+	if(TARGET_WINDOWS AND NOT ("${EXT_FFTW_LIB_TYPE}" STREQUAL "STATIC"))
 		set_property(TARGET fftw PROPERTY INTERFACE_COMPILE_DEFINITIONS FFTW_DLL CALLING_FFTW)
 	endif()
 
 	if(MPI)
 		# Import MPI fftw
-		import_library(fftw_mpi ${FFTW_MPI_LIBRARIES} ${FFTW_MPI_INCLUDES})
+		import_library(fftw_mpi ${FFTW_LIBRARIES_MPI} ${FFTW_INCLUDES_MPI})
 		
 	endif()	
 	

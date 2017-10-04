@@ -131,8 +131,12 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
 
-	add_flags(Fortran -Wall -Wno-tabs -Wno-unused-function -ffree-line-length-none -Wno-unused-dummy-argument)
-		
+	add_flags(Fortran -Wall -Wno-tabs -Wno-unused-function -ffree-line-length-none)
+	
+	if("${CMAKE_Fortran_COMPILER_VERSION}" VERSION_GREATER 4.1)	
+		add_flags(Fortran -Wno-unused-dummy-argument)
+	endif()	
+	
 	if(NOT UNUSED_WARNINGS)
 		add_flags(Fortran -Wno-unused-variable)
 	endif()
