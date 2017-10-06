@@ -27,6 +27,7 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		
 		# this shadows the cache variable with a local variable	
 		string(STRIP "${MPI_${LANG}_COMPILE_FLAGS}" MPI_${LANG}_COMPILE_FLAGS)
+		string(STRIP "${MPI_${LANG}_LINK_FLAGS}" MPI_${LANG}_LINK_FLAGS)
 		
 	endforeach()
 	
@@ -37,13 +38,12 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		#create a non-cached variable with the contents of the cache variable plus one extra flag
 		set(MPI_Fortran_COMPILE_FLAGS ${MPI_Fortran_COMPILE_FLAGS} -fno-range-check)
 	endif()
-	
-	message("MPI_C_COMPILE_FLAGS: ${MPI_C_COMPILE_FLAGS}")
-	
+		
 	# create imported targets
 	# --------------------------------------------------------------------
 	foreach(LANG ${ENABLED_LANGUAGES})
 		string(TOLOWER ${LANG} LANG_LOWERCASE)
+		
 		import_libraries(mpi_${LANG_LOWERCASE} LIBRARIES ${MPI_${LANG}_LINK_FLAGS} ${MPI_${LANG}_LIBRARIES} INCLUDES ${MPI_${LANG}_INCLUDE_PATH})
 		set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${MPI_${LANG}_INCLUDE_PATH})
 		
