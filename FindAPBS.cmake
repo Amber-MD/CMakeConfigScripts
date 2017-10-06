@@ -9,12 +9,12 @@
 
 include(FindPackageHandleStandardArgs)
 
-find_library(APBS_API_LIB iapbs)
-find_library(APBS_GENERIC_LIB apbs_generic)
-find_library(APBS_ROUTINES_LIB apbs_routines)
-find_library(APBS_PMGC_LIB apbs_pmgc)
-find_library(APBS_MG_LIB apbs_mg)
-find_library(APBS_MALOC_LIB maloc)
+find_library(APBS_API_LIB iapbs NO_SYSTEM_ENVIRONMENT_PATH)
+find_library(APBS_GENERIC_LIB apbs_generic NO_SYSTEM_ENVIRONMENT_PATH)
+find_library(APBS_ROUTINES_LIB apbs_routines NO_SYSTEM_ENVIRONMENT_PATH)
+find_library(APBS_PMGC_LIB apbs_pmgc NO_SYSTEM_ENVIRONMENT_PATH)
+find_library(APBS_MG_LIB apbs_mg NO_SYSTEM_ENVIRONMENT_PATH)
+find_library(APBS_MALOC_LIB maloc NO_SYSTEM_ENVIRONMENT_PATH)
 
 set(APBS_LIBRARIES ${APBS_API_LIB} ${APBS_ROUTINES_LIB} ${APBS_MG_LIB} ${APBS_PMGC_LIB} ${APBS_GENERIC_LIB} ${APBS_MALOC_LIB} )
 

@@ -47,7 +47,7 @@ endif()
 
 # Find headers and libraries
 find_path(LOG4CXX_INCLUDE_DIR NAMES log4cxx/log4cxx.h HINTS ${LOG4CXX_INCLUDE_HINTS})
-find_library(LOG4CXX_LIBRARY NAMES log4cxx HINTS ${LOG4CXX_LIBRARY_HINTS})
+find_library(LOG4CXX_LIBRARY NAMES log4cxx HINTS ${LOG4CXX_LIBRARY_HINTS} NO_SYSTEM_ENVIRONMENT_PATH)
 
 # Set LOG4CXX_FOUND honoring the QUIET and REQUIRED arguments
 find_package_handle_standard_args(LOG4CXX DEFAULT_MSG LOG4CXX_LIBRARY LOG4CXX_INCLUDE_DIR)

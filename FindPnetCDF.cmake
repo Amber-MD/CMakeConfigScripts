@@ -218,7 +218,8 @@ function (find_package_component PKG)
                               NAMES ${${PKGCOMP}_LIBRARY_NAMES}
                               PATHS ${${PKGCOMP}_PREFIX}
                               PATH_SUFFIXES lib
-                              NO_DEFAULT_PATH)
+                              NO_DEFAULT_PATH
+                              NO_SYSTEM_ENVIRONMENT_PATH)
                               
                 # If found, check if library is static or dynamic 
                 if (${PKGCOMP}_LIBRARY)

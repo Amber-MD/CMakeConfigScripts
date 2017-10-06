@@ -188,7 +188,7 @@ if(NEED_readline)
 		set_3rdparty(readline EXTERNAL)
 	else()
 		#check if the internal readline has the dependencies it needs	
-		find_library(TERMCAP_LIBRARY NAMES ncurses termcap)
+		find_library(TERMCAP_LIBRARY NAMES ncurses termcap NO_SYSTEM_ENVIRONMENT_PATH)
 		find_path(TERMCAP_INCLUDE_DIR termcap.h)
 	
 		if(${CMAKE_SYSTEM_NAME} STREQUAL Windows OR (TERMCAP_LIBRARY AND TERMCAP_INCLUDE_DIR))
@@ -321,7 +321,7 @@ endif()
 if(NEED_xblas)
 	#NOTE: xblas is currently only available as a static library.
 	# however, it will need to be built with PIC turned on if amber is built as shared
-	find_library(XBLAS_LIBRARY NAMES xblas-amb xblas)
+	find_library(XBLAS_LIBRARY NAMES xblas-amb xblas NO_SYSTEM_ENVIRONMENT_PATH)
 	
 	if(XBLAS_LIBRARY)
 		set_3rdparty(xblas EXTERNAL)
@@ -361,7 +361,7 @@ endif()
 
 if(NEED_arpack)
 	#  ARPACK
-	find_library(ARPACK_LIBRARY arpack)
+	find_library(ARPACK_LIBRARY arpack NO_SYSTEM_ENVIRONMENT_PATH)
 	if(ARPACK_LIBRARY)
 		set_3rdparty(arpack EXTERNAL)
 	else()
@@ -424,11 +424,11 @@ if(NEED_lio)
 	#with the old system, lio was found by pointing configure to its source directory
 	#we support the same argument, and we look for the libraries in the system search path
 	if(DEFINED LIO_HOME)
-		find_library(LIO_G2G_LIBRARY NAMES g2g PATHS ${LIO_HOME}/g2g DOC "Path to libg2g.so")
-		find_library(LIO_AMBER_LIBRARY NAMES lio-g2g PATHS ${LIO_HOME}/lioamber DOC "Path to liblio-g2g.so")
+		find_library(LIO_G2G_LIBRARY NAMES g2g PATHS ${LIO_HOME}/g2g DOC "Path to libg2g.so" NO_SYSTEM_ENVIRONMENT_PATH)
+		find_library(LIO_AMBER_LIBRARY NAMES lio-g2g PATHS ${LIO_HOME}/lioamber DOC "Path to liblio-g2g.so" NO_SYSTEM_ENVIRONMENT_PATH)
 	else()
-		find_library(LIO_G2G_LIBRARY g2g DOC "Path to libg2g.so")
-		find_library(LIO_AMBER_LIBRARY lio-g2g DOC "Path to liblio-g2g.so")
+		find_library(LIO_G2G_LIBRARY g2g DOC "Path to libg2g.so" NO_SYSTEM_ENVIRONMENT_PATH)
+		find_library(LIO_AMBER_LIBRARY lio-g2g DOC "Path to liblio-g2g.so" NO_SYSTEM_ENVIRONMENT_PATH)
 	endif()
 	
 	if(LIO_G2G_LIBRARY AND LIO_G2G_LIBRARY)	
@@ -518,7 +518,7 @@ if(NEED_libm)
 		message(STATUS "Found math library functions in standard library.")
 		set(LIBM "")
 	else()
-		find_library(LIBM NAMES m math libm)
+		find_library(LIBM NAMES m math libm NO_SYSTEM_ENVIRONMENT_PATH)
 		if(LIBM)
 			set(CMAKE_REQUIRED_LIBRARIES ${LIBM})
 			check_c_source_compiles("${CHECK_SINE_C_SOURCE}" LIBM_HAVE_SIN)

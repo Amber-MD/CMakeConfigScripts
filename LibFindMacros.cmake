@@ -1,5 +1,5 @@
 # Version 2.2
-# Public Domain, originally written by Lasse Kärkkäinen <tronic>
+# Public Domain, originally written by Lasse Kï¿½rkkï¿½inen <tronic>
 # Maintained at https://github.com/Tronic/cmake-modules
 # Please send your improvements as pull requests on Github.
 
@@ -50,7 +50,7 @@ function (libfind_pkg_detect PREFIX)
     find_path(${PREFIX}_INCLUDE_DIR NAMES ${pathargs} HINTS ${${PREFIX}_PKGCONF_INCLUDE_DIRS})
   endif()
   if (libraryargs)
-    find_library(${PREFIX}_LIBRARY NAMES ${libraryargs} HINTS ${${PREFIX}_PKGCONF_LIBRARY_DIRS})
+    find_library(${PREFIX}_LIBRARY NAMES ${libraryargs} HINTS ${${PREFIX}_PKGCONF_LIBRARY_DIRS} NO_SYSTEM_ENVIRONMENT_PATH)
   endif()
 endfunction()
 

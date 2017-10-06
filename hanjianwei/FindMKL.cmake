@@ -86,7 +86,7 @@ endforeach()
 # MKL is composed by four layers: Interface, Threading, Computational and OpenMP
 
 if(MKL_SDL)
-    find_library(MKL_LIBRARY mkl_rt PATHS ${MKL_LIB_PATHS})
+    find_library(MKL_LIBRARY mkl_rt PATHS ${MKL_LIB_PATHS} NO_SYSTEM_ENVIRONMENT_PATH)
 
     set(MKL_NEEDED_LIBNAMES MKL_LIBRARY)
     set(MKL_LIBRARIES ${MKL_LIBRARY})
@@ -105,9 +105,9 @@ else()
         set(MKL_INTERFACE_LIBNAMES mkl_intel mkl_intel_lp64)
     endif()
 
-    find_library(MKL_INTERFACE_LIBRARY NAMES ${MKL_INTERFACE_LIBNAMES} PATHS ${MKL_LIB_PATHS})
+    find_library(MKL_INTERFACE_LIBRARY NAMES ${MKL_INTERFACE_LIBNAMES} PATHS ${MKL_LIB_PATHS} NO_SYSTEM_ENVIRONMENT_PATH)
     
-    find_library(MKL_GFORTRAN_INTERFACE_LIBRARY NAMES mkl_gf mkl_gf_lp64 PATHS ${MKL_LIB_PATHS})
+    find_library(MKL_GFORTRAN_INTERFACE_LIBRARY NAMES mkl_gf mkl_gf_lp64 PATHS ${MKL_LIB_PATHS} NO_SYSTEM_ENVIRONMENT_PATH)
     	
     # gfortran specifically needs a seperate library
     if(MKL_USE_GNU_COMPAT)
@@ -117,9 +117,9 @@ else()
 	endif()
 	
     ######################## Threading layer ########################
-    find_library(MKL_SEQUENTIAL_THREADING_LIBRARY mkl_sequential PATHS ${MKL_LIB_PATHS})
-    find_library(MKL_INTEL_THREADING_LIBRARY mkl_intel_thread PATHS ${MKL_LIB_PATHS})
-    find_library(MKL_GNU_THREADING_LIBRARY mkl_gnu_thread PATHS ${MKL_LIB_PATHS})
+    find_library(MKL_SEQUENTIAL_THREADING_LIBRARY mkl_sequential PATHS ${MKL_LIB_PATHS} NO_SYSTEM_ENVIRONMENT_PATH)
+    find_library(MKL_INTEL_THREADING_LIBRARY mkl_intel_thread PATHS ${MKL_LIB_PATHS} NO_SYSTEM_ENVIRONMENT_PATH)
+    find_library(MKL_GNU_THREADING_LIBRARY mkl_gnu_thread PATHS ${MKL_LIB_PATHS} NO_SYSTEM_ENVIRONMENT_PATH)
     
     if(MKL_MULTI_THREADED)
     	if(MKL_USE_GNU_COMPAT)
@@ -133,9 +133,9 @@ else()
     
 
     ####################### Computational layer #####################
-    find_library(MKL_CORE_LIBRARY mkl_core PATHS ${MKL_LIB_PATHS})
-    find_library(MKL_FFT_LIBRARY mkl_cdft_core PATHS ${MKL_LIB_PATHS})
-    find_library(MKL_SCALAPACK_LIBRARY mkl_scalapack_core mkl_scalapack_lp64 PATHS ${MKL_LIB_PATHS})
+    find_library(MKL_CORE_LIBRARY mkl_core PATHS ${MKL_LIB_PATHS} NO_SYSTEM_ENVIRONMENT_PATH)
+    find_library(MKL_FFT_LIBRARY mkl_cdft_core PATHS ${MKL_LIB_PATHS} NO_SYSTEM_ENVIRONMENT_PATH)
+    find_library(MKL_SCALAPACK_LIBRARY mkl_scalapack_core mkl_scalapack_lp64 PATHS ${MKL_LIB_PATHS} NO_SYSTEM_ENVIRONMENT_PATH)
 
     ############################ OpenMP Library ##########################
     if(WIN32)
@@ -148,7 +148,7 @@ else()
 	# ..but libiomp5.so is NOT!
 	#it's in the lib folder of the DIRECTORY CONTAINING MKL_HOME.
     
-    find_library(MKL_INTEL_OMP_LIBRARY ${MKL_INTEL_OMP_LIBNAME} PATHS ${MKL_OMP_LIB_PATHS})
+    find_library(MKL_INTEL_OMP_LIBRARY ${MKL_INTEL_OMP_LIBNAME} PATHS ${MKL_OMP_LIB_PATHS} NO_SYSTEM_ENVIRONMENT_PATH)
     
     if(NOT MKL_MULTI_THREADED)
     	set(MKL_OMP_LIBRARY "") # None needed
@@ -204,7 +204,7 @@ else()
     
     
     # link libdl if it exists
-    find_library(LIBDL dl PATHS "")
+    find_library(LIBDL dl PATHS "" NO_SYSTEM_ENVIRONMENT_PATH)
     if(LIBDL)
 	    check_library_exists(dl dlopen ${LIBDL} HAVE_LIBDL)
     else()
