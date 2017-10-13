@@ -139,12 +139,19 @@ function(using_external_library LIBPATH)
 				get_filename_component(LIB_FOLDER ${LIBPATH} PATH)
 				get_filename_component(POSSIBLE_DLL_FOLDER ${LIB_FOLDER}/../bin REALPATH)
 			
+				
 				# DLLs often have a hyphen then a number as their suffix, so we use a fuzzy match, with and without the lib prefix.
 				file(GLOB DLL_LOCATION_${LIBNAME} "${POSSIBLE_DLL_FOLDER}/${LIBNAME}*.dll")
 			
 				if("${DLL_LOCATION_${LIBNAME}}" STREQUAL "")
 					file(GLOB DLL_LOCATION_${LIBNAME} "${POSSIBLE_DLL_FOLDER}/lib${LIBNAME}*.dll")
 				endif()
+				
+				if("${DLL_LOCATION_${LIBNAME}}" STREQUAL "")
+					# MS-MPI, at least, installs its DLL to System32
+					file(GLOB DLL_LOCATION_${LIBNAME} "C:/Windows/System32/${LIBNAME}.dll")
+				endif()
+			
 			
 				if("${DLL_LOCATION_${LIBNAME}}" STREQUAL "")
 					message(WARNING "Could not locate dll file corresponding to the import library ${LIBPATH}. Please set DLL_LOCATION_${LIBNAME} to the correct DLL file.")
@@ -153,7 +160,7 @@ function(using_external_library LIBPATH)
 			
 				list(LENGTH DLL_LOCATION_${LIBNAME} NUM_POSSIBLE_PATHS)
 				if(${NUM_POSSIBLE_PATHS} GREATER 1)
-					message(WARNING "Found multiple dll files corresponding to the import library ${LIBPATH}. Please set DLL_LOCATION_${LIBNAME} to the correct DLL file.")
+					message(WARNING "Found multiple candidate dll files corresponding to the import library ${LIBPATH}. Please set DLL_LOCATION_${LIBNAME} to the correct DLL file.")
 					set(DLL_LOCATION_${LIBNAME} <unknown>)
 				endif()
 			endif()
