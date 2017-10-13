@@ -338,24 +338,19 @@ endif()
 
 if(NEED_blas) # because of the earlier check, we can be sure that NEED_blas == NEED_lapack
 
-	if(mkl_ENABLED)
-		set_3rdparty(blas DISABLED)
-		set_3rdparty(lapack DISABLED)
+	# this calls FindBLAS
+	find_package(LAPACKFixed)
+	
+	if(BLAS_FOUND)
+		set_3rdparty(blas EXTERNAL)
 	else()
-		# this calls FindBLAS
-		find_package(LAPACKFixed)
-		
-		if(BLAS_FOUND)
-			set_3rdparty(blas EXTERNAL)
-		else()
-			set_3rdparty(blas INTERNAL)
-		endif()
-		
-		if(LAPACK_FOUND)
-			set_3rdparty(lapack EXTERNAL)
-		else()
-			set_3rdparty(lapack INTERNAL)
-		endif()
+		set_3rdparty(blas INTERNAL)
+	endif()
+	
+	if(LAPACK_FOUND)
+		set_3rdparty(lapack EXTERNAL)
+	else()
+		set_3rdparty(lapack INTERNAL)
 	endif()
 endif()
 
@@ -676,7 +671,9 @@ if(LINALG_LIBS_REQUIRED AND NOT (mkl_ENABLED OR (blas_ENABLED AND lapack_ENABLED
 endif()
 
 if(mkl_ENABLED AND (blas_ENABLED AND lapack_ENABLED))
-	message(FATAL_ERROR "You cannot use MKL and regular blas/lapack at the same time!")
+	# prefer MKL to BLAS
+	set_3rdparty(blas DISABLED)
+	set_3rdparty(lapack DISABLED)
 endif()
 
 # Now that we know which libraries we need, set them up properly.
