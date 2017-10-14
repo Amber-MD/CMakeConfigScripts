@@ -31,7 +31,7 @@ if (NetCDF_INCLUDES AND NetCDF_LIBRARIES)
 endif (NetCDF_INCLUDES AND NetCDF_LIBRARIES)
 
 find_path (NetCDF_INCLUDES netcdf.h)
-find_library(NetCDF_LIBRARIES_C NAMES netcdf NO_SYSTEM_ENVIRONMENT_PATH)
+find_library(NetCDF_LIBRARIES_C NAMES netcdf)
 
 if(NetCDF_LIBRARIES_C)
 	get_filename_component(NetCDF_LIBPATH "${NetCDF_LIBRARIES_C}" DIRECTORY)
@@ -53,7 +53,7 @@ get_filename_component(NetCDF_lib_dirs "${NetCDF_LIBRARIES_C}" PATH)
 macro (NetCDF_check_interface lang header libs)
 	find_path (NetCDF_INCLUDES_${lang} NAMES ${header} HINTS "${NetCDF_INCLUDES}" NO_DEFAULT_PATH)
   
-	find_library(NetCDF_LIBRARIES_${lang} NAMES ${libs} HINTS "${NetCDF_lib_dirs}" NO_SYSTEM_ENVIRONMENT_PATH)
+	find_library (NetCDF_LIBRARIES_${lang} NAMES ${libs} HINTS "${NetCDF_lib_dirs}")
 
 	mark_as_advanced (NetCDF_LIBRARIES_${lang})
 		

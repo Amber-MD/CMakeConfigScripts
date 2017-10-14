@@ -269,8 +269,8 @@ set(_JNI_NORMAL_JAWT
   )
 
 foreach(search ${_JNI_SEARCHES})
-  find_library(JAVA_JVM_LIBRARY ${_JNI_${search}_JVM} NO_SYSTEM_ENVIRONMENT_PATH)
-  find_library(JAVA_AWT_LIBRARY ${_JNI_${search}_JAWT} NO_SYSTEM_ENVIRONMENT_PATH)
+  find_library(JAVA_JVM_LIBRARY ${_JNI_${search}_JVM})
+  find_library(JAVA_AWT_LIBRARY ${_JNI_${search}_JAWT})
   if(JAVA_JVM_LIBRARY)
     break()
   endif()

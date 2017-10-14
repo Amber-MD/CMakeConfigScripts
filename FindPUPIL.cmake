@@ -12,9 +12,9 @@ include(FindPackageHandleStandardArgs)
 
 
 
-find_library(PUPIL_MAIN_LIB PUPIL NO_SYSTEM_ENVIRONMENT_PATH)
-find_library(PUPIL_BLIND_LIB PUPILBlind NO_SYSTEM_ENVIRONMENT_PATH)
-find_library(PUPIL_TIME_LIB PUPILTime NO_SYSTEM_ENVIRONMENT_PATH)
+find_library(PUPIL_MAIN_LIB PUPIL)
+find_library(PUPIL_BLIND_LIB PUPILBlind)
+find_library(PUPIL_TIME_LIB PUPILTime)
 
 find_package(JNIFixed)
 

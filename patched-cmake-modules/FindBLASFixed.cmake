@@ -105,7 +105,8 @@ macro(Check_Fortran_Libraries LIBRARIES _prefix _name _flags _list _thread)
 					set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES} .so.3gf)
 				endif ()
 			endif ()
-			find_library(${_prefix}_${_library}_LIBRARY NAMES ${_library} NO_SYSTEM_ENVIRONMENT_PATH)
+			find_library(${_prefix}_${_library}_LIBRARY
+				NAMES ${_library})
 				
 			#message("DEBUG: ${_prefix}_${_library}_LIBRARY: ${${_prefix}_${_library}_LIBRARY}, PATHS: ${_libdir}, NAMES: ${_library}")
 			mark_as_advanced(${_prefix}_${_library}_LIBRARY)

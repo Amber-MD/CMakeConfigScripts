@@ -107,7 +107,10 @@ macro(Check_Lapack_Libraries LIBRARIES _prefix _name _flags _list _blas _threads
 					set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES} .so.3gf)
 				endif ()
 			endif ()
-			find_library(${_prefix}_${_library}_LIBRARY NAMES ${_library} PATHS ${_libdir} NO_SYSTEM_ENVIRONMENT_PATH)
+			find_library(${_prefix}_${_library}_LIBRARY
+				NAMES ${_library}
+				PATHS ${_libdir}
+				)
 			mark_as_advanced(${_prefix}_${_library}_LIBRARY)
 			set(${LIBRARIES} ${${LIBRARIES}} ${${_prefix}_${_library}_LIBRARY})
 			set(_libraries_work ${${_prefix}_${_library}_LIBRARY})

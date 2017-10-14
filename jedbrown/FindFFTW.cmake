@@ -26,7 +26,7 @@ set(FFTW_INCLUDES ${FFTW_INCLUDES_SERIAL})
 
 # libraries
 # --------------------------------------------------------------------
-find_library(FFTW_LIBRARIES_SERIAL NAMES fftw3 NO_SYSTEM_ENVIRONMENT_PATH)
+find_library (FFTW_LIBRARIES_SERIAL NAMES fftw3)
 set(FFTW_LIBRARIES ${FFTW_LIBRARIES_SERIAL})
 
 # Fortran component
@@ -48,7 +48,7 @@ endif()
 # MPI component
 # --------------------------------------------------------------------
 if("${FFTW_FIND_COMPONENTS}" MATCHES "MPI")
-	find_library(FFTW_LIBRARIES_MPI NAMES fftw3_mpi NO_SYSTEM_ENVIRONMENT_PATH)
+	find_library(FFTW_LIBRARIES_MPI NAMES fftw3_mpi)
 	list(APPEND FFTW_LIBRARIES ${FFTW_LIBRARIES_MPI})
 	
 	find_path(FFTW_INCLUDES_MPI fftw3-mpi.h)
