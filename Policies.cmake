@@ -1,3 +1,8 @@
+if(POLICY CMP0003)
+	#NEW: always link libraries by full path
+	cmake_policy(SET CMP0003 NEW)
+endif()
+
 if(POLICY CMP0018)
 	#NEW: enable PROPERTY POSITION_INDEPENDENT_CODE
 	cmake_policy(SET CMP0018 NEW)
@@ -29,10 +34,16 @@ if(POLICY CMP0056)
 endif()
 
 if(POLICY CMP0058)
-	#Spoof Ninja dependencies that don't exist in case they are custom command byproducts
+	#OLD: Spoof Ninja dependencies that don't exist in case they are custom command byproducts
 	# We would actually like to set this to the new behavior, but it doesn't exist in CMake 3.1 and we want consistency
 	cmake_policy(SET CMP0058 OLD)
 endif()
+
+if(POLICY CMP0060)
+	#NEW: Link all libraries by full path regardless of implicit dirs
+	cmake_policy(SET CMP0060 NEW)
+endif()
+
 
 if(POLICY CMP0065)
 	#do not export executable symbols by default
