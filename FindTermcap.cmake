@@ -13,7 +13,7 @@ set(TERMCAP_SYMBOL tgetent)
 # check libraries
 
 # skip if user defined on cache
-if(NOT DEFINED TERMCAP_LIBRARY)
+if(NOT (DEFINED TERMCAP_LIBRARY AND EXISTS "${TERMCAP_LIBRARY}"))
 	
 	foreach(POSSIBLE_LIBRARY termcap tinfo ncurses curses gnutermcap)
 		
@@ -27,7 +27,7 @@ if(NOT DEFINED TERMCAP_LIBRARY)
 			check_library_exists(${${POSSIBLE_LIBRARY_UCASE}_LIBRARY} ${TERMCAP_SYMBOL} "" HAVE_TERMCAP_SYMBOL_IN_${POSSIBLE_LIBRARY_UCASE})
 			
 			if(HAVE_TERMCAP_SYMBOL_IN_${POSSIBLE_LIBRARY_UCASE})
-				set(TERMCAP_LIBRARY ${POSSIBLE_LIBRARY_UCASE}_LIBRARY)
+				set(TERMCAP_LIBRARY ${${POSSIBLE_LIBRARY_UCASE}_LIBRARY})
 				
 				break()
 			endif()
