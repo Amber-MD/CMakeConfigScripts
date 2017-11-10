@@ -115,12 +115,33 @@ Either disable BUILD_PYTHON, or set PYTHON_EXECUTABLE to point to a compatible P
 	endif()
 	
 	# Amber's Python programs must be installed with the PYTHONPATH set to the install directory
-	# pass this arg to cmake -E env to make it so
-	if(WIN32)
-		set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/site-packages\"")
-	else()
-		set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages\"")
+	# so determine the Python prefix relative to AMBERHOME
+	
+	if(NOT DEFINED RELATIVE_PYTHONPATH)
+	
+		# command modified from here: https://stackoverflow.com/questions/122327/how-do-i-find-the-location-of-my-python-site-packages-directory
+		execute_process(
+			COMMAND "${PYTHON_EXECUTABLE}" 
+				-c "import os; import sys; print(os.path.dirname(os.__file__).replace(sys.prefix, '') + '/site-packages')"
+			RESULT_VARIABLE PYTHONPATH_CMD_RESULT
+			OUTPUT_VARIABLE PYTHONPATH_CMD_OUTPUT
+			ERROR_VARIABLE PYTHONPATH_CMD_STDERR
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+		
+		if(NOT "${PYTHONPATH_CMD_RESULT}" EQUAL 0)
+			message(FATAL_ERROR "Failed to determine relative PYTHONPATH: python command failed with error ${PYTHONPATH_CMD_STDERR}")
+		endif()
+		
+		# cnvert backslashes to forward slashes
+		file(TO_CMAKE_PATH "${PYTHONPATH_CMD_OUTPUT}" PYTHONPATH_CMD_OUTPUT)
+		
+		message(STATUS "Python relative site-packages location: <prefix>${PYTHONPATH_CMD_OUTPUT}")
+		
+		set(PYTHON_INSTALL_DIR "${PYTHONPATH_CMD_OUTPUT}" CACHE INTERNAL "Install folder of Python modules relative to the prefix they're installed to with setup.py install --prefix.")
 	endif()
+		
+	set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}${PYTHON_INSTALL_DIR}\"")
+	
 	
 	# argument to force Python packages to get installed into the Amber install dir
 	set(PYTHON_PREFIX_ARG \"--prefix=\${CMAKE_INSTALL_PREFIX_BS}\")
