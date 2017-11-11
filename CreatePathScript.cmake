@@ -34,8 +34,10 @@ set PERL5LIB=%AMBERHOME%\\${PERL_MODULE_DIR_WIN}")
 
 	# python path
 	if(BUILD_PYTHON)
+	
+		string(REPLACE "/" "\\" RELATIVE_PYTHONPATH_WIN "${PREFIX_RELATIVE_PYTHONPATH}")
 		file(APPEND ${VAR_FILE_BAT} "
-set PYTHONPATH=%AMBERHOME%\\lib\\site-packages")
+set PYTHONPATH=%AMBERHOME%${RELATIVE_PYTHONPATH_WIN}")
 	endif()
 	
 	install(PROGRAMS ${VAR_FILE_BAT} DESTINATION ".")
@@ -112,18 +114,18 @@ setenv LD_LIBRARY_PATH \"\${LD_LIBRARY_PATH}:\${AMBERHOME}/\"")
 	
 # Add location of Amber Python modules to default Python search path
 if [ -z \"\$PYTHONPATH\" ]; then
-	export PYTHONPATH=\"\${AMBERHOME}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages\"
+	export PYTHONPATH=\"\${AMBERHOME}${PREFIX_RELATIVE_PYTHONPATH}\"
 else
-	export PYTHONPATH=\"\${AMBERHOME}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages:\${PYTHONPATH}\"
+	export PYTHONPATH=\"\${AMBERHOME}${PREFIX_RELATIVE_PYTHONPATH}:\${PYTHONPATH}\"
 fi")
 		
 		file(APPEND ${SOURCE_FILE_CSH} "
 
 # Add location of Amber Python modules to default Python search path
 if( ! (\$?PYTHONPATH) ) then
-	setenv PYTHONPATH \"\${AMBERHOME}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages\"
+	setenv PYTHONPATH \"\${AMBERHOME}${PREFIX_RELATIVE_PYTHONPATH}\"
 else
-	setenv PYTHONPATH \"\${AMBERHOME}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages:\${PYTHONPATH}\"
+	setenv PYTHONPATH \"\${AMBERHOME}${PREFIX_RELATIVE_PYTHONPATH}:\${PYTHONPATH}\"
 endif")
 	endif()
 	

@@ -117,12 +117,21 @@ Either disable BUILD_PYTHON, or set PYTHON_EXECUTABLE to point to a compatible P
 	# Amber's Python programs must be installed with the PYTHONPATH set to the install directory
 	# so determine the Python prefix relative to AMBERHOME
 	
-	if(NOT DEFINED RELATIVE_PYTHONPATH)
+	if(NOT DEFINED PREFIX_RELATIVE_PYTHONPATH)
 	
-		# command modified from here: https://stackoverflow.com/questions/122327/how-do-i-find-the-location-of-my-python-site-packages-directory
+		# determine key for INSTALL_SCHEMES
+		if(TARGET_WINDOWS)
+			set(SCHEME_KEY "nt")
+		else()
+			set(SCHEME_KEY "unix_prefix")
+		endif()
+	
+		# this was REALLY hard to figure out.  Seriously, I've created entire programs' build files in less time than it took to get this command working on all systems.
+		# This command peeks into the guts of distutils to see what the package installer thinks the install prefix is.
+		# Any solution involving sys.prefix doesn't work on all Linux distros since that seems to be incorrect on some installations
 		execute_process(
 			COMMAND "${PYTHON_EXECUTABLE}" 
-				-c "import os; import sys; print(os.path.dirname(os.__file__).replace(sys.prefix, '') + '/site-packages')"
+				-c "import sys; from distutils.command.install import INSTALL_SCHEMES; print(INSTALL_SCHEMES['${SCHEME_KEY}']['purelib'].replace('$py_version_short', (str.split(sys.version))[0][0:3]).replace('$base', ''))"
 			RESULT_VARIABLE PYTHONPATH_CMD_RESULT
 			OUTPUT_VARIABLE PYTHONPATH_CMD_OUTPUT
 			ERROR_VARIABLE PYTHONPATH_CMD_STDERR
@@ -137,10 +146,10 @@ Either disable BUILD_PYTHON, or set PYTHON_EXECUTABLE to point to a compatible P
 		
 		message(STATUS "Python relative site-packages location: <prefix>${PYTHONPATH_CMD_OUTPUT}")
 		
-		set(PYTHON_INSTALL_DIR "${PYTHONPATH_CMD_OUTPUT}" CACHE INTERNAL "Install folder of Python modules relative to the prefix they're installed to with setup.py install --prefix.")
+		set(PREFIX_RELATIVE_PYTHONPATH "${PYTHONPATH_CMD_OUTPUT}" CACHE INTERNAL "Install folder of Python modules relative to the prefix they're installed to with setup.py install --prefix.")
 	endif()
 		
-	set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}${PYTHON_INSTALL_DIR}\"")
+	set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}${PREFIX_RELATIVE_PYTHONPATH}\"")
 	
 	
 	# argument to force Python packages to get installed into the Amber install dir
