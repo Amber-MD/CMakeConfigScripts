@@ -3,7 +3,7 @@
 # Must be included after PythonConfig.cmake
 
 # The updater requires python.  Python builds don't have to be enabled, we just need to have the interpereter
-if(NOT BUILD_PYTHON)
+if(NOT HAS_PYTHON)
 	return()
 endif()
 
