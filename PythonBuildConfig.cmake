@@ -38,7 +38,8 @@ if(BUILD_PYTHON)
 			endif()
 		endforeach()
 		
-		set(ERROR_MESSAGE "${ERROR_MESSAGE}.  Please install these and try again, or set USE_MINICONDA to TRUE to create a python environment automatically.")
+		set(ERROR_MESSAGE "${ERROR_MESSAGE}.  Please install these and try again.  If you cannot install them, you may set BUILD_PYTHON to FALSE to \
+skip building Python packages, or set DOWNLOAD_MINICONDA to TRUE to create a python environment automatically.")
 		
 		message(FATAL_ERROR ${ERROR_MESSAGE})
 	endif()
@@ -50,7 +51,7 @@ if(BUILD_PYTHON)
 	
 	if(NOT HAVE_TKINTER)
 		message(FATAL_ERROR "Could not find the Python Tkinter package.  You must install tk through your package manager (python-tk on Ubuntu, tk on Arch),\
- and the tkinter Python package will get installed.  If you cannot get Tkinter, disable BUILD_PYTHON to skip building Python packages, or enable USE_MINICONDA.")
+ and the tkinter Python package will get installed.  If you cannot get Tkinter, disable BUILD_PYTHON to skip building Python packages, or enable DOWNLOAD_MINICONDA.")
 	endif()
 	
 	# --------------------------------------------------------------------

@@ -15,8 +15,16 @@ if(EXISTS "${CONDA}")
 	get_filename_component(ANACONDA_BIN "${CONDA}" DIRECTORY)
 	get_filename_component(ANACONDA_ROOT "${ANACONDA_BIN}/.." REALPATH)
 	
-	message(STATUS "Found system Anaconda at ${ANACONDA_ROOT}.  It will be used as a Python interpereter, and for additional shared libraries")
+	message(STATUS "Found system Anaconda at ${ANACONDA_ROOT}.  It will be used as a Python interpereter, and for additional shared libraries.")
 	message(STATUS "It is not possible to avoid using Anaconda if it is on the PATH.  To build Amber without using Anaconda, remove it from your PATH.")
+	message(STATUS "To use a different Anaconda install, just move it to the front of your PATH and rerun CMake.")
+	message(STATUS "To change the Python interpreter in use to a different one inside Anaconda, set the PYTHON_EXECUTABLE variable to point to it.")
+	
+	if(DEFINED DOWNLOAD_MINICONDA)
+		if(DOWNLOAD_MINICONDA)
+			message(WARNING "DOWNLOAD_MINICONDA is TRUE, but this will be ignored because Anaconda was found on your path.")
+		endif()
+	endif() 
 	
 	list(APPEND CMAKE_LIBRARY_PATH "${ANACONDA_ROOT}/lib")
 	list(APPEND CMAKE_LIBRARY_PATH "${ANACONDA_ROOT}/include")
@@ -53,9 +61,9 @@ endif()
 # --------------------------------------------------------------------
 # Find the actual interpreter
 
-if(DOWNLOAD_MINICONDA)
+if((NOT USING_SYSTEM_ANACONDA) AND DOWNLOAD_MINICONDA)
 	set(MINICONDA_VERSION 4.3.21) 
-	option(MINICONDA_USE_PY3 "If true, Amber will download a Python 3 miniconda when USE_MINICONDA is enabled.  Otherwise, Python 2.7 Miniconda will get downloaded." FALSE)
+	option(MINICONDA_USE_PY3 "If true, Amber will download a Python 3 miniconda when DOWNLOAD_MINICONDA is enabled.  Otherwise, Python 2.7 Miniconda will get downloaded." FALSE)
 	
 	include(UseMiniconda)
 	download_and_use_miniconda()

@@ -66,9 +66,9 @@ elseif(${PACKAGE_TYPE} STREQUAL WINDOWS_INSTALLER)
 	
 	# Miniconda warning
 	# --------------------------------------------------------------------
-	if(USE_MINICONDA)
+	if(DOWNLOAD_MINICONDA)
 		message(WARNING "You are using Miniconda and are trying to build a NSIS windows installer package.  Miniconda drives the installer over the 1GB limit and \
-this will cause the packaging process to fail.  Please disable USE_MINICONDA  and use a system Python, or, if miniconda is absolutely required, switch to an ARCHIVE package.")
+this will cause the packaging process to fail.  Please disable DOWNLOAD_MINICONDA  and use a system Python, or, if miniconda is absolutely required, switch to an ARCHIVE package.")
 	endif()
 	
 	# startup file

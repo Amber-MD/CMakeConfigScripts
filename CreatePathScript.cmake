@@ -8,7 +8,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
 	set(VAR_FILE_BAT ${CMAKE_CURRENT_BINARY_DIR}/amber.bat)
 	
 	# Miniconda needs to be added to that path if we're using it
-	if(USE_MINICONDA)
+	if(DOWNLOAD_MINICONDA)
 		set(MINICONDA_EXTRA_PATH_FOLDERS "%AMBERHOME%\\miniconda;%AMBERHOME%\\miniconda\\Scripts;")
 	else()
 		set(MINICONDA_EXTRA_PATH_FOLDERS "")
@@ -63,7 +63,7 @@ else()
 	endif() 
 	
 	# if we're using minconda, we need to add that to the path
-	if(USE_MINICONDA)
+	if(DOWNLOAD_MINICONDA)
 		set(MINICONDA_PATH_PART "\${AMBERHOME}/miniconda/bin:")
 	else()
 		set(MINICONDA_PATH_PART "")
