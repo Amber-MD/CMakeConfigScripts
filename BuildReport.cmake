@@ -65,6 +65,11 @@ function(print_build_report)
 	
 	if(DEFINED BUILD_PYTHON)
 	color_print_bool("Build Python Programs:  " ${BUILD_PYTHON})
+	if(DOWNLOAD_MINICONDA)
+	colormsg(" -Python Interpreter:   " HIBLUE "Internal Miniconda")
+	else()
+	colormsg(" -Python Interpreter:   " HIBLUE "${PYTHON_EXECUTABLE}")
+	endif()
 	endif()
 	
 	if(DEFINED BUILD_PERL)

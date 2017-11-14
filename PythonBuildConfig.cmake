@@ -1,5 +1,12 @@
 
-option(BUILD_PYTHON "Whether to build the Python programs and libraries." TRUE)
+option(BUILD_PYTHON "Whether to build the Python programs and libraries." ${HAS_PYTHON})
+
+if(BUILD_PYTHON AND NOT HAS_PYTHON)
+	message(WARNING "BUILD_PYTHON is enabled, but python was not found.  Python packages will be disabled until Python is found.")
+	
+	# create a local variable shadowing the cache variable
+	set(BUILD_PYTHON FALSE)
+endif()
 
 if(BUILD_PYTHON)
 	
@@ -77,7 +84,7 @@ skip building Python packages, or set DOWNLOAD_MINICONDA to TRUE to create a pyt
 	# Amber's Python programs must be installed with the PYTHONPATH set to the install directory
 	# so determine the Python prefix relative to AMBERHOME
 	
-	if(NOT DEFINED PREFIX_RELATIVE_PYTHONPATH)
+	if(NOT ((DEFINED PREFIX_RELATIVE_PYTHONPATH) AND ("${PYTHON_EXECUTABLE}" STREQUAL "${PY_INTERP_FOR_RELATIVE_PYTHONPATH}")))
 	
 		# determine key for INSTALL_SCHEMES
 		if(TARGET_WINDOWS)
@@ -107,6 +114,8 @@ skip building Python packages, or set DOWNLOAD_MINICONDA to TRUE to create a pyt
 		message(STATUS "Python relative site-packages location: <prefix>${PYTHONPATH_CMD_OUTPUT}")
 		
 		set(PREFIX_RELATIVE_PYTHONPATH "${PYTHONPATH_CMD_OUTPUT}" CACHE INTERNAL "Install folder of Python modules relative to the prefix they're installed to with setup.py install --prefix.")
+		
+		set(PY_INTERP_FOR_RELATIVE_PYTHONPATH ${PYTHON_EXECUTABLE} CACHE INTERNAL "The python interpreter used to run the PREFIX_RELATIVE_PYTHONPATH check" FORCE)
 	endif()
 		
 	set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}${PREFIX_RELATIVE_PYTHONPATH}\"")
