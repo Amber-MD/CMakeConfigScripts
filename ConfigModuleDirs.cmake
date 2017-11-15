@@ -19,13 +19,13 @@ function(config_module_dirs TARGETNAME TARGET_MODULE_DIR) #3rd optional argument
 	set(LEFTOVER_INT_INC_DIRS "")
 	
 	foreach(DIR ${PREV_INC_DIRS})
-		if(NOT "${DIR}" MATCHES "amber-submodules/")
+		if(NOT "${DIR}" MATCHES "amber-modules/")
 			list(APPEND LEFTOVER_INC_DIRS ${DIR})
 		endif()
 	endforeach()
 	
 	foreach(DIR ${PREV_INT_INC_DIRS})
-		if(NOT "${DIR}" MATCHES "amber-submodules/")
+		if(NOT "${DIR}" MATCHES "amber-modules/")
 			list(APPEND LEFTOVER_INT_INC_DIRS ${DIR})
 		endif()
 	endforeach()
