@@ -22,7 +22,7 @@ if(EXISTS "${CONDA}")
 	
 	if(DEFINED DOWNLOAD_MINICONDA)
 		if(DOWNLOAD_MINICONDA)
-			message(WARNING "DOWNLOAD_MINICONDA is TRUE, but this will be ignored because Anaconda was found on your path.")
+			message(FATAL_ERROR "DOWNLOAD_MINICONDA is TRUE, but this will be ignored because Anaconda was found on your path.  Please set it to FALSE, or remove Anaconda from your PATH.")
 		endif()
 	endif() 
 	
