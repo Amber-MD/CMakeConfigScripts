@@ -46,6 +46,24 @@ if(NOT DEFINED MKL_HOME)
 	endif()
 endif()
 
+# local version of import_library() that does not add to the library tracker
+#usage: import_library(<library name> <library path> [include dir 1] [include dir 2]...)
+function(mkl_import_library NAME PATH) #3rd arg: INCLUDE_DIRS
+	
+	#Try to figure out whether it is shared or static.
+	get_lib_type(${PATH} LIB_TYPE)
+
+	if("${LIB_TYPE}" STREQUAL "STATIC")
+		add_library(${NAME} STATIC IMPORTED GLOBAL)
+	else()
+		add_library(${NAME} SHARED IMPORTED GLOBAL)
+	endif()
+
+	set_property(TARGET ${NAME} PROPERTY IMPORTED_LOCATION ${PATH})
+	set_property(TARGET ${NAME} PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${ARGN})
+	
+endfunction(mkl_import_library)
+
 ######################### Headers #######################
 
 # Find include dir
@@ -108,9 +126,9 @@ else()
     set(MKL_INTERFACE_LIBNAMES mkl_intel mkl_intel_lp64)
 endif()
 
-find_library(MKL_INTERFACE_LIBRARY NAMES ${MKL_INTERFACE_LIBNAMES} PATHS ${MKL_LIB_PATHS})
+find_library(MKL_INTERFACE_LIBRARY NAMES ${MKL_INTERFACE_LIBNAMES} HINTS ${MKL_LIB_PATHS})
 
-find_library(MKL_GFORTRAN_INTERFACE_LIBRARY NAMES mkl_gf mkl_gf_lp64 PATHS ${MKL_LIB_PATHS})
+find_library(MKL_GFORTRAN_INTERFACE_LIBRARY NAMES mkl_gf mkl_gf_lp64 HINTS ${MKL_LIB_PATHS})
 	
 # gfortran specifically needs a seperate library
 if(MKL_USE_GNU_COMPAT)
@@ -120,17 +138,17 @@ else()
 endif()
 
 if(MKL_INTERFACE_LIBRARY)
-	import_library(mkl::interface ${MKL_INTERFACE_LIBRARY} ${MKL_INCLUDE_DIR_FOR_IMPLIB})
+	mkl_import_library(mkl::interface ${MKL_INTERFACE_LIBRARY} ${MKL_INCLUDE_DIR_FOR_IMPLIB})
 endif()
 
 if(${MKL_FORTRAN_INTERFACE_LIBRARY})
-	import_library(mkl::fortran_interface ${${MKL_FORTRAN_INTERFACE_LIBRARY}} ${MKL_INCLUDE_DIR_FOR_IMPLIB})
+	mkl_import_library(mkl::fortran_interface ${${MKL_FORTRAN_INTERFACE_LIBRARY}} ${MKL_INCLUDE_DIR_FOR_IMPLIB})
 endif()
 
 ######################## Threading layer ########################
-find_library(MKL_SEQUENTIAL_THREADING_LIBRARY mkl_sequential PATHS ${MKL_LIB_PATHS})
-find_library(MKL_INTEL_THREADING_LIBRARY mkl_intel_thread PATHS ${MKL_LIB_PATHS})
-find_library(MKL_GNU_THREADING_LIBRARY mkl_gnu_thread PATHS ${MKL_LIB_PATHS})
+find_library(MKL_SEQUENTIAL_THREADING_LIBRARY mkl_sequential HINTS ${MKL_LIB_PATHS})
+find_library(MKL_INTEL_THREADING_LIBRARY mkl_intel_thread HINTS ${MKL_LIB_PATHS})
+find_library(MKL_GNU_THREADING_LIBRARY mkl_gnu_thread HINTS ${MKL_LIB_PATHS})
 
 if(MKL_MULTI_THREADED)
 	if(MKL_USE_GNU_COMPAT)
@@ -143,25 +161,25 @@ else()
 endif()
 
 if(${MKL_THREADING_LIBRARY})
-	import_library(mkl::threading "${${MKL_THREADING_LIBRARY}}" ${MKL_INCLUDE_DIR_FOR_IMPLIB})
+	mkl_import_library(mkl::threading "${${MKL_THREADING_LIBRARY}}" ${MKL_INCLUDE_DIR_FOR_IMPLIB})
 endif()
 
 ####################### Computational layer #####################
-find_library(MKL_CORE_LIBRARY mkl_core PATHS ${MKL_LIB_PATHS})
+find_library(MKL_CORE_LIBRARY mkl_core HINTS ${MKL_LIB_PATHS})
 
 if(MKL_CORE_LIBRARY)
-	import_library(mkl::core "${MKL_CORE_LIBRARY}" ${MKL_INCLUDE_DIR_FOR_IMPLIB})
+	mkl_import_library(mkl::core "${MKL_CORE_LIBRARY}" ${MKL_INCLUDE_DIR_FOR_IMPLIB})
 endif()
 
 if(MKL_NEEDEXTRA)
-	find_library(MKL_FFT_LIBRARY mkl_cdft_core PATHS ${MKL_LIB_PATHS})
-	find_library(MKL_SCALAPACK_LIBRARY mkl_scalapack_core mkl_scalapack_lp64 PATHS ${MKL_LIB_PATHS})
+	find_library(MKL_FFT_LIBRARY mkl_cdft_core HINTS ${MKL_LIB_PATHS})
+	find_library(MKL_SCALAPACK_LIBRARY mkl_scalapack_core mkl_scalapack_lp64 HINTS ${MKL_LIB_PATHS})
 	
 	if(MKL_FFT_LIBRARY)
-		import_library(mkl::cdft "${MKL_FFT_LIBRARY}" ${MKL_INCLUDE_DIR_FOR_IMPLIB})
+		mkl_import_library(mkl::cdft "${MKL_FFT_LIBRARY}" ${MKL_INCLUDE_DIR_FOR_IMPLIB})
 	endif()
 	if(MKL_SCALAPACK_LIBRARY)
-		import_library(mkl::scalapack "${MKL_SCALAPACK_LIBRARY}" ${MKL_INCLUDE_DIR_FOR_IMPLIB})
+		mkl_import_library(mkl::scalapack "${MKL_SCALAPACK_LIBRARY}" ${MKL_INCLUDE_DIR_FOR_IMPLIB})
 	endif()
 endif()
 
@@ -218,7 +236,7 @@ set(CMAKE_FIND_LIBRARY_SUFFIXES ${_MKL_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES})
 
 
 # link libdl if it exists
-find_library(LIBDL dl PATHS "")
+find_library(LIBDL dl HINTS "")
 if(LIBDL)
     check_library_exists(dl dlopen ${LIBDL} HAVE_LIBDL)
 else()
