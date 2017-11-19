@@ -213,5 +213,5 @@ endfunction(check_all_symbols)
 
 # print a variable and its value.  Useful for debugging.
 function(printvar VARNAME)
-	message("${VARNAME}: ${${VARNAME}}")
+	message("${VARNAME}: \"${${VARNAME}}\"")
 endfunction(printvar)

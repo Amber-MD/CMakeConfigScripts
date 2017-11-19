@@ -62,11 +62,11 @@ else()
 		set(LIB_PATH_VAR LD_LIBRARY_PATH)
 	endif() 
 	
+	set(EXTRA_PATH_PART "")
+	
 	# if we're using minconda, we need to add that to the path
 	if(DOWNLOAD_MINICONDA)
-		set(MINICONDA_PATH_PART "\${AMBERHOME}/miniconda/bin:")
-	else()
-		set(MINICONDA_PATH_PART "")
+		set(EXTRA_PATH_PART "\${AMBERHOME}/miniconda/bin:")
 	endif()
     
     # NOTE: we can't (always) use $0 to find the path to the script because it is being sourced
@@ -89,7 +89,7 @@ else
 fi
 
 export AMBERHOME=$(cd \"$(dirname \"$this_script\")\"; pwd)
-export PATH=\"\${AMBERHOME}/bin:${MINICONDA_PATH_PART}\${PATH}\"
+export PATH=\"\${AMBERHOME}/bin:${EXTRA_PATH_PART}\${PATH}\"
 export ${LIB_PATH_VAR}=\"$LD_LIBRARY_PATH:$AMBERHOME/lib\"") 
 	
 	#Since CMake sets libraries' rpath, you'd think you wouldn't need to set LD_LIBRARY_PATH

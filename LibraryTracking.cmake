@@ -1,5 +1,5 @@
 # Across the build system, we need to keep track of which libraries we are using, for two reasons:
-# 1. Installers and packages need to bundle them or depend on them.
+# 1. Installers and packages need to bundle them.
 # 2. Nab needs to know which libraries to link to things it builds.
 
 # Here, we create macros for recording which external libraries are used.
@@ -15,77 +15,6 @@
 set(USED_LIB_RUNTIME_PATH "" CACHE INTERNAL "Paths to shared libraries needed at runtime" FORCE) # Path to a .so, .dylib, or .dll library.  "<none>" if the library is static only.
 set(USED_LIB_LINKTIME_PATH "" CACHE INTERNAL "Paths to shared libraries needed at link time" FORCE) # Path to a .a or .lib static library, or an import library
 set(USED_LIB_NAME "" CACHE INTERNAL "Names of used shared libraries" FORCE) # contains the library names as supplied to the linker.
-
-# linker flag prefix -- if a link library starts with this character, it will be ignored by import_libraries()
-# this is needed because FindMKL can return linker flags mixed with its libraries (which is actually the official CMake way of doing things)
-if(TARGET_WINDOWS AND NOT MINGW)
-	set(LINKER_FLAG_PREFIX "/")  # stupid illogical MSVC command-line format...
-else()
-	set(LINKER_FLAG_PREFIX "-")
-endif()
-
-# utility functions
-# --------------------------------------------------------------------
-
-#Unfortunately, CMake doesn't let you import a library without knowing whether it is shared or static, and there's no easy way to tell which it is.
-#sets OUTPUT_VARAIBLE to "IMPORT", "SHARED", or "STATIC" depending on the library passed
-function(get_lib_type LIBRARY OUTPUT_VARIABLE)
-
-	if(NOT EXISTS ${LIBRARY})
-		message(FATAL_ERROR "get_lib_type(): library ${LIBRARY} does not exist!")
-	endif()
-
-	get_filename_component(LIB_NAME ${LIBRARY} NAME)
-	
-	# first, check for import libraries
-	if(TARGET_WINDOWS)
-		if(MINGW)
-			# on MinGW, import libraries have a different file extension, so our job is easy.
-			if(${LIB_NAME} MATCHES ".*${CMAKE_IMPORT_LIBRARY_SUFFIX}")
-				set(${OUTPUT_VARIABLE} IMPORT PARENT_SCOPE)
-				return()
-			endif()
-		else() # MSVC, Intel, or some other Windows compiler
-			
-			# we have to work a little harder, and use Dumpbin to check the library type, since import and static libraries have the same extensions
-			find_program(DUMPBIN dumpbin)
-			
-			if(NOT DUMPBIN)
-				message(FATAL_ERROR "The Microsoft Dumpbin tool was not found.  It is needed to analyze libraries, so please set the DUMPBIN variable to point to it.")
-			endif()
-			
-			execute_process(COMMAND ${DUMPBIN} OUTPUT_VARIABLE DUMPBIN_OUTPUT ERROR_VARIABLE DUMPBIN_ERROUT RESULT_VARIABLE DUMPBIN_RESULT)
-			
-			# sanity check
-			if(NOT ${DUMPBIN_RESULT} EQUAL 0)
-				message(FATAL_ERROR "Could not analyze the type of library ${LIBRARY}: dumpbin failed to execute with error message ${DUMPBIN_ERROUT}")
-			endif()
-			
-			# check for dynamic symbol entries
-			# https://stackoverflow.com/questions/488809/tools-for-inspecting-lib-files
-			if("${DUMPBIN_OUTPUT}" MATCHES "Symbol name  :")
-				# found one!  It's an import library!
-				set(${OUTPUT_VARIABLE} IMPORT PARENT_SCOPE)
-			else()
-				# by process of elimination, it's a static library
-				set(${OUTPUT_VARIABLE} STATIC PARENT_SCOPE)
-			endif()
-			
-			return()
-		endif()
-	endif()
-	
-	# now we can figure the rest out by suffix matching
-	if(${LIB_NAME} MATCHES ".*${CMAKE_SHARED_LIBRARY_SUFFIX}")
-		set(${OUTPUT_VARIABLE} SHARED PARENT_SCOPE)
-	elseif(${LIB_NAME} MATCHES ".*${CMAKE_STATIC_LIBRARY_SUFFIX}")
-		set(${OUTPUT_VARIABLE} STATIC PARENT_SCOPE)
-	else()
-		message(FATAL_ERROR "Could not determine whether \"${LIBRARY}\" is a static or shared library, it does not have a known suffix.")
-	endif()
-	
-	#printvar(${OUTPUT_VARIABLE})
-endfunction(get_lib_type)
 
 # Like using_external_library, but accepts multiple paths.
 macro(using_external_libraries)	
@@ -104,30 +33,9 @@ function(using_external_library LIBPATH)
 	endif()
 	
 	if(NOT ("${USED_LIB_RUNTIME_PATH}" MATCHES "${LIBPATH}" OR "${USED_LIB_LINKTIME_PATH}" MATCHES "${LIBPATH}"))
-		get_lib_type("${LIBPATH}" LIB_TYPE)
-
-		# Figure out the library name that you'd feed to the linker from the filename
-		# --------------------------------------------------------------------
-	
-		# get full library name
-		get_filename_component(LIBNAME ${LIBPATH} NAME)
-	
-		#remove prefix
-		string(REGEX REPLACE "^lib" "" LIBNAME ${LIBNAME})
-	
-		#remove numbers after the file extension
-		string(REGEX REPLACE "(\\.[0-9])+$" "" LIBNAME ${LIBNAME})
 		
-		#remove the file extension
-	
-		if("${LIB_TYPE}" STREQUAL "IMPORT")
-			string(REGEX REPLACE "${CMAKE_IMPORT_LIBRARY_SUFFIX}$" "" LIBNAME ${LIBNAME})
-		elseif("${LIB_TYPE}" STREQUAL "STATIC")
-			string(REGEX REPLACE "${CMAKE_STATIC_LIBRARY_SUFFIX}\$" "" LIBNAME ${LIBNAME})
-		else()
-			string(REGEX REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}\$" "" LIBNAME ${LIBNAME})
-		endif()
-	
+		get_lib_type("${LIBPATH}" LIB_TYPE)
+		get_linker_name(${LIBPATH} LIBNAME)
 	
 		# if we are on Windows, we need to find the corresponding .dll library if we got an import library
 		# --------------------------------------------------------------------
@@ -248,11 +156,10 @@ function(import_libraries NAME)
 	set_property(TARGET ${NAME} PROPERTY INTERFACE_LINK_LIBRARIES ${IMP_LIBS_LIBRARIES})
 	set_property(TARGET ${NAME} PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${IMP_LIBS_INCLUDES})
 	
-	# we don't want to add generator expressions to the library tracker...
-	string(GENEX_STRIP "${IMP_LIBS_LIBRARIES}" IMP_LIBS_LIBRARIES_NO_GENEX)
+	resolve_cmake_library_list(LIBRARY_PATHS ${IMP_LIBS_LIBRARIES})
 	
 	# add to library tracker
-	foreach(LIBRARY ${IMP_LIBS_LIBRARIES_NO_GENEX})
+	foreach(LIBRARY ${LIBRARY_PATHS})
 		if("${LIBRARY}" MATCHES "^${LINKER_FLAG_PREFIX}")
 			# linker flag -- ignore
 			
@@ -260,26 +167,7 @@ function(import_libraries NAME)
 			# full path to library
 			using_external_library("${LIBRARY}")
 			
-		elseif(TARGET "${LIBRARY}")
-			
-			get_property(TARGET_LIB_TYPE TARGET ${LIBRARY} PROPERTY TYPE)
-			
-			# it's an error to check if an interface library has an imported location
-			if(NOT "${TARGET_LIB_TYPE}" STREQUAL "INTERFACE_LIBRARY")
-				
-				get_property(LIBRARY_HAS_IMPORTED_LOCATION TARGET ${LIBRARY} PROPERTY IMPORTED_LOCATION SET)
-				if(LIBRARY_HAS_IMPORTED_LOCATION)
-					# CMake imported target
-					get_property(LIBRARY_IMPORTED_LOCATION TARGET ${LIBRARY} PROPERTY IMPORTED_LOCATION)
-					using_external_library("${LIBRARY_IMPORTED_LOCATION}")
-					
-				endif()
-				
-				# else it's a CMake target that is built by this project -- ignore
-			
-			endif()
 		endif()
-		# otherwise it's a library name to find on the linker search path (using CMake in "naive mode")
 	endforeach()
 	
 
