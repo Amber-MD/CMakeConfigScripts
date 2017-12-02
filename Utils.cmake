@@ -10,9 +10,8 @@ endmacro(list_to_space_separated)
 #only works on UNIX
 macro(installtime_create_symlink FILE SYMLINK) # 3rd optional arg: COMPONENT
 	#cmake -E create_symlink doesn't work on non-UNIX OS's
-	#being able to build automake programs is a good indicator of unix-ness
 	
-	if(NOT CAN_BUILD_AUTOMAKE) 
+	if(HOST_WINDOWS) 
 		message(FATAL_ERROR "installtime_create_symlink called on a non-UNIX platform")
 	endif()
 	

@@ -57,8 +57,11 @@ If you want Amber to work on systems without MinGW installed, then you may have 
 	
 	# get rid of any "<none>" elements in the runtime path list	
 	set(USED_DLLS ${USED_LIB_RUNTIME_PATH})
-	list(REMOVE_ITEM USED_DLLS <none>)
-	list(REMOVE_ITEM USED_DLLS <unknown>)
+	
+	if(NOT "${USED_DLLS}" STREQUAL "")
+		list(REMOVE_ITEM USED_DLLS <none>)
+		list(REMOVE_ITEM USED_DLLS <unknown>)
+	endif()
 	
 	list(APPEND DLLS_TO_BUNDLE ${USED_DLLS}) 
 	
