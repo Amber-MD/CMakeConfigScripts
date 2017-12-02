@@ -22,7 +22,7 @@ find_package(FLEX REQUIRED)
 #------------------------------------------------------------------------------
 find_program(BASH bash)
 
-if(BASH AND NOT WIN32)
+if(BASH AND NOT HOST_WINDOWS)
 	set(AUTOMAKE_DEFAULT TRUE)
 else()
 	set(AUTOMAKE_DEFAULT FALSE)

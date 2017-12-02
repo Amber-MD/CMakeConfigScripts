@@ -327,10 +327,15 @@ if(NEED_xblas)
 	
 	if(XBLAS_LIBRARY)
 		set_3rdparty(xblas EXTERNAL)
-	elseif(CAN_BUILD_AUTOMAKE)
-		set_3rdparty(xblas INTERNAL)
 	else()
-		set_3rdparty(xblas DISABLED)
+		message(STATUS "Could NOT find xblas.  Please set XBLAS_LIBRARY to point to libxblas.a.")
+		
+		if(EXISTS "${M4}")
+			set_3rdparty(xblas INTERNAL)
+		else()
+			message(STATUS "Internal xblas cannot build since m4 was not found.")
+			set_3rdparty(xblas DISABLED)
+		endif()
 	endif()
 endif()
 
