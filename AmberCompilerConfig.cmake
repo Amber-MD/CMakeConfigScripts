@@ -1,7 +1,7 @@
 #This file sets the (cross) compiler based on the COMPILER and TARGET variables
 
 #create COMPILER option
-set(COMPILER "auto" CACHE STRING "Compiler to build Amber with.  Valid values: gnu, intel, pgi, cray, clang, auto.  If 'auto', autodetect the host compiler, or use the CC,CXX,and FC variables if they are set.
+set(COMPILER "auto" CACHE STRING "Compiler to build Amber with.  Valid values: gnu, intel, pgi, cray, clang, auto, manual.  If 'auto', autodetect the host compiler, or use the CC,CXX,and FC variables if they are set.
  This option can ONLY be set the first time CMake is run.  If you want to change it, delete the build directory and start over.")
 
 option(CROSSCOMPILE "Whether to crosscompile.  If true, assume that executables built by the compiler cannot run on the build system.") 
@@ -26,9 +26,9 @@ if(CROSSCOMPILE)
 	endif()
 	
 	#check if the compiler can crosscompile
-	list_contains(CAN_CROSSCOMPILE ${COMPILER} gnu clang)
+	list_contains(CAN_CROSSCOMPILE ${COMPILER} gnu clang manual)
 	if(NOT CAN_CROSSCOMPILE)
-		message(FATAL_ERROR "Cannot crosscompile with compiler ${COMPILER}.  Please explicitly set COMPILER to either gnu or clang.")
+		message(FATAL_ERROR "Cannot crosscompile with compiler ${COMPILER}.  Please explicitly set COMPILER to either gnu, clang, or manual.")
 	endif()
 	
 	if("${CMAKE_SYSTEM_NAME}" STREQUAL "")
