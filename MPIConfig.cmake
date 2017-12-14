@@ -22,14 +22,20 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		message("If these are not the correct MPI wrappers, then set MPI_<language>_COMPILER to the correct wrapper and reconfigure.")
 	endif()
 	
-	#Trim leading spaces from the compile flags.  They cause problems with PROPERTY COMPILE_OPTIONS
 	foreach(LANG C CXX Fortran)
+		
+		#Trim leading spaces from the compile flags.  They cause problems with PROPERTY COMPILE_OPTIONS
 		
 		# this shadows the cache variable with a local variable	
 		string(STRIP "${MPI_${LANG}_COMPILE_FLAGS}" MPI_${LANG}_COMPILE_FLAGS)
 		string(STRIP "${MPI_${LANG}_LINK_FLAGS}" MPI_${LANG}_LINK_FLAGS)
 		
+		#convert space seperated flag variables into proper lists
+		separate_arguments(MPI_${LANG}_COMPILE_OPTIONS UNIX_COMMAND "${MPI_${LANG}_COMPILE_FLAGS}")
+		separate_arguments(MPI_${LANG}_LINK_OPTIONS UNIX_COMMAND "${MPI_${LANG}_LINK_FLAGS}")
+		
 	endforeach()
+	
 	
 	# the MinGW port-hack of MS-MPI needs to be compiled with -fno-range-check
 	if("${MPI_Fortran_LIBRARIES}" MATCHES "msmpi" AND "${CMAKE_Fortran_COMPILER_ID}" STREQUAL GNU)
@@ -44,14 +50,14 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 	foreach(LANG ${ENABLED_LANGUAGES})
 		string(TOLOWER ${LANG} LANG_LOWERCASE)
 		
-		import_libraries(mpi_${LANG_LOWERCASE} LIBRARIES ${MPI_${LANG}_LINK_FLAGS} ${MPI_${LANG}_LIBRARIES} INCLUDES ${MPI_${LANG}_INCLUDE_PATH})
+		import_libraries(mpi_${LANG_LOWERCASE} LIBRARIES ${MPI_${LANG}_LINK_OPTIONS} ${MPI_${LANG}_LIBRARIES} INCLUDES ${MPI_${LANG}_INCLUDE_PATH})
 		set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${MPI_${LANG}_INCLUDE_PATH})
 		
 		if(MCPAR_WORKAROUND_ENABLED)
 			# use generator expression
-			set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:${LANG}>:${MPI_${LANG}_COMPILE_FLAGS}>)
+			set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:${LANG}>:${MPI_${LANG}_COMPILE_OPTIONS}>)
 		else()
-			set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_COMPILE_OPTIONS ${MPI_${LANG}_COMPILE_FLAGS})
+			set_property(TARGET mpi_${LANG_LOWERCASE} PROPERTY INTERFACE_COMPILE_OPTIONS ${MPI_${LANG}_COMPILE_OPTIONS})
 		endif()
 		
 		# C++ MPI doesn't like having "MPI" defined, but it's what Amber uses as the MPI switch in most programs (though not EMIL)
@@ -66,9 +72,9 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 	macro(mpi_object_library TARGET LANGUAGE)
 		if(MCPAR_WORKAROUND_ENABLED)
 			# use generator expression
-			set_property(TARGET ${TARGET} APPEND PROPERTY COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:${LANGUAGE}>:${MPI_${LANGUAGE}_COMPILE_FLAGS}>)
+			set_property(TARGET ${TARGET} APPEND PROPERTY COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:${LANGUAGE}>:${MPI_${LANGUAGE}_COMPILE_OPTIONS}>)
 		else()
-			set_property(TARGET ${TARGET} APPEND PROPERTY COMPILE_OPTIONS ${MPI_${LANGUAGE}_COMPILE_FLAGS})
+			set_property(TARGET ${TARGET} APPEND PROPERTY COMPILE_OPTIONS ${MPI_${LANGUAGE}_COMPILE_OPTIONS})
 		endif()
 
 		target_include_directories(${TARGET} PUBLIC ${MPI_${LANGUAGE}_INCLUDE_PATH})

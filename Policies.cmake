@@ -46,6 +46,6 @@ endif()
 
 
 if(POLICY CMP0065)
-	#do not export executable symbols by default
+	#NEW: do not export executable symbols by default
 	cmake_policy(SET CMP0065 NEW)
 endif()
