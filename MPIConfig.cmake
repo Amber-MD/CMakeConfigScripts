@@ -22,6 +22,14 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		message("If these are not the correct MPI wrappers, then set MPI_<language>_COMPILER to the correct wrapper and reconfigure.")
 	endif()
 	
+	# the MinGW port-hack of MS-MPI needs to be compiled with -fno-range-check
+	if("${MPI_Fortran_LIBRARIES}" MATCHES "msmpi" AND "${CMAKE_Fortran_COMPILER_ID}" STREQUAL GNU)
+		message(STATUS "MS-MPI range check workaround active")
+		
+		#create a non-cached variable with the contents of the cache variable plus one extra flag
+		set(MPI_Fortran_COMPILE_FLAGS "${MPI_Fortran_COMPILE_FLAGS} -fno-range-check")
+	endif()
+	
 	foreach(LANG C CXX Fortran)
 		
 		#Trim leading spaces from the compile flags.  They cause problems with PROPERTY COMPILE_OPTIONS
@@ -35,15 +43,6 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		separate_arguments(MPI_${LANG}_LINK_OPTIONS UNIX_COMMAND "${MPI_${LANG}_LINK_FLAGS}")
 		
 	endforeach()
-	
-	
-	# the MinGW port-hack of MS-MPI needs to be compiled with -fno-range-check
-	if("${MPI_Fortran_LIBRARIES}" MATCHES "msmpi" AND "${CMAKE_Fortran_COMPILER_ID}" STREQUAL GNU)
-		message(STATUS "MS-MPI range check workaround active")
-		
-		#create a non-cached variable with the contents of the cache variable plus one extra flag
-		set(MPI_Fortran_COMPILE_FLAGS ${MPI_Fortran_COMPILE_FLAGS} -fno-range-check)
-	endif()
 		
 	# create imported targets
 	# --------------------------------------------------------------------
