@@ -12,12 +12,16 @@ endif()
 
 # print header
 # --------------------------------------------------------------------
+message(STATUS "**************************************************************************")
 message(STATUS "Starting configuration of ${PROJECT_NAME} version ${${PROJECT_NAME}_VERSION}...")
 
 # print CMake version at the start so we can use it to diagnose issues even if the configure fails
 message(STATUS "CMake Version: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
-
-
+message(STATUS "For how to use this build system, please read this wiki:")
+message(STATUS "    http://ambermd.org/pmwiki/pmwiki.php/Main/CMake")
+message(STATUS "For a list of important CMake variables, check here:")
+message(STATUS "    http://ambermd.org/pmwiki/pmwiki.php/Main/CMake-Common-Options")
+message(STATUS "**************************************************************************")
 # fix search path so that libraries from the install tree are not used
 # --------------------------------------------------------------------
 list(REMOVE_ITEM CMAKE_SYSTEM_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
