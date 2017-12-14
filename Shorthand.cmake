@@ -3,7 +3,7 @@
 
 #shorthand for installing a library or libraries, shared or static.
 #the normal way is way, WAY too long.
-#usage: install_libraries(<lib1> <lib2...> [SUBDIR <subdirectory in lib folder to put libraries into>])
+#usage: install_libraries(<lib1> <lib2...> [SUBDIR <subdirectory in lib folder to put libraries into>] [COMPONENT <component>])
 
 function(install_libraries) # LIBRARIES...
 	cmake_parse_arguments(
@@ -26,7 +26,7 @@ function(install_libraries) # LIBRARIES...
 	endif()
 endfunction(install_libraries)
 
-#shorthand for linking multiple targets to a library or libraries.
+#Shorthand for linking multiple targets to one or more libraries.
 #usage: targets_link_libraries(fooexe1 fooexe2 LIBRARIES libbar libbaz)
 macro(targets_link_libraries)
 	#parse the arguents
@@ -52,8 +52,8 @@ macro(targets_link_libraries)
 endmacro(targets_link_libraries)
 
 
-# shorthand for adding an imported executable
-# Sets it up so that using NAME in a custom command will invoke the executable at PATH
+# Shorthand for adding an imported executable.
+# Sets it up so that using NAME as the program in a custom command will invoke the executable at PATH
 macro(import_executable NAME PATH)
 	add_executable(${NAME} IMPORTED)
 	set_property(TARGET ${NAME} PROPERTY IMPORTED_LOCATION ${PATH})
@@ -109,7 +109,7 @@ macro(list_contains OUTPUT ELEMENT) #3rd arg: LIST...
 
 endmacro(list_contains)
 
-# Checks all of the include files provided and sets variables corresponding to their names
+# Checks for the presence of all include files provided and sets variables corresponding to their names.
 # Variable naming follows the Automake convention
 # foo.h -> HAVE_FOO_H
 # sys/stat.h -> HAVE_SYS_STAT_H
@@ -138,7 +138,8 @@ macro(check_all_includes LANGUAGE)
 endmacro(check_all_includes)
 
 
-# Checks all of the function names provided and sets variables corresponding to their names
+# Checks for the presence all of the functions provided and sets variables corresponding to their names.
+# Set CMAKE_REQUIRED_LIBRARIES to point to libraries that you want this test to link.
 # Variable naming follows the Automake convention
 # strlen -> HAVE_STRLEN
 # _underscore -> HAVE__UNDERSCORE
@@ -155,7 +156,8 @@ macro(check_all_functions)
 	endforeach()
 endmacro(check_all_functions)
 
-# Checks all of the type names provided and sets variables corresponding to their names and sizes
+# Checks for the presence in system headers of all the types provided and sets variables corresponding to their names and sizes.
+# Set CMAKE_EXTRA_INCLUDE_FILES to name extra headers that you want this function to include, and CMAKE_REQUIRED_INCLUDES to point to additional directories to search for those headers in.
 # Variable naming follows the Automake convention
 # off_t -> HAVE_OFF_T, SIZEOF_OFF_T
 # _underscore -> HAVE__UNDERSCORE, SIZEOF__UNDERSCORE
@@ -211,7 +213,7 @@ function(check_all_symbols HEADER)
 	endforeach()
 endfunction(check_all_symbols)
 
-# print a variable and its value.  Useful for debugging.
+# Prints a variable name and its value to the standard output.  Useful for debugging.
 function(printvar VARNAME)
 	message("${VARNAME}: \"${${VARNAME}}\"")
 endfunction(printvar)

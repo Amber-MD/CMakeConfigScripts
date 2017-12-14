@@ -24,8 +24,11 @@ macro(using_external_libraries)
 endmacro(using_external_libraries)
 
 
-# Notify the packager that an external library is being used
-# If a Windows import library as passed as an argument, will automatically find and add the corresponding DLL
+# Notifies the packager that an external library is being used.  It will be bundled along with Amber when packages are created, and
+# shown in the packaging report. If a Windows import library as passed as an argument, will automatically find and add the corresponding DLL.
+# Does nothing if it has already been called with this library. 
+#
+# Make sure to call this for every library linked to by Amber!
 function(using_external_library LIBPATH)
 	
 	if("${LIBPATH}" STREQUAL "" OR NOT EXISTS "${LIBPATH}")
@@ -105,7 +108,9 @@ endfunction(using_external_library)
 # import functions
 # --------------------------------------------------------------------
 
-# shorthand for adding an imported library, with a path and include dirs.
+# Shorthand for setting up a CMake imported target for a library file, with a path and include directories.
+# After calling this function, using NAME in a library list will tell CMake to link to the provided file, and add the provided include directories.
+# Automatically adds the library to the library tracker.
 
 #usage: import_library(<library name> <library path> [include dir 1] [include dir 2]...)
 function(import_library NAME PATH) #3rd arg: INCLUDE_DIRS
@@ -126,7 +131,7 @@ function(import_library NAME PATH) #3rd arg: INCLUDE_DIRS
 	
 endfunction(import_library)
 
-# shorthand for adding one library target which corresponds to multiple linkable things
+# Shorthand for adding one library target which corresponds to multiple linkable things.
 # "linkable things" can be any of 6 different types:
 #    1. CMake imported targets (as created by import_library() or by another module)
 #    2. File paths to libraries
@@ -137,7 +142,7 @@ endfunction(import_library)
 
 # Things of the first 2 types are added to the library tracker.
 
-#usage: import_libraries(<library name> LIBRARIES <library paths...> INCLUDES [include dir 1] [include dir 2]...)
+#usage: import_libraries(<library name> LIBRARIES <library paths...> INCLUDES [<include dirs...>])
 function(import_libraries NAME)
 
 	cmake_parse_arguments(IMP_LIBS "" "" "LIBRARIES;INCLUDES" ${ARGN})
@@ -169,7 +174,5 @@ function(import_libraries NAME)
 			
 		endif()
 	endforeach()
-	
-
 	
 endfunction(import_libraries)

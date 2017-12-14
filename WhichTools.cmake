@@ -66,7 +66,7 @@ FEW
 #	amberlite
 amberlite
 
-#	cphstats
+#	cphstats and cestats
 cphstats
 
 #	quick

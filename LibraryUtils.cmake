@@ -123,7 +123,7 @@ function(resolve_cmake_library_list LIB_PATH_OUTPUT)
 				else()
 					# else it's a CMake target that is built by this project
 					
-					# detect if the library has been renames
+					# detect if the library has been renamed
 					get_property(LIB_NAME TARGET ${LIBRARY} PROPERTY OUTPUT_NAME)
 					
 					if("${LIB_NAME}" STREQUAL "")
