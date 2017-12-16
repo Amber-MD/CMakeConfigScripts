@@ -22,7 +22,10 @@ endif()
 
 #We have to guess the install directory used by the install script
 if(BUILD_PERL)
-	set(PERL_MODULE_DIR "lib/perl" CACHE STRING "Path relative to install prefix where perl modules are installed.  This path gets added to the startup script") #relative to install prefix
-	message(STATUS "Installing Perl modules to ${PERL_MODULE_DIR}")
+	
+	#relative to install prefix, must NOT begin with a slash
+	set(PERL_MODULE_DIR "lib/perl" CACHE STRING "Path relative to install prefix where perl modules are installed.  This path gets added to the startup script") 
+	
+	message(STATUS "Perl modules well be installed to AMBERHOME/${PERL_MODULE_DIR}")
 endif()
 
