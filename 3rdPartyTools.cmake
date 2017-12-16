@@ -625,7 +625,7 @@ set(FORCE_INTERNAL_LIBS "" CACHE STRING "3rd party libraries to force to build i
 set(FORCE_DISABLE_LIBS "" CACHE STRING "3rd party libraries to force Amber to not use at all. Accepts a semicolon-seperated list of library names from the 3rd Party Libraries section of the build report.")
 
 foreach(TOOL ${FORCE_EXTERNAL_LIBS})
-	colormsg(GREEN "Forcing ${TOOL} to be sourced externally")
+	colormsg(YELLOW "Forcing ${TOOL} to be sourced externally")
 
 	list_contains(VALID_TOOL ${TOOL} ${3RDPARTY_TOOLS})
 	
@@ -638,7 +638,7 @@ endforeach()
 
 if(INSIDE_AMBER)
 	foreach(TOOL ${FORCE_INTERNAL_LIBS})
-		colormsg(YELLOW "Forcing ${TOOL} to be built internally")
+		colormsg(GREEN "Forcing ${TOOL} to be built internally")
 	
 		list_contains(VALID_TOOL ${TOOL} ${3RDPARTY_TOOLS})
 		

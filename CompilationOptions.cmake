@@ -83,11 +83,11 @@ endif()
 #-------------------------------------------------------------------------------
 test(TARGET_OSX "${CMAKE_SYSTEM_NAME}" STREQUAL Darwin)
 test(TARGET_WINDOWS "${CMAKE_SYSTEM_NAME}" STREQUAL Windows)
-test(TARGET_LINUX "${CMAKE_SYSTEM_NAME}" STREQUAL Linux)
+test(TARGET_LINUX "${CMAKE_SYSTEM_NAME}" STREQUAL Linux OR "${CMAKE_SYSTEM_NAME}" STREQUAL Android) # Android is close enough to Linux for our purposes
 
 test(HOST_OSX "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL Darwin)
 test(HOST_WINDOWS "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL Windows)
-test(HOST_LINUX "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL Linux)
+test(HOST_LINUX "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL Linux OR "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL Android)
 
 # --------------------------------------------------------------------
 # Determine if we are mixing different vendors' compilers
