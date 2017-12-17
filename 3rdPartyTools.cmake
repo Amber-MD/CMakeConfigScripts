@@ -721,7 +721,7 @@ endif()
 #------------------------------------------------------------------------------
 
 if(readline_EXTERNAL)
-	import_library(readline ${READLINE_LIBRARY} ${READLINE_INCLUDE_DIR} ${READLINE_INCLUDE_DIR}/readline)	
+	import_libraries(readline LIBRARIES ${READLINE_LIBRARY} INCLUDES ${READLINE_INCLUDE_DIR} ${READLINE_INCLUDE_DIR}/readline)	
 	
 	# Configure dll imports if neccesary
 	# It's not like this is, y'know, DOCUMENTED anywhere
