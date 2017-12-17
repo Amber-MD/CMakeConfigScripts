@@ -207,8 +207,12 @@ endif()
 
 if(NEED_mkl)
 
-	# We assume that most 3rd party compilers (like clang) attempt compatibility with GNU's OpenMP ABI
-	test(MKL_USE_GNU_COMPAT NOT ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC"))
+	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
+		set(MKL_USE_GNU_COMPAT TRUE)
+	else()
+		set(MKL_USE_GNU_COMPAT FALSE)
+	endif()
+	
 	set(MKL_MULTI_THREADED ${OPENMP})
 	
 	set(MKL_NEEDINCLUDES FALSE)

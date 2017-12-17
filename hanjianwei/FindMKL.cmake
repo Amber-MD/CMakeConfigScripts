@@ -8,7 +8,7 @@
 #
 #   MKL_STATIC        :   use static linking.  Requires linker support for the -Wl,--start-group flag.
 #   MKL_MULTI_THREADED:   use multi-threading. Requires the FindOpenMP module 
-#	MKL_USE_GNU_COMPAT:   Use the GNU ABI compatibility layer.  Required when using GCC.
+#	MKL_USE_GNU_COMPAT:   Use the GNU ABI compatibility layer for Fortran and OpenMP.  Required when using GCC.
 #   MKL_MIC           :   Use the Many Integrated Core libraries if they are available
 # 	MKL_NEEDEXTRA	  :   Also import the "extra" MKL libraries (scalapack and cdft)
 #	MKL_NEEDINCLUDES  :	  Set to true if you require mkl.h.  Since many applications don't need the header, if this is false, MKL will still count as found even if the headers aren't found.
