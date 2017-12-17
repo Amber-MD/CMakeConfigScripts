@@ -10,7 +10,7 @@ if(TARGET_WINDOWS)
 	if(MINGW)
 		# MinGW - add runtme libraries to library tracker
 	
-		get_filename_component(MINGW_BIN_DIR ${CMAKE_C_COMPILER} DIRECTORY)
+		get_filename_component(MINGW_BIN_DIR "${CMAKE_C_COMPILER}" DIRECTORY)
 		get_filename_component(MINGW_BASE_DIR "${MINGW_BIN_DIR}/.." REALPATH)
 		
 		#file(GLOB MINGW_LIB_DIR "${MINGW_BASE_DIR}/*-mingw32/lib") # we do a fuzzy search because the architecture folder is named differently on mingw and mingw64

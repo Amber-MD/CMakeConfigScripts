@@ -973,7 +973,7 @@ endif()
 #------------------------------------------------------------------------------
 
 if(libbz2_EXTERNAL)
-	import_library(bzip2 ${BZIP2_LIBRARIES} ${BZIP2_INCLUDE_DIR})
+	import_libraries(bzip2 LIBRARIES ${BZIP2_LIBRARIES} INCLUDES ${BZIP2_INCLUDE_DIR})
 endif()
 
 #------------------------------------------------------------------------------
