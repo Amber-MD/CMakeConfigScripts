@@ -19,13 +19,21 @@ function(get_lib_type LIBRARY OUTPUT_VARIABLE)
 
 	get_filename_component(LIB_NAME ${LIBRARY} NAME)
 	
+	set(CACHE_VAR_NAME GET_LIB_TYPE_CACHED_RESULT_${LIB_NAME})
+		
+	if((DEFINED ${CACHE_VAR_NAME}) AND ("${${CACHE_VAR_NAME}}" STREQUAL "SHARED" OR "${${CACHE_VAR_NAME}}" STREQUAL "STATIC" OR "${${CACHE_VAR_NAME}}" STREQUAL "IMPORT"))
+		
+		# use cache variable
+		set(${OUTPUT_VARIABLE} ${${CACHE_VAR_NAME}} PARENT_SCOPE)
+		return()
+	endif()
+	
 	# first, check for import libraries
 	if(TARGET_WINDOWS)
 		if(MINGW)
 			# on MinGW, import libraries have a different file extension, so our job is easy.
 			if(${LIB_NAME} MATCHES ".*${CMAKE_IMPORT_LIBRARY_SUFFIX}")
-				set(${OUTPUT_VARIABLE} IMPORT PARENT_SCOPE)
-				return()
+				set(LIB_TYPE IMPORT)
 			endif()
 		else() # MSVC, Intel, or some other Windows compiler
 			
@@ -36,37 +44,40 @@ function(get_lib_type LIBRARY OUTPUT_VARIABLE)
 				message(FATAL_ERROR "The Microsoft Dumpbin tool was not found.  It is needed to analyze libraries, so please set the DUMPBIN variable to point to it.")
 			endif()
 			
-			execute_process(COMMAND ${DUMPBIN} OUTPUT_VARIABLE DUMPBIN_OUTPUT ERROR_VARIABLE DUMPBIN_ERROUT RESULT_VARIABLE DUMPBIN_RESULT)
+			# NOTE: this can take around 2-5 seconds for large libraries -- hence why we cache the result of this function
+			execute_process(COMMAND ${DUMPBIN} -headers ${LIBRARY} OUTPUT_VARIABLE DUMPBIN_OUTPUT ERROR_VARIABLE DUMPBIN_ERROUT RESULT_VARIABLE DUMPBIN_RESULT)
 			
 			# sanity check
 			if(NOT ${DUMPBIN_RESULT} EQUAL 0)
-				message(FATAL_ERROR "Could not analyze the type of library ${LIBRARY}: dumpbin failed to execute with error message ${DUMPBIN_ERROUT}")
+				message(FATAL_ERROR "Could not analyze the type of library ${LIBRARY}: dumpbin failed to execute with output ${DUMPBIN_OUTPUT} and error message ${DUMPBIN_ERROUT}")
 			endif()
 			
 			# check for dynamic symbol entries
 			# https://stackoverflow.com/questions/488809/tools-for-inspecting-lib-files
 			if("${DUMPBIN_OUTPUT}" MATCHES "Symbol name  :")
 				# found one!  It's an import library!
-				set(${OUTPUT_VARIABLE} IMPORT PARENT_SCOPE)
+				set(LIB_TYPE IMPORT)
 			else()
 				# by process of elimination, it's a static library
-				set(${OUTPUT_VARIABLE} STATIC PARENT_SCOPE)
+				set(LIB_TYPE STATIC)
 			endif()
-			
-			return()
 		endif()
 	endif()
 	
 	# now we can figure the rest out by suffix matching
-	if(${LIB_NAME} MATCHES ".*${CMAKE_SHARED_LIBRARY_SUFFIX}")
-		set(${OUTPUT_VARIABLE} SHARED PARENT_SCOPE)
-	elseif(${LIB_NAME} MATCHES ".*${CMAKE_STATIC_LIBRARY_SUFFIX}")
-		set(${OUTPUT_VARIABLE} STATIC PARENT_SCOPE)
-	else()
-		message(FATAL_ERROR "Could not determine whether \"${LIBRARY}\" is a static or shared library, it does not have a known suffix.")
+	if((NOT TARGET_WINDOWS) OR (TARGET_WINDOWS AND MINGW AND "${LIB_TYPE}" STREQUAL ""))
+		if(${LIB_NAME} MATCHES ".*${CMAKE_SHARED_LIBRARY_SUFFIX}")
+			set(LIB_TYPE SHARED)
+		elseif(${LIB_NAME} MATCHES ".*${CMAKE_STATIC_LIBRARY_SUFFIX}")
+			set(LIB_TYPE STATIC)
+		else()
+			message(FATAL_ERROR "Could not determine whether \"${LIBRARY}\" is a static or shared library, it does not have a known suffix.")
+		endif()
 	endif()
 	
-	#printvar(${OUTPUT_VARIABLE})
+	set(${OUTPUT_VARIABLE} ${LIB_TYPE} PARENT_SCOPE)
+	set(${CACHE_VAR_NAME} ${LIB_TYPE} CACHE INTERNAL "Result of get_lib_type() for ${LIB_NAME}" FORCE)
+	
 endfunction(get_lib_type)
 
 # Takes a list of CMake libraries that you might pass to a target, and returns a list of resolved library paths that correspond to it.

@@ -37,7 +37,10 @@ if("${FFTW_FIND_COMPONENTS}" MATCHES "Fortran")
 	# should exist if Fortran support is present
 	set(FFTW_FORTRAN_HEADER "${FFTW_INCLUDES}/fftw3.f03")
 	
-	if(EXISTS "${FFTW_FORTRAN_HEADER}")
+	if(NOT EXISTS "${FFTW_INCLUDES_SERIAL}")
+		message(STATUS "Cannot search for FFTW Fortran headers because the serial headers were not found")
+		set(FFTW_Fortran_FOUND FALSE)
+	elseif(EXISTS "${FFTW_FORTRAN_HEADER}")
 		set(FFTW_Fortran_FOUND TRUE)
 	else()
 		set(FFTW_Fortran_FOUND FALSE)
