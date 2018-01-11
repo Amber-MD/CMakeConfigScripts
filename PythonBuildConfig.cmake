@@ -19,55 +19,59 @@ if(BUILD_PYTHON)
 	#  We try to aggregate all missing packages into a single error message.
 	#------------------------------------------------------------------------------
 
+	option(SKIP_PYTHON_PACKAGE_CHECKS "If true, the buildscript will not verify that you have the needed Python packages to run Amber's Python programs." FALSE)
 	
-	# check "normal" packages
-	# --------------------------------------------------------------------
-	check_python_package(numpy HAVE_NUMPY)
-	check_python_package(scipy HAVE_SCIPY)
-	check_python_package(matplotlib HAVE_MATPLOTLIB)
-	
-	if(AMBER_RELEASE)
-		# cython is not needed since pytraj will have been pre-cythonized
-		set(HAVE_CYTHON TRUE)
-	else()
-		check_python_package(cython HAVE_CYTHON)
-	endif()
-	
-	if(NOT (HAVE_NUMPY AND HAVE_SCIPY AND HAVE_MATPLOTLIB AND HAVE_CYTHON))
+	if(NOT SKIP_PYTHON_PACKAGECHECKS)
 		
-		set(ERROR_MESSAGE "Missing required Python packages:")
+		# check "normal" packages
+		# --------------------------------------------------------------------
+		check_python_package(numpy HAVE_NUMPY)
+		check_python_package(scipy HAVE_SCIPY)
+		check_python_package(matplotlib HAVE_MATPLOTLIB)
 		
-		# add missing packages to string
-		foreach(PACKAGE numpy scipy matplotlib cython)
-			string(TOUPPER ${PACKAGE} PACKAGE_UCASE)
-			if(NOT HAVE_${PACKAGE_UCASE})
-				set(ERROR_MESSAGE "${ERROR_MESSAGE} ${PACKAGE}")
-			endif()
-		endforeach()
+		if(AMBER_RELEASE)
+			# cython is not needed since pytraj will have been pre-cythonized
+			set(HAVE_CYTHON TRUE)
+		else()
+			check_python_package(cython HAVE_CYTHON)
+		endif()
 		
-		set(ERROR_MESSAGE "${ERROR_MESSAGE}.  Please install these and try again.  If you cannot install them, you may set BUILD_PYTHON to FALSE to \
-skip building Python packages, or set DOWNLOAD_MINICONDA to TRUE to create a python environment automatically.")
-		
-		message(FATAL_ERROR ${ERROR_MESSAGE})
-	endif()
-	
-	# --------------------------------------------------------------------
-	# apparantly tkinter is not capitalized in some environments (???????)
-	check_python_package(tkinter HAVE_TKINTER)
-	check_python_package(Tkinter HAVE_TKINTER)
-	
-	if(NOT HAVE_TKINTER)
-		message(FATAL_ERROR "Could not find the Python Tkinter package.  You must install tk through your package manager (python-tk on Ubuntu, tk on Arch),\
- and the tkinter Python package will get installed.  If you cannot get Tkinter, disable BUILD_PYTHON to skip building Python packages, or enable DOWNLOAD_MINICONDA.")
-	endif()
-	
-	# --------------------------------------------------------------------
-	# this one has a different error message
-	check_python_package(distutils.sysconfig HAVE_DISTUTILS_SYSCONFIG)
-	if(NOT HAVE_DISTUTILS_SYSCONFIG)
-		message(FATAL_ERROR "You need to install the Python development headers!")
-	endif()
+		if(NOT (HAVE_NUMPY AND HAVE_SCIPY AND HAVE_MATPLOTLIB AND HAVE_CYTHON))
 			
+			set(ERROR_MESSAGE "Missing required Python packages:")
+			
+			# add missing packages to string
+			foreach(PACKAGE numpy scipy matplotlib cython)
+				string(TOUPPER ${PACKAGE} PACKAGE_UCASE)
+				if(NOT HAVE_${PACKAGE_UCASE})
+					set(ERROR_MESSAGE "${ERROR_MESSAGE} ${PACKAGE}")
+				endif()
+			endforeach()
+			
+			set(ERROR_MESSAGE "${ERROR_MESSAGE}.  Please install these and try again.  If you cannot install them, you may set BUILD_PYTHON to FALSE to \
+skip building Python packages, or set DOWNLOAD_MINICONDA to TRUE to create a python environment automatically.")
+			
+			message(FATAL_ERROR ${ERROR_MESSAGE})
+		endif()
+		
+		# --------------------------------------------------------------------
+		# apparantly tkinter is not capitalized in some environments (???????)
+		check_python_package(tkinter HAVE_TKINTER)
+		check_python_package(Tkinter HAVE_TKINTER)
+		
+		if(NOT HAVE_TKINTER)
+			message(FATAL_ERROR "Could not find the Python Tkinter package.  You must install tk through your package manager (python-tk on Ubuntu, tk on Arch),\
+	 and the tkinter Python package will get installed.  If you cannot get Tkinter, disable BUILD_PYTHON to skip building Python packages, or enable DOWNLOAD_MINICONDA.")
+		endif()
+		
+		# --------------------------------------------------------------------
+		# this one has a different error message
+		check_python_package(distutils.sysconfig HAVE_DISTUTILS_SYSCONFIG)
+		if(NOT HAVE_DISTUTILS_SYSCONFIG)
+			message(FATAL_ERROR "You need to install the Python development headers!")
+		endif()
+	endif()
+		
 	#-------------------------------------------------------------------------------
 	#  Build parts of installation commands
 	#-------------------------------------------------------------------------------
