@@ -3,7 +3,7 @@
 
 
 # the necessity for this check is discussed here: https://github.com/Amber-MD/CMakeConfigScripts/issues/4
-if("${COMPILER}" STREQUAL gnu)
+if("${COMPILER}" STREQUAL GNU)
 	
 	foreach(LANG C CXX)
 		if("${CMAKE_${LANG}_COMPILER_ID}" STREQUAL Clang OR "${CMAKE_${LANG}_COMPILER_ID}" STREQUAL AppleClang)

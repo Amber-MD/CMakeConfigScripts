@@ -44,8 +44,8 @@ if(NOT USING_SYSTEM_ANACONDA)
 	
 	
 		message(FATAL_ERROR "We highly recommend letting AMBER install a Python environment with all prerequisites inside \
-its install location via a Continuum Miniconda distribution. \
-Miniconda is chosen because it comes with a great package manager conda, which is \
+Amber's install location via a Continuum Miniconda distribution. \
+Miniconda is chosen because it comes with a great package manager, conda, which is \
 specially designed for numerical and scientific computing. This makes compiling \
 AMBER Python extensions much easier. \
 This will only need to be done once. \

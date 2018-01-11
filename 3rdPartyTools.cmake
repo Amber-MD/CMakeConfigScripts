@@ -811,7 +811,7 @@ elseif(netcdf_INTERNAL)
 
 	#TODO on Cray systems a static netcdf may be required
 
-	if(${COMPILER} STREQUAL cray)
+	if(${COMPILER} STREQUAL CRAY)
 			message(FATAL_ERROR "Bundled NetCDF cannot be used with cray compilers.  Please reconfigure with -DFORCE_EXTERNAL_LIBS=netcdf. \
 		 On cray systems you can usually load the system NetCDF with 'module load cray-netcdf' or 'module load netcdf'.")
 	endif()
@@ -835,7 +835,7 @@ if(netcdf-fortran_EXTERNAL)
 elseif(netcdf-fortran_INTERNAL)
 	#TODO on Cray systems a static netcdf may be required
 
-	if(${COMPILER} STREQUAL cray)
+	if(${COMPILER} STREQUAL CRAY)
 			message(FATAL_ERROR "Bundled NetCDF cannot be used with cray compilers. \
  On cray systems you can usually load the system NetCDF with 'module load cray-netcdf' or 'module load netcdf'.")
 	endif()
