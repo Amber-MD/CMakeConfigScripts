@@ -1,8 +1,6 @@
 # This file contains code which must run to start up the build system, and includes files that are common to Amber and every submodule.
 # This file must run AFTER a project() command without any languages, but BEFORE the enable_language() command
 
-message("FIRST_RUN: \"${FIRST_RUN}\"")
-
 
 if(NOT DEFINED FIRST_RUN)
 

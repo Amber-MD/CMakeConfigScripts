@@ -167,13 +167,13 @@ endfunction(resolve_cmake_library_list)
 function(get_linker_name LIBRARY_PATH OUTPUT_VARIABLE)
 	
 		# get full library name
-		get_filename_component(LIBNAME ${LIBRARY_PATH} NAME)
+		get_filename_component(LIBNAME "${LIBRARY_PATH}" NAME)
 	
 		#remove prefix
-		string(REGEX REPLACE "^lib" "" LIBNAME ${LIBNAME})
+		string(REGEX REPLACE "^lib" "" LIBNAME "${LIBNAME}")
 	
 		#remove numbers after the file extension
-		string(REGEX REPLACE "(\\.[0-9])+$" "" LIBNAME ${LIBNAME})
+		string(REGEX REPLACE "(\\.[0-9])+$" "" LIBNAME "${LIBNAME}")
 		
 		#remove the file extension
 		get_lib_type(${LIBRARY_PATH} LIB_TYPE)

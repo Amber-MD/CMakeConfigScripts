@@ -307,6 +307,13 @@ if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
 		# warning flags
 		add_flags(Fortran "-warn all" "-warn nounused")
 		
+		if(AMBER_RELEASE)
+			
+			# disable errors from type mismatches
+			add_flags(Fortran -warn nointerfaces)
+		endif()
+			
+		
 	endif()
 endif()
 
@@ -339,12 +346,31 @@ endif()
 # Cray
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 if("${CMAKE_C_COMPILER_ID}" STREQUAL "Cray")
+
+    # NOTE: In order for GNU-like defines to work (e.g.
+    #       -D_FILE_OFFSET_BITS etc.) cray compilers need '-h gnu'.
+
+    add_flags(C -h gnu)
+    
+    # cray compilers have equivalent of -O3 on by default
+    set(OPT_CFLAGS "")
+    
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Cray")
+
+	add_flags(CXX -h gnu)
+	set(OPT_CXXFLAGS "")
+	
 endif()
 
 if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Cray")
+
+    # Also, the fortran compile requires '-emf' to force
+    # the build of module files with all-lowercase names.
+    add_flags(Fortran -h gnu -emf)
+    
+    set(OPT_FFLAGS "")
 endif()
 
 #-------------------------------------------------------------------------------

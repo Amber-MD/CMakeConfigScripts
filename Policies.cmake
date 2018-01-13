@@ -49,3 +49,8 @@ if(POLICY CMP0065)
 	#NEW: do not export executable symbols by default
 	cmake_policy(SET CMP0065 NEW)
 endif()
+
+if(POLICY CMP0066)
+	#NEW: pass CMAKE_<lang>_FLAGS_<config> to try_compile() statements
+	cmake_policy(SET CMP0066 NEW)
+endif()
