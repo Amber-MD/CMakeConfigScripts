@@ -11,7 +11,7 @@ if(NOT DEFINED PARALLELIZATION_CONFIG_INCLUDED)
 	endif()
 	
 	# --------------------------------------------------------------------
-	# Mixing Compiler Paralleization Workaround
+	# Mixing Compiler Parallelization Workaround
 	# --------------------------------------------------------------------
 	
 	# Since cmake-buildscripts v1.1, MPI and OpenMP compiler flags are passed around via targets (mpi_cxx, openmp_fortran, etc.).

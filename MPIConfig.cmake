@@ -26,8 +26,8 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 	if("${MPI_Fortran_LIBRARIES}" MATCHES "msmpi" AND "${CMAKE_Fortran_COMPILER_ID}" STREQUAL GNU)
 		message(STATUS "MS-MPI range check workaround active")
 		
-		#create a non-cached variable with the contents of the cache variable plus one extra flag
-		set(MPI_Fortran_COMPILE_FLAGS "${MPI_Fortran_COMPILE_FLAGS} -fno-range-check")
+		#create a non-cached variable with the contents of the cache variable plus extra flags
+		set(MPI_Fortran_COMPILE_FLAGS "${MPI_Fortran_COMPILE_FLAGS} -fno-range-check -Wno-conversion")
 	endif()
 	
 	foreach(LANG C CXX Fortran)
@@ -42,8 +42,59 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		separate_arguments(MPI_${LANG}_COMPILE_OPTIONS UNIX_COMMAND "${MPI_${LANG}_COMPILE_FLAGS}")
 		separate_arguments(MPI_${LANG}_LINK_OPTIONS UNIX_COMMAND "${MPI_${LANG}_LINK_FLAGS}")
 		
-	endforeach()
+		# --------------------------------------------------------------------
+		# sometimes MPI will include flags of the form "-Xlinker -rpath -Xlinker /usr/foo".  Unfortunately,
+		# CMake will see a directory by itself in the linker flags and go:
+		# "Target "foo" requests linking to directory "/usr/foo".  Targets may link only to libraries.  CMake is dropping the item."
+		# We fix that here by removing these options.
 		
+		# get rid of RPATH flags; CMake will set those itself
+		string(REPLACE "-Xlinker;-rpath;" "" MPI_${LANG}_LINK_OPTIONS "${MPI_${LANG}_LINK_OPTIONS}")
+		# for each two arguments, check if they are -Xlinker;<some directory>, and if so, delete them.
+		list(LENGTH MPI_${LANG}_LINK_OPTIONS NUM_LINK_OPT)
+		
+		set(INDEX 1)
+		set(TEMP_REBUILT_LINK_OPTIONS "")
+		
+		while(INDEX LESS NUM_LINK_OPT)
+			math(EXPR FIRST_INDEX "${INDEX} - 1")
+		
+			list(GET MPI_${LANG}_LINK_OPTIONS ${FIRST_INDEX} FIRST_ELEMENT)
+			list(GET MPI_${LANG}_LINK_OPTIONS ${INDEX} SECOND_ELEMENT)
+			
+			set(IS_RPATH_DIRECTORY FALSE)
+			
+			# try and figure out if SECOND_ELEMENT looks like a folder path
+			if("${FIRST_ELEMENT}" STREQUAL "-Xlinker" AND "${SECOND_ELEMENT}" MATCHES "^/.*")
+				if(EXISTS "${SECOND_ELEMENT}")
+					if(IS_DIRECTORY "${SECOND_ELEMENT}")
+						set(IS_RPATH_DIRECTORY TRUE)
+					endif()
+				else()
+					# sometimes, we are passed nonexistant directories.
+					# in this case, as long as they don't have an extension, delete them.
+					
+					get_filename_component(PATH_EXTENSION "${SECOND_ELEMENT}" EXT)
+					
+					if("${PATH_EXTENSION}" STREQUAL "")
+						set(IS_RPATH_DIRECTORY TRUE)
+					endif()
+				endif()
+			endif()	
+		
+			if("${FIRST_ELEMENT}" STREQUAL "-Xlinker" AND "${SECOND_ELEMENT}" MATCHES "/.*")
+				math(EXPR INDEX "${INDEX} + 2")
+				message(STATUS "Found and removed RPATH control flags from MPI flags")
+			else()
+				list(APPEND TEMP_REBUILT_LINK_OPTIONS ${FIRST_ELEMENT})
+				math(EXPR INDEX "${INDEX} + 1")
+			endif()
+		endwhile()
+		
+		set(MPI_${LANG}_LINK_OPTIONS TEMP_REBUILT_LINK_OPTIONS)
+					
+	endforeach()
+			
 	# create imported targets
 	# --------------------------------------------------------------------
 	foreach(LANG ${ENABLED_LANGUAGES})
