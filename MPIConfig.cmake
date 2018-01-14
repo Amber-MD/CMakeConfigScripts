@@ -44,12 +44,11 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		
 		# --------------------------------------------------------------------
 		# sometimes MPI will include flags of the form "-Xlinker -rpath -Xlinker /usr/foo".  Unfortunately,
-		# CMake will see a directory by itself in the linker flags and go:
-		# "Target "foo" requests linking to directory "/usr/foo".  Targets may link only to libraries.  CMake is dropping the item."
-		# We fix that here by removing these options.
-		
+		# This causes errors because it conflicts with CMake's automatic RPATH flags.
 		# get rid of RPATH flags; CMake will set those itself
 		string(REPLACE "-Xlinker;-rpath;" "" MPI_${LANG}_LINK_OPTIONS "${MPI_${LANG}_LINK_OPTIONS}")
+		string(REPLACE "-Wl,-rpath;" "" MPI_${LANG}_LINK_OPTIONS "${MPI_${LANG}_LINK_OPTIONS}")
+		
 		# for each two arguments, check if they are -Xlinker;<some directory>, and if so, delete them.
 		list(LENGTH MPI_${LANG}_LINK_OPTIONS NUM_LINK_OPT)
 		
@@ -62,13 +61,14 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 			list(GET MPI_${LANG}_LINK_OPTIONS ${FIRST_INDEX} FIRST_ELEMENT)
 			list(GET MPI_${LANG}_LINK_OPTIONS ${INDEX} SECOND_ELEMENT)
 			
-			set(IS_RPATH_DIRECTORY FALSE)
+			set(IS_XLINKER_DIRECTORY FALSE)
+			set(IS_WL_DIRECTORY FALSE)
 			
 			# try and figure out if SECOND_ELEMENT looks like a folder path
 			if("${FIRST_ELEMENT}" STREQUAL "-Xlinker" AND "${SECOND_ELEMENT}" MATCHES "^/.*")
 				if(EXISTS "${SECOND_ELEMENT}")
 					if(IS_DIRECTORY "${SECOND_ELEMENT}")
-						set(IS_RPATH_DIRECTORY TRUE)
+						set(IS_XLINKER_DIRECTORY TRUE)
 					endif()
 				else()
 					# sometimes, we are passed nonexistant directories.
@@ -77,13 +77,31 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 					get_filename_component(PATH_EXTENSION "${SECOND_ELEMENT}" EXT)
 					
 					if("${PATH_EXTENSION}" STREQUAL "")
-						set(IS_RPATH_DIRECTORY TRUE)
+						set(IS_XLINKER_DIRECTORY TRUE)
 					endif()
 				endif()
-			endif()	
-		
-			if("${FIRST_ELEMENT}" STREQUAL "-Xlinker" AND "${SECOND_ELEMENT}" MATCHES "/.*")
+			elseif("${FIRST_ELEMENT}" MATCHES "-Wl,/(.*)")
+				if(EXISTS "${CMAKE_MATCH_1}")
+					if(IS_DIRECTORY "${CMAKE_MATCH_1}")
+						set(IS_WL_DIRECTORY TRUE)
+					endif()
+				else()
+					# sometimes, we are passed nonexistant directories.
+					# in this case, as long as they don't have an extension, delete them.
+					
+					get_filename_component(PATH_EXTENSION "${CMAKE_MATCH_1}" EXT)
+					
+					if("${PATH_EXTENSION}" STREQUAL "")
+						set(IS_WL_DIRECTORY TRUE)
+					endif()
+				endif()
+			endif()
+			
+			if(IS_XLINKER_DIRECTORY)
 				math(EXPR INDEX "${INDEX} + 2")
+				message(STATUS "Found and removed RPATH control flags from MPI flags")
+			elseif(IS_WL_DIRECTORY)
+				math(EXPR INDEX "${INDEX} + 1")
 				message(STATUS "Found and removed RPATH control flags from MPI flags")
 			else()
 				list(APPEND TEMP_REBUILT_LINK_OPTIONS ${FIRST_ELEMENT})

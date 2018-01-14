@@ -8,7 +8,6 @@
 #
 #   MKL_STATIC        :   use static linking.  Requires linker support for the -Wl,--start-group flag.
 #   MKL_MULTI_THREADED:   use multi-threading. Requires the FindOpenMP module 
-#	MKL_USE_GNU_COMPAT:   Use the GNU ABI compatibility layer for Fortran and OpenMP.  Required when using GCC.
 #   MKL_MIC           :   Use the Many Integrated Core libraries if they are available
 # 	MKL_NEEDEXTRA	  :   Also import the "extra" MKL libraries (scalapack and cdft)
 #	MKL_NEEDINCLUDES  :	  Set to true if you require mkl.h.  Since many applications don't need the header, if this is false, MKL will still count as found even if the headers aren't found.
@@ -131,7 +130,7 @@ find_library(MKL_INTERFACE_LIBRARY NAMES ${MKL_INTERFACE_LIBNAMES} HINTS ${MKL_L
 find_library(MKL_GFORTRAN_INTERFACE_LIBRARY NAMES mkl_gf mkl_gf_lp64 HINTS ${MKL_LIB_PATHS})
 	
 # gfortran specifically needs a seperate library
-if(MKL_USE_GNU_COMPAT)
+if("${CMAKE_FORTRAN_COMPILER_ID}" STREQUAL GNU)
 	set(MKL_FORTRAN_INTERFACE_LIBRARY MKL_GFORTRAN_INTERFACE_LIBRARY)
 else()
 	set(MKL_FORTRAN_INTERFACE_LIBRARY MKL_INTERFACE_LIBRARY)
@@ -149,13 +148,20 @@ endif()
 find_library(MKL_SEQUENTIAL_THREADING_LIBRARY mkl_sequential HINTS ${MKL_LIB_PATHS})
 find_library(MKL_INTEL_THREADING_LIBRARY mkl_intel_thread HINTS ${MKL_LIB_PATHS})
 find_library(MKL_GNU_THREADING_LIBRARY mkl_gnu_thread HINTS ${MKL_LIB_PATHS})
+find_library(MKL_PGI_THREADING_LIBRARY mkl_pgi_thread HINTS ${MKL_LIB_PATHS})
+
 
 if(MKL_MULTI_THREADED)
-	if(MKL_USE_GNU_COMPAT)
-		set(MKL_THREADING_LIBRARY MKL_GNU_THREADING_LIBRARY)	
+	
+	# this might not be the best when mixing different compilers, but I'm not sure there IS a correct action to take in that case.
+	if("${CMAKE_C_COMPILER_ID}" STREQUAL GNU)
+		set(MKL_THREADING_LIBRARY MKL_GNU_THREADING_LIBRARY)
+	elseif("${CMAKE_C_COMPILER_ID}" STREQUAL PGI)	
+		set(MKL_THREADING_LIBRARY MKL_PGI_THREADING_LIBRARY)
     else()
     	set(MKL_THREADING_LIBRARY MKL_INTEL_THREADING_LIBRARY)
     endif()
+    
 else()
     set(MKL_THREADING_LIBRARY MKL_SEQUENTIAL_THREADING_LIBRARY)
 endif()

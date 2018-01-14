@@ -206,13 +206,6 @@ endif()
 #------------------------------------------------------------------------------
 
 if(NEED_mkl)
-
-	if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU")
-		set(MKL_USE_GNU_COMPAT TRUE)
-	else()
-		set(MKL_USE_GNU_COMPAT FALSE)
-	endif()
-	
 	set(MKL_MULTI_THREADED ${OPENMP})
 	
 	set(MKL_NEEDINCLUDES FALSE)
