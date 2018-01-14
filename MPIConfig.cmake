@@ -91,7 +91,7 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 			endif()
 		endwhile()
 		
-		set(MPI_${LANG}_LINK_OPTIONS TEMP_REBUILT_LINK_OPTIONS)
+		set(MPI_${LANG}_LINK_OPTIONS ${TEMP_REBUILT_LINK_OPTIONS})
 					
 	endforeach()
 			
