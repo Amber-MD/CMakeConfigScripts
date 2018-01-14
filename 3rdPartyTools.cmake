@@ -744,10 +744,6 @@ if(mkl_ENABLED)
 		message(WARNING "You are using different compilers from different vendors together.  This may cause link errors with MKL and OpenMP.  There is no way around this.")
 	endif()
 	
-	if(OPENMP AND NOT ("${CMAKE_C_COMPILER_ID}" STREQUAL GNU OR "${CMAKE_C_COMPILER_ID}" STREQUAL Intel))
-		message(WARNING "Using MKL in OpenMP mode probably will not work with compilers other than GCC or Intel.")
-	endif()
-	
 	if(mkl_ENABLED AND (blas_ENABLED OR lapack_ENABLED))
 		message(FATAL_ERROR "MKL replaces blas and lapack!  They can't be enabled when MKL is in use!")
 	endif()
