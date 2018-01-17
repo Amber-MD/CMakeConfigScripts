@@ -307,7 +307,9 @@ if("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "Intel")
 		# warning flags
 		add_flags(Fortran "-warn all" "-warn nounused")
 		
-		if(AMBER_RELEASE)
+		option(IFORT_CHECK_INTERFACES "If enabled and Intel Fortran is in use, then ifort will check that types passed to functions are the correct ones, and produce warnings or errors for mismatches." FALSE)
+		
+		if(NOT IFORT_CHECK_INTERFACES)
 			
 			# disable errors from type mismatches
 			add_flags(Fortran -warn nointerfaces)
