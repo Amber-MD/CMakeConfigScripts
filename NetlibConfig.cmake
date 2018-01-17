@@ -9,6 +9,9 @@ set(NETLIB_LIBRARIES "")
 # basic linear algebra libraries
 if(mkl_ENABLED)
     list(APPEND NETLIB_LIBRARIES ${MKL_FORTRAN_LIBRARIES})
+    
+   	#this affects all Amber programs
+    add_definitions(-DMKL)
 else()
 	list(APPEND NETLIB_LIBRARIES blas lapack)
 endif()
