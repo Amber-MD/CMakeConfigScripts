@@ -41,7 +41,6 @@ pbsa
 sff
 rism
 nab
-nabc
 nss
 etc
 
@@ -93,7 +92,8 @@ if(NOT AMBER_RELEASE)
 	list(APPEND AMBER_TOOLS 
 		chamber
 		ptraj
-		mtkpp)
+		mtkpp
+		nabc)
 endif()
 
 # save an unaltered copy for disable_all_tools_except()

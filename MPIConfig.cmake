@@ -13,14 +13,10 @@ if(MPI)
 Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG}_LIBRARIES to point to your MPI.")
 		endif()
 	
-		if(FIRST_RUN)
-			message(STATUS "MPI ${LANG} Compiler: ${MPI_${LANG}_COMPILER}")
-		endif()
+		message(STATUS "MPI ${LANG} Compiler: ${MPI_${LANG}_COMPILER}")
 	endforeach()
 	
-	if(FIRST_RUN)	
-		message("If these are not the correct MPI wrappers, then set MPI_<language>_COMPILER to the correct wrapper and reconfigure.")
-	endif()
+	message(STATUS "If these are not the correct MPI wrappers, then set MPI_<language>_COMPILER to the correct wrapper and reconfigure.")
 	
 	# the MinGW port-hack of MS-MPI needs to be compiled with -fno-range-check
 	if("${MPI_Fortran_LIBRARIES}" MATCHES "msmpi" AND "${CMAKE_Fortran_COMPILER_ID}" STREQUAL GNU)
