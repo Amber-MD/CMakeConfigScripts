@@ -43,9 +43,8 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 		# This causes errors because it conflicts with CMake's automatic RPATH flags.
 		# get rid of RPATH flags; CMake will set those itself
 		string(REPLACE "-Xlinker;-rpath;" "" MPI_${LANG}_LINK_OPTIONS "${MPI_${LANG}_LINK_OPTIONS}")
-		string(REPLACE "-Wl,-rpath;" "" MPI_${LANG}_LINK_OPTIONS "${MPI_${LANG}_LINK_OPTIONS}")
 		
-		# for each two arguments, check if they are -Xlinker;<some directory>, and if so, delete them.
+		# for each two arguments, check if they are either "-Xlinker;<some directory>", "-Wl,-rpath,...", or "-Wl,<some directory>". If so, delete them.
 		list(LENGTH MPI_${LANG}_LINK_OPTIONS NUM_LINK_OPT)
 		
 		set(INDEX 1)
@@ -59,6 +58,7 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 			
 			set(IS_XLINKER_DIRECTORY FALSE)
 			set(IS_WL_DIRECTORY FALSE)
+			set(IS_WL_RPATH FALSE)
 			
 			# try and figure out if SECOND_ELEMENT looks like a folder path
 			if("${FIRST_ELEMENT}" STREQUAL "-Xlinker" AND "${SECOND_ELEMENT}" MATCHES "^/.*")
@@ -68,7 +68,7 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 					endif()
 				else()
 					# sometimes, we are passed nonexistant directories.
-					# in this case, as long as they don't have an extension, delete them.
+					# in this case, as long as they don't have an extension, remove them.
 					
 					get_filename_component(PATH_EXTENSION "${SECOND_ELEMENT}" EXT)
 					
@@ -83,7 +83,7 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 					endif()
 				else()
 					# sometimes, we are passed nonexistant directories.
-					# in this case, as long as they don't have an extension, delete them.
+					# in this case, as long as they don't have an extension, remove them.
 					
 					get_filename_component(PATH_EXTENSION "${CMAKE_MATCH_1}" EXT)
 					
@@ -91,12 +91,17 @@ Please install one and try again, or set MPI_${LANG}_INCLUDE_PATH and MPI_${LANG
 						set(IS_WL_DIRECTORY TRUE)
 					endif()
 				endif()
+			elseif("${FIRST_ELEMENT}" MATCHES "-Wl,-rpath.*")
+				set(IS_WL_RPATH TRUE)
 			endif()
 			
 			if(IS_XLINKER_DIRECTORY)
 				math(EXPR INDEX "${INDEX} + 2")
 				message(STATUS "Found and removed RPATH control flags from MPI flags")
 			elseif(IS_WL_DIRECTORY)
+				math(EXPR INDEX "${INDEX} + 1")
+				message(STATUS "Found and removed RPATH control flags from MPI flags")
+			elseif(IS_WL_RPATH)
 				math(EXPR INDEX "${INDEX} + 1")
 				message(STATUS "Found and removed RPATH control flags from MPI flags")
 			else()
