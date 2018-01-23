@@ -42,7 +42,7 @@ set(3RDPARTY_TOOL_USES
 "for creating trajectory data files from Fortran"                                 
 "used by cpptraj for parallel trajectory output"                                  
 "used to do Fourier transforms very quickly"                                      
-"used for the console functionality of gleap and cpptraj"                         
+"used for the console functionality of cpptraj"                         
 "used for high-precision linear algebra calculations"                             
 "used by Sander to run certain QM routines on the GPU"                            
 "used by Sander as an alternate Poisson-Boltzmann equation solver"                
@@ -360,7 +360,8 @@ endif()
 
 if(NEED_arpack)
 	#  ARPACK
-	find_library(ARPACK_LIBRARY arpack)
+	find_package(ARPACK)
+	
 	if(ARPACK_LIBRARY)
 		set_3rdparty(arpack EXTERNAL)
 	else()
@@ -871,13 +872,6 @@ if(arpack_EXTERNAL)
 	endif()
 	
 	import_library(arpack ${ARPACK_LIBRARY})
-
-	set(CMAKE_REQUIRED_LIBRARIES ${ARPACK_LIBRARY})
-
-	#Some arpacks (e.g. Ubuntu's package manager's one) don't have the arsecond_ function from wallclock.c
-	#sff uses it, so we have to tell sff to build it
-	check_function_exists(arsecond_ ARPACK_HAS_ARSECOND)
-	set(CMAKE_REQUIRED_LIBRARIES "")
 
 	if(NOT ARPACK_HAS_ARSECOND)
 		message(STATUS "System arpack is missing the arsecond_ function.  That function will be built inside amber")

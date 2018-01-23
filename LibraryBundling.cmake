@@ -73,7 +73,7 @@ Accepts a semicolon-seperated list.")
 	list(REMOVE_DUPLICATES LIBS_TO_BUNDLE)
 
 	install(FILES ${DLLS_TO_BUNDLE} DESTINATION ${DLLDIR})
-	install(FILES ${LIBS_TO_BUNDLE} DESTINATION ${LIBDIR}) # this one we handle ourselves, because it needs to go into lib instead of bin
+	install(FILES ${LIBS_TO_BUNDLE} DESTINATION ${LIBDIR})
 	
 	if(MINGW)
 	

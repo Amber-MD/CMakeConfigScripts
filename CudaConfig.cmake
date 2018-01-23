@@ -8,8 +8,7 @@ if(CROSSCOMPILE)
 else()
 
 	#first, find CUDA.
-	find_package(CUDA QUIET)
-	message(STATUS "Found CUDA - ${CUDA_FOUND}")
+	find_package(CUDA)
 	option(CUDA "Build ${PROJECT_NAME} with CUDA GPU acceleration support." FALSE)
 	
 	if(CUDA AND NOT CUDA_FOUND)
