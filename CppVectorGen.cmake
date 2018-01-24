@@ -12,46 +12,59 @@ set(SUPPORTS_INITIALIZER_LISTS FALSE)
 
 macro(format_list_as_vector OUTPUT_VAR QUOTE LIST VECTORNAME VECTORTYPE)
 	
-	if(SUPPORTS_INITIALIZER_LISTS)
-		set(${OUTPUT_VAR} "${${OUTPUT_VAR}}
-std::vector<${VECTORTYPE}> ${VECTORNAME}({")
+	
+	list(LENGTH ${LIST} VECTOR_LENGTH)
+	
+	if(${VECTOR_LENGTH} EQUAL 0)
+		
+		# generate an empty vector
+		set(${OUTPUT_VAR} "${${OUTPUT_VAR}} 
+std::vector<${VECTORTYPE}> ${VECTORNAME};")
+	
 	else()
-		#because we don't have initializer list support, we have to do this the hard way
-		# see http://stackoverflow.com/questions/2236197/what-is-the-easiest-way-to-initialize-a-stdvector-with-hardcoded-elements
-		set(ARRAYNAME "__cmake_${VECTORNAME}_initializer_array")
-		set(${OUTPUT_VAR} "${${OUTPUT_VAR}}
-const ${VECTORTYPE} ${ARRAYNAME}[] = {")
-	endif()
 	
-	set(FIRSTLOOP TRUE)
-	foreach(ELEMENT ${${LIST}})
-	
-		# append a comma to the previous element if necessary
-		if(NOT FIRSTLOOP)
-			set(${OUTPUT_VAR} "${${OUTPUT_VAR}}, ")	
-		endif()
 		
-		set(FIRSTLOOP FALSE)
-		
-		if(${QUOTE})
+		if(SUPPORTS_INITIALIZER_LISTS)
 			set(${OUTPUT_VAR} "${${OUTPUT_VAR}}
-\"${ELEMENT}\"")
+std::vector<${VECTORTYPE}> ${VECTORNAME}({")
+		else()
+			#because we don't have initializer list support, we have to do this the hard way
+			# see http://stackoverflow.com/questions/2236197/what-is-the-easiest-way-to-initialize-a-stdvector-with-hardcoded-elements
+			set(ARRAYNAME "__cmake_${VECTORNAME}_initializer_array")
+			set(${OUTPUT_VAR} "${${OUTPUT_VAR}}
+const ${VECTORTYPE} ${ARRAYNAME}[] = {")
+		endif()
+			
+		
+		set(FIRSTLOOP TRUE)
+		foreach(ELEMENT ${${LIST}})
+		
+			# append a comma to the previous element if necessary
+			if(NOT FIRSTLOOP)
+				set(${OUTPUT_VAR} "${${OUTPUT_VAR}}, ")	
+			endif()
+			
+			set(FIRSTLOOP FALSE)
+			
+			if(${QUOTE})
+				set(${OUTPUT_VAR} "${${OUTPUT_VAR}}
+	\"${ELEMENT}\"")
+			else()
+				set(${OUTPUT_VAR} "${${OUTPUT_VAR}}
+	${ELEMENT}")
+			endif()
+		endforeach()
+		
+		if(SUPPORTS_INITIALIZER_LISTS)
+			set(${OUTPUT_VAR} "${${OUTPUT_VAR}}
+});")
 		else()
 			set(${OUTPUT_VAR} "${${OUTPUT_VAR}}
-${ELEMENT}")
-		endif()
-	endforeach()
-	
-	if(SUPPORTS_INITIALIZER_LISTS)
-		set(${OUTPUT_VAR} "${${OUTPUT_VAR}}
-});")
-	else()
-		set(${OUTPUT_VAR} "${${OUTPUT_VAR}}
 };
 std::vector<${VECTORTYPE}> ${VECTORNAME}(${ARRAYNAME}, ${ARRAYNAME} + sizeof(${ARRAYNAME}) / sizeof(${ARRAYNAME}[0]));
 ")
-	endif()
-	
+		endif()
+	endif()	
 endmacro(format_list_as_vector)
 
 # Function for linking data from CMake directly into a program
