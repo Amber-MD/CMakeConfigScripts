@@ -284,19 +284,38 @@ endif()
 list_to_space_separated(PMEMD_CFLAGS_SPC ${PMEMD_CFLAGS})
 list_to_space_separated(PMEMD_FFLAGS_SPC ${PMEMD_FFLAGS})
 
+
 #-------------------------------------------------------------------------------
-#  Common (for now) configuration
+#  CUDA configuration
 #-------------------------------------------------------------------------------
+
+option(GTI "Use GTI version of pmemd.cuda instead of AFE version" FALSE)
 
 if(CUDA)
 	set(PMEMD_NVCC_FLAGS -use_fast_math -O3)
 	
-	set(PMEMD_CUDA_DEFINES CUDA)
+	set(PMEMD_CUDA_DEFINES -DCUDA)
+	
+	if(GTI)
+		
+		list(APPEND PMEMD_NVCC_FLAGS -rdc=true --std c++11) 
+		list(APPEND PMEMD_CUDA_DEFINES -DGTI)
+		
+		message(STATUS "Building the GTI version of pmemd.cuda")
+	else()
+		message(STATUS "Building the AFE version of pmemd.cuda")
+	endif()
 
 	if(MPI)
-		#note: these are compile options, so they need -D prefixes
 		list(APPEND PMEMD_NVCC_FLAGS -DMPICH_IGNORE_CXX_SEEK)
 	endif()
+	
+	# Before CMake 3.7, FindCUDA did not automatically link libcudadevrt, as is required for seperable compilation.
+	# Finder code copied from here: https://github.com/Kitware/CMake/commit/891e0ebdcea547b10689eee9fd008a27e4afd3b9
+	if(CMAKE_VERSION VERSION_LESS 3.7)
+		cuda_find_library_local_first(CUDA_cudadevrt_LIBRARY cudadevrt "\"cudadevrt\" library")
+ 		mark_as_advanced(CUDA_cudadevrt_LIBRARY)
+ 	endif()
 endif()
 
 #-------------------------------------------------------------------------------
