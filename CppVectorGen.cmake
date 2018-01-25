@@ -19,7 +19,8 @@ macro(format_list_as_vector OUTPUT_VAR QUOTE LIST VECTORNAME VECTORTYPE)
 		
 		# generate an empty vector
 		set(${OUTPUT_VAR} "${${OUTPUT_VAR}} 
-std::vector<${VECTORTYPE}> ${VECTORNAME};")
+std::vector<${VECTORTYPE}> ${VECTORNAME};
+")
 	
 	else()
 	

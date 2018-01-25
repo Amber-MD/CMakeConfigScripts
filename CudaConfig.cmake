@@ -50,7 +50,7 @@ else()
 			message(FATAL_ERROR "Error: Unsupported CUDA version. AMBER requires CUDA version >= 7.5.
 				Please upgrade your CUDA installation or disable building with CUDA.")
 		endif()
-				
+						
 		set(CUDA_PROPAGATE_HOST_FLAGS FALSE)
 				
 		#the same CUDA file is used for multiple targets in PMEMD, so turn this off
