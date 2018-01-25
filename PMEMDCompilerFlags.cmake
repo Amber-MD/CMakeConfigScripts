@@ -309,13 +309,7 @@ if(CUDA)
 	if(MPI)
 		list(APPEND PMEMD_NVCC_FLAGS -DMPICH_IGNORE_CXX_SEEK)
 	endif()
-	
-	# Before CMake 3.7, FindCUDA did not automatically link libcudadevrt, as is required for seperable compilation.
-	# Finder code copied from here: https://github.com/Kitware/CMake/commit/891e0ebdcea547b10689eee9fd008a27e4afd3b9
-	if(CMAKE_VERSION VERSION_LESS 3.7)
-		cuda_find_library_local_first(CUDA_cudadevrt_LIBRARY cudadevrt "\"cudadevrt\" library")
- 		mark_as_advanced(CUDA_cudadevrt_LIBRARY)
- 	endif()
+
 endif()
 
 #-------------------------------------------------------------------------------
