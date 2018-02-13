@@ -41,7 +41,6 @@ pbsa
 sff
 rism
 nab
-nss
 etc
 
 #   mdgx:
@@ -92,7 +91,6 @@ if(NOT AMBER_RELEASE)
 	list(APPEND AMBER_TOOLS 
 		chamber
 		ptraj
-		mtkpp
 		nabc)
 endif()
 
@@ -164,7 +162,6 @@ tool_depends(mmpbsa_py nab lib)
 tool_depends(nab sff pbsa cifparse)
 tool_depends(nmode lib)
 tool_depends(nmr_aux cifparse lib)
-tool_depends(nss nab)
 tool_depends(pbsa sander lib)
 tool_depends(pymdgx mdgx)
 tool_depends(pysander sander)
@@ -228,7 +225,7 @@ endif()
 #deprecated programs
 option(BUILD_DEPRECATED "Build outdated and deprecated tools, such as ptraj" FALSE)
 if(NOT BUILD_DEPRECATED)
-	disable_tools("Deprecated tools are disabled" ptraj mtkpp)
+	disable_tools("Deprecated tools are disabled" ptraj )
 endif()
 
 # in-development programs
@@ -248,17 +245,6 @@ endif()
 # host tools
 if(USE_HOST_TOOLS)
 	disable_tool(byacc "Using host tools version")
-endif()
-
-# PGI won't compile MTK++; see bug 219.
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL PGI)
-	disable_tool(mtkpp "Not compatible with the PGI C++ compiler.")
-endif()
-
-# ...neither will AppleClang >= 8.0.  That Eigen library seems to be murder on compilers.
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL AppleClang AND ("${CMAKE_CXX_COMPILER_VERSION}" VERSION_GREATER 8.0 OR "${CMAKE_CXX_COMPILER_VERSION}" VERSION_EQUAL 8.0))
-
-	disable_tool(mtkpp "Not compatible with AppleClang >= 8.0.")
 endif()
 
 if(MINGW)
@@ -281,7 +267,6 @@ if(CRAY)
 			gbnsr6
 			sander
 			nmr_aux
-			nss
 			etc
 			mmpbsa
 			amberlite
