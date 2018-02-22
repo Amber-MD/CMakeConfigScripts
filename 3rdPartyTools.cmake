@@ -25,8 +25,6 @@ zlib
 libbz2
 plumed
 libm
-qt4
-log4cxx
 mkl
 mpi4py
 perlmol)
@@ -50,9 +48,7 @@ set(3RDPARTY_TOOL_USES
 "for various compression and decompression tasks"                                 
 "for bzip2 compression in cpptraj"                                                
 "used as an alternate MD backend for Sander"                                      
-"for fundamental math routines if they are not contained in the C library"        
-"for XML handling in MTK++"                                                       
-"for logging in MTK++"                                                            
+"for fundamental math routines if they are not contained in the C library"                                                                 
 "alternate implementation of lapack and blas that is tuned for speed"             
 "MPI support library for MMPBSA.py"                                               
 "chemistry library used by FEW")                                                  
@@ -547,34 +543,6 @@ if(NEED_libm)
 endif()
 
 #------------------------------------------------------------------------------
-#  QT4 (used by MTK++)
-#------------------------------------------------------------------------------
-if(NEED_qt4)
-	set(QT4_NO_LINK_QTMAIN TRUE)
-	set(CMAKE_AUTOMOC FALSE)
-	find_package(Qt4)
-	
-	if(Qt4_FOUND)
-		set_3rdparty(qt4 EXTERNAL)
-	else()
-		set_3rdparty(qt4 DISABLED)
-	endif()
-endif()
-
-#------------------------------------------------------------------------------
-#  log4cxx (used by MTK++)
-#------------------------------------------------------------------------------
-if(NEED_log4cxx)
-	find_package(log4cxx)
-	
-	if(LOG4CXX_FOUND)
-		set_3rdparty(log4cxx EXTERNAL)
-	else()
-		set_3rdparty(log4cxx DISABLED)
-	endif()
-endif()
-
-#------------------------------------------------------------------------------
 #  mpi4py (only needed for MMPBSA.py)
 #------------------------------------------------------------------------------
 if(NEED_mpi4py)
@@ -931,8 +899,19 @@ if(plumed_EXTERNAL)
 	include(${PLUMED_INSTALL_DIR}/lib/plumed/src/lib/Plumed.cmake)
 	
 	if(STATIC)
+		set(PLUMED_LINKER_FLAGS "")
+		
+		# grab interface linker flags from variable
+		foreach(FLAG ${PLUMED_STATIC_LOAD})
+			if("${FLAG}" MATCHES "^-")
+				list(APPEND PLUMED_LINKER_FLAGS ${FLAG})
+			endif()
+		endforeach()
+	
 		#build the multiple object files it installs (???) into a single archive
 		add_library(plumed STATIC ${PLUMED_STATIC_DEPENDENCIES})
+		target_link_libraries(plumed ${PLUMED_LINKER_FLAGS})
+		set_property(TARGET plumed PROPERTY LINKER_LANGUAGE CXX) # CMake cannot figure this out since there are only object files
 		install_libraries(plumed)
 	else()
 		import_library(plumed ${PLUMED_SHARED_DEPENDENCIES})
@@ -971,23 +950,6 @@ endif()
 #------------------------------------------------------------------------------ 
 if(libm_EXTERNAL)	
 	import_library(libm ${LIBM})
-endif()
-
-#------------------------------------------------------------------------------
-#  log4cxx
-#------------------------------------------------------------------------------ 
-if(log4cxx_EXTERNAL)
-	import_library(log4cxx ${LOG4CXX_LIBRARY} ${LOG4CXX_INCLUDE_DIR})
-endif()
-
-#------------------------------------------------------------------------------
-#  Qt4
-#------------------------------------------------------------------------------ 
-
-if(qt4_ENABLED)
-	# MTKpp uses qt4's XML parser, so we need to add it to the library tracker
-	get_property(QT4_XML_IMPORTED_LOCATION TARGET Qt4::QtXml PROPERTY IMPORTED_LOCATION_RELEASE)
-	using_external_library(${QT4_XML_IMPORTED_LOCATION})
 endif()
 
 #------------------------------------------------------------------------------
