@@ -1,4 +1,4 @@
-#File 
+#File to search for miscellaneous programs that Amber uses
 #NOTE: must be included after MPIConfig, OpenMPConfig, and CompilerFLags
 
 

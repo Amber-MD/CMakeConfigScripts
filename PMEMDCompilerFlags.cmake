@@ -289,7 +289,7 @@ list_to_space_separated(PMEMD_FFLAGS_SPC ${PMEMD_FFLAGS})
 #  CUDA configuration
 #-------------------------------------------------------------------------------
 
-option(GTI "Use GTI version of pmemd.cuda instead of AFE version" FALSE)
+option(GTI "Use GTI version of pmemd.cuda instead of AFE version" TRUE)
 
 if(CUDA)
 	set(PMEMD_NVCC_FLAGS -use_fast_math -O3)

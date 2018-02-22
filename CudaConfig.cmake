@@ -16,8 +16,16 @@ else()
 	endif()
 	
 	if(CUDA)
+		
+		option(VOLTA "Build the CUDA version of pmemd with special optimizations for the Volta architecture (this will be deprecated as the optimizations become standardized in a later release)" FALSE)
+		if(VOLTA AND (${CUDA_VERSION} VERSION_LESS 9.0))
+			message(FATAL_ERROR "Volta optimizations cannot be built with this CUDA version.  Please disable the VOLTA option, or upgrade CUDA.")
+		endif()
+		
 		#Note at present we do not include SM3.5 or SM3.7 since they sometimes show performance
 		#regressions over just using SM3.0.
+		#SM7.0 = V100 and Volta Geforce / GTX Ampere?
+		set(SM70FLAGS -gencode arch=compute_60,code=sm_70)
 		#SM6.2 = ??? 
 		set(SM62FLAGS -gencode arch=compute_62,code=sm_62)
 		#SM6.1 = GP106 = GTX-1070, GP104 = GTX-1080, GP102 = Titan-X[P]
@@ -40,12 +48,25 @@ else()
 		message(STATUS "CUDA version ${CUDA_VERSION} detected")
 		
 		if(${CUDA_VERSION} VERSION_EQUAL 7.5)
-			message("Configuring CUDA for SM3.0, SM5.0, SM5.2 and SM5.3")
-			message("BE AWARE: CUDA 7.5 does not support GTX-1080, DGX-1 or other Pascal based GPUs.")
+			message(STATUS "Configuring CUDA for SM3.0, SM5.0, SM5.2 and SM5.3")
+			message(STATUS "BE AWARE: CUDA 7.5 does not support GTX-1080, Titan-XP, DGX-1, V100 or other Pascal/Volta based GPUs.")
 		  	list(APPEND CUDA_NVCC_FLAGS ${SM30FLAGS} ${SM50FLAGS} ${SM52FLAGS} ${SM53FLAGS})
-		elseif((${CUDA_VERSION} VERSION_EQUAL 8.0) OR (${CUDA_VERSION} VERSION_GREATER 8.0))
-			message("Configuring CUDA for SM3.0, SM5.0, SM5.2, SM5.3, SM6.0, SM6.1 and SM6.2")
-		  	list(APPEND CUDA_NVCC_FLAGS ${SM30FLAGS} ${SM50FLAGS} ${SM52FLAGS} ${SM53FLAGS} ${SM60FLAGS} ${SM61FLAGS} ${SM62FLAGS} -Wno-deprecated-gpu-targets)
+		  	
+		elseif(${CUDA_VERSION} VERSION_EQUAL 8.0)
+			message(STATUS "Configuring CUDA for SM3.0, SM5.0, SM5.2, SM5.3, SM6.0, SM6.1 and SM6.2")
+			message(STATUS "BE AWARE: CUDA 8.0 does not support V100, Volta Gefore / GTX Ampere? or other Volta based GPUs.")
+		  	list(APPEND CUDA_NVCC_FLAGS ${SM30FLAGS} ${SM50FLAGS} ${SM52FLAGS} ${SM53FLAGS} ${SM60FLAGS} ${SM61FLAGS} -Wno-deprecated-gpu-targets)
+		  	
+		elseif((${CUDA_VERSION} VERSION_EQUAL 9.0) OR (${CUDA_VERSION} VERSION_EQUAL 9.1))
+		
+			if(VOLTA)
+				message(STATUS "Configuring for SM7.0 only with special optimizations")
+				list(APPEND CUDA_NVCC_FLAGS ${SM70FLAGS} -DVOLTAOPT)
+			else()	
+				message(STATUS "Configuring CUDA for SM3.0, SM5.0, SM5.2, SM5.3, SM6.0, SM6.1, and SM7.0")
+			  	list(APPEND CUDA_NVCC_FLAGS ${SM30FLAGS} ${SM50FLAGS} ${SM52FLAGS} ${SM53FLAGS} ${SM60FLAGS} ${SM61FLAGS} ${SM70FLAGS} -Wno-deprecated-gpu-targets)
+		  	endif()
+		  	
 		else()
 			message(FATAL_ERROR "Error: Unsupported CUDA version. AMBER requires CUDA version >= 7.5.
 				Please upgrade your CUDA installation or disable building with CUDA.")
