@@ -1,15 +1,15 @@
 # file with configuration that is common to both OpenMP and MPI.
 # It is included from both OpenMPConfig and MPIConfig.
 
+if(OPENMP OR MPI)
+	set(PARALLEL TRUE)
+else()
+	set(PARALLEL FALSE)
+endif()
+
+	
 if(NOT DEFINED PARALLELIZATION_CONFIG_INCLUDED)
 	set(PARALLELIZATION_CONFIG_INCLUDED TRUE)
-	
-	if(OPENMP OR MPI)
-		set(PARALLEL TRUE)
-	else()
-		set(PARALLEL FALSE)
-	endif()
-	
 	# --------------------------------------------------------------------
 	# Mixing Compiler Parallelization Workaround
 	# --------------------------------------------------------------------
@@ -24,9 +24,11 @@ if(NOT DEFINED PARALLELIZATION_CONFIG_INCLUDED)
 	
 	if(MIXING_COMPILERS AND PARALLEL)
 		if("${CMAKE_VERSION}" VERSION_GREATER 3.3 OR "${CMAKE_VERSION}" VERSION_EQUAL 3.3)
-			if("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
-				message(WARNING "You are using parallelization, and are mixing compilers from different vendors.  This is not supported with Visual Studio due to a CMake technical limitation. \
-You may get compiler errors caused by the wrong flags getting passed to compilers on mixed-language programs.  To build in this configuration, please use NMake or JOM.")
+			if("${CMAKE_GENERATOR}" MATCHES "Visual Studio" AND ("${CMAKE_VERSION}" VERSION_LESS 3.10 OR "${CMAKE_VERSION}" VERSION_EQUAL 3.10))
+				message(WARNING "You are using parallelization, and are mixing compilers from different vendors.  This is not supported with Visual Studio with this CMake version \
+due to a CMake technical limitation. \
+You may get compiler errors caused by the wrong flags getting passed to compilers on mixed-language programs.  To build in this configuration, please use NMake or JOM, or upgrade to \
+CMake >= 3.11.")
 			else()
 				set(MCPAR_WORKAROUND_ENABLED TRUE)
 			endif()

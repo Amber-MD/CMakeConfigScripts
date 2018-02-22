@@ -87,15 +87,15 @@ endfunction()
 
 #The targets it creates are regular executable targets, so they can be linked to and installed.
 
-#If MPI is enabled, mpinab will be used.
+#If the MPI argument is passed, mpinab will be used.
 
-#usage: add_nab_executable(<target name> NAB_SOURCES <nab sources...> [C_SOURCES <c sources...>])
+#usage: add_nab_executable(<target name> NAB_SOURCES <nab sources...> [C_SOURCES <c sources...>] [MPI])
 function(add_nab_executable EXE_NAME)
 
 	#parse the arguents
     cmake_parse_arguments(
-        ADD_NABEXE
-        ""
+        "ADD_NABEXE"
+        "MPI"
         ""
         "NAB_SOURCES;C_SOURCES"
         ${ARGN})
@@ -109,13 +109,18 @@ function(add_nab_executable EXE_NAME)
 	endif()
 	
 	#create the executable
-	if(MPI)
+	if(ADD_NABEXE_MPI)
     	nab_compile(${EXE_NAME}_COMPILED_NAB ${ADD_NABEXE_NAB_SOURCES} MPI)
     else()
     	nab_compile(${EXE_NAME}_COMPILED_NAB ${ADD_NABEXE_NAB_SOURCES})
     endif()
     
     add_executable(${EXE_NAME} ${${EXE_NAME}_COMPILED_NAB} ${ADD_NABEXE_C_SOURCES})
-    target_link_libraries(${EXE_NAME} libnab)    
+    
+    if(MPI)
+    	target_link_libraries(${EXE_NAME} libnab_mpi mpi_c)
+    else()
+    	target_link_libraries(${EXE_NAME} libnab)    
+    endif()
     
 endfunction(add_nab_executable)
