@@ -10,10 +10,20 @@ set(NAB_HEADER_DIR ${CMAKE_SOURCE_DIR}/AmberTools/src/nab)
 
 #compiles NAB_FILES into GENERATED_C_FILES
 #add GENERATED_C_FILES as source code to a target
-macro(nab_compile GENERATED_C_FILES) #2nd argument: NAB_FILES...
+#usage: nab_compile(<c files output var> [MPI] <nab files...>)
+function(nab_compile GENERATED_C_FILES)
+
+	cmake_parse_arguments(NABCOMP "MPI" "" "" ${ARGN})
 	
 	#create the intermediates dir if it doesn't exist
-	set(C_FILES_DIR "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/nabfiles")
+	if(NABCOMP_MPI)
+		set(C_FILES_DIR "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mpinabfiles")
+	else()
+		set(C_FILES_DIR "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/nabfiles")
+	endif()
+	
+	
+	
 	file(MAKE_DIRECTORY ${C_FILES_DIR})
 	
 	#turn include directories into preprocessor arguments
@@ -30,9 +40,15 @@ macro(nab_compile GENERATED_C_FILES) #2nd argument: NAB_FILES...
 			list(APPEND CPP_ARGS "-D${DEFINITION}")
 		endforeach()
 	endif()
+	
+	if(NABCOMP_MPI)
+		set(NAB2C_EXECUTABLE ${RUNNABLE_mpinab2c})
+	else()
+		set(NAB2C_EXECUTABLE ${RUNNABLE_nab2c})
+	endif()
 
 	#set up build rules for each nab file
-	foreach(NAB_FILE ${ARGN})
+	foreach(NAB_FILE ${NABCOMP_UNPARSED_ARGUMENTS})
 		get_filename_component(NAB_FILENAME ${NAB_FILE} NAME)
 			
 		strip_last_extension(NAB_FILE_BASENAME ${NAB_FILENAME})	
@@ -50,21 +66,28 @@ macro(nab_compile GENERATED_C_FILES) #2nd argument: NAB_FILES...
 			WORKING_DIRECTORY ${C_FILES_DIR})
 		
 		add_custom_command(OUTPUT ${GENERATED_C_FILE}
-			COMMAND ${RUNNABLE_nab2c} -nfname ${NAB_FILENAME} < ${PREPROCESSED_INTERMEDIATE}
+			COMMAND ${NAB2C_EXECUTABLE} -nfname ${NAB_FILENAME} < ${PREPROCESSED_INTERMEDIATE}
 			VERBATIM
 			DEPENDS ${PREPROCESSED_INTERMEDIATE} nab2c
 			COMMENT "[NAB] Compiling ${NAB_FILENAME}"
 			WORKING_DIRECTORY ${C_FILES_DIR})
-		list(APPEND ${GENERATED_C_FILES} ${GENERATED_C_FILE})	
-	endforeach()
 		
-endmacro()
+		list(APPEND ${GENERATED_C_FILES} ${GENERATED_C_FILE})	
+		set_property(SOURCE ${GENERATED_C_FILE} PROPERTY COMPILE_FLAGS -w) # NAB generates code that triggers compile warnings, so standard procedure is to disable all warnings
+		
+	endforeach()
+	
+	set(${GENERATED_C_FILES} ${${GENERATED_C_FILES}} PARENT_SCOPE)
+		
+endfunction()
 
 #function which condenses the four lines of boilerplate to create a nab executable into one line.
 #you pass it an executable target name, a list of nab sources, and a list of C sources, and it will create the
 #executable and set up the nab sources to be compiled.
 
-#The targets it creates are regular executable targets, so they can be linked to and installed
+#The targets it creates are regular executable targets, so they can be linked to and installed.
+
+#If MPI is enabled, mpinab will be used.
 
 #usage: add_nab_executable(<target name> NAB_SOURCES <nab sources...> [C_SOURCES <c sources...>])
 function(add_nab_executable EXE_NAME)
@@ -86,7 +109,12 @@ function(add_nab_executable EXE_NAME)
 	endif()
 	
 	#create the executable
-    nab_compile(${EXE_NAME}_COMPILED_NAB ${ADD_NABEXE_NAB_SOURCES})
+	if(MPI)
+    	nab_compile(${EXE_NAME}_COMPILED_NAB ${ADD_NABEXE_NAB_SOURCES} MPI)
+    else()
+    	nab_compile(${EXE_NAME}_COMPILED_NAB ${ADD_NABEXE_NAB_SOURCES})
+    endif()
+    
     add_executable(${EXE_NAME} ${${EXE_NAME}_COMPILED_NAB} ${ADD_NABEXE_C_SOURCES})
     target_link_libraries(${EXE_NAME} libnab)    
     
