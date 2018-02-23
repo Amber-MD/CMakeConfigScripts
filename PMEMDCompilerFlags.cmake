@@ -297,14 +297,14 @@ if(CUDA)
 	set(PMEMD_CUDA_DEFINES -DCUDA)
 	
 	if(GTI)
-		
-		list(APPEND PMEMD_NVCC_FLAGS -rdc=true --std c++11) 
 		list(APPEND PMEMD_CUDA_DEFINES -DGTI)
 		
 		message(STATUS "Building the GTI version of pmemd.cuda")
 	else()
 		message(STATUS "Building the AFE version of pmemd.cuda")
 	endif()
+
+	list(APPEND PMEMD_NVCC_FLAGS -rdc=true --std c++11) 
 
 	if(MPI)
 		list(APPEND PMEMD_NVCC_FLAGS -DMPICH_IGNORE_CXX_SEEK)
