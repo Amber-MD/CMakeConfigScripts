@@ -103,4 +103,10 @@ Either enable DOWNLOAD_MINICONDA, or set PYTHON_EXECUTABLE to point to a Python 
 		
 		set(HAS_PYTHON FALSE)
 	endif()
+	
+	# set up amber.python symlink to point to active python interpereter
+	# (this could break if the install is moved to a different computer, but it's the best we can do)
+	if((HOST_OSX OR HOST_LINUX) AND (TARGET_OSX OR TARGET_LINUX))
+    	install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${PYTHON_EXECUTABLE} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/bin/amber.python)" COMPONENT Python)
+    endif()
 endif()

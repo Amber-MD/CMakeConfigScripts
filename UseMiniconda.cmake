@@ -42,11 +42,11 @@ function(download_and_use_miniconda)
 	
 	# create "amber.*" symlinks
     if((HOST_OSX OR HOST_LINUX) AND (TARGET_OSX OR TARGET_LINUX))
-    	installtime_create_symlink(miniconda/bin/python bin/amber.python)
-    	installtime_create_symlink(miniconda/bin/conda bin/amber.conda)
-    	installtime_create_symlink(miniconda/bin/ipython bin/amber.ipython)
-    	installtime_create_symlink(miniconda/bin/jupyter bin/amber.jupyter)
-    	installtime_create_symlink(miniconda/bin/pip bin/amber.pip)
+    	installtime_create_symlink(miniconda/bin/python bin/amber.python Python)
+    	installtime_create_symlink(miniconda/bin/conda bin/amber.conda Python)
+    	installtime_create_symlink(miniconda/bin/ipython bin/amber.ipython Python)
+    	installtime_create_symlink(miniconda/bin/jupyter bin/amber.jupyter Python)
+    	installtime_create_symlink(miniconda/bin/pip bin/amber.pip Python)
     endif()
         
 	# check if we have already downloaded miniconda
@@ -55,8 +55,8 @@ function(download_and_use_miniconda)
 		message(STATUS "Miniconda is installed in the build directory!")
 		return()
 	endif()
-	vim cmake	
-	if(MINICONDA_USE_PY3)
+
+	if(MINICONDA_USE_PY3)	
 		message(STATUS "Downloading Python 3 Miniconda")	    
 	else()
 		message(STATUS "Downloading Python 2.7 Miniconda")
