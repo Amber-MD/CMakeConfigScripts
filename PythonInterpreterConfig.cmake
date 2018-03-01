@@ -10,10 +10,11 @@
 find_program(CONDA conda)
 
 if(EXISTS "${CONDA}")
-	set(USING_SYSTEM_ANACONDA TRUE)
 	
 	get_filename_component(ANACONDA_BIN "${CONDA}" DIRECTORY)
 	get_filename_component(ANACONDA_ROOT "${ANACONDA_BIN}/.." REALPATH)
+	
+	set(USING_SYSTEM_ANACONDA TRUE)
 	
 	message(STATUS "Found system Anaconda at ${ANACONDA_ROOT}.  It will be used as a Python interpereter, and for additional shared libraries.")
 	message(STATUS "It is not possible to avoid using Anaconda if it is on the PATH.  To build Amber without using Anaconda, remove it from your PATH.")
@@ -27,7 +28,9 @@ if(EXISTS "${CONDA}")
 	endif() 
 	
 	list(APPEND CMAKE_LIBRARY_PATH "${ANACONDA_ROOT}/lib")
-	list(APPEND CMAKE_LIBRARY_PATH "${ANACONDA_ROOT}/include")
+	list(APPEND CMAKE_INCLUDE_PATH "${ANACONDA_ROOT}/include")
+	list(APPEND CMAKE_PROGRAM_PATH "${ANACONDA_BIN}")
+	
 else()
 	set(USING_SYSTEM_ANACONDA FALSE)
 endif()
