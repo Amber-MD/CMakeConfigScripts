@@ -188,3 +188,46 @@ function(get_linker_name LIBRARY_PATH OUTPUT_VARIABLE)
 		
 		set(${OUTPUT_VARIABLE} ${LIBNAME} PARENT_SCOPE)
 endfunction(get_linker_name)
+
+# Converts the result of resolve_cmake_library_list() into a "link line" ready to be passed to gcc or ld, and a 
+# list of directories to add to the search path.  
+macro(resolved_lib_list_to_link_line LINK_LINE_VAR DIRS_VAR) # ARGN: LIB_PATH_LIST
+
+	set(${LINK_LINE_VAR} "")
+	set(${DIRS_VAR} "")
+
+	foreach(LIBRARY ${ARGN})
+		if("${LIBRARY}" MATCHES "^${LINKER_FLAG_PREFIX}")
+		
+			# linker flag -- put in library list to preserve ordering
+			list(APPEND ${LINK_LINE_VAR} "${LIBRARY}")
+		elseif("${LIBRARY}" MATCHES "(.+)\\.framework")
+			
+			# OS X framework -- translate to "-framework" linker flag
+			get_filename_component(FRAMEWORK_BASENAME "${LIBRARY}" NAME_WE)
+			string(TOLOWER "${FRAMEWORK_BASENAME}" FRAMEWORK_BASENAME_LCASE)
+			list(APPEND ${LINK_LINE_VAR} "-framework" "${FRAMEWORK_BASENAME_LCASE}")
+			
+		elseif(EXISTS "${LIBRARY}")
+		
+			if(NOT IS_DIRECTORY "${LIBRARY}")
+				# full path to library
+				get_filename_component(LIB_DIR ${LIBRARY} DIRECTORY)
+				list(APPEND ${DIRS_VAR} ${LIB_DIR})
+				
+				get_linker_name("${LIBRARY}" LIB_LINK_NAME)
+				list(APPEND ${LINK_LINE_VAR} "-l${LIB_LINK_NAME}")
+				
+			endif()
+			
+		else()
+			
+			# target built by this project
+			list(APPEND ${LINK_LINE_VAR} "-l${LIBRARY}")
+			
+		endif()
+	endforeach()
+	
+	list(REMOVE_DUPLICATES ${DIRS_VAR})
+	
+endmacro(resolved_lib_list_to_link_line)
