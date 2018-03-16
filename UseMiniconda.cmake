@@ -14,6 +14,8 @@ function(download_and_use_miniconda)
 	set(MINICONDA_DOWNLOAD_DIR ${MINICONDA_TEMP_DIR}/download)
 	set(MINICONDA_INSTALL_DIR ${MINICONDA_TEMP_DIR}/install)	
 	
+	set(MINICONDA_INSTALL_DIR ${MINICONDA_TEMP_DIR}/install PARENT_SCOPE) # need to keep this around for install_minconda()
+	
 	if(MINICONDA_USE_PY3)
 	    set(PYTHON_MAJOR_RELEASE 3)	    
 	else()
@@ -36,9 +38,6 @@ function(download_and_use_miniconda)
 	set(MINICONDA_PYTHON ${MINICONDA_PYTHON} PARENT_SCOPE)
 	
 	file(MAKE_DIRECTORY ${MINICONDA_TEMP_DIR} ${MINICONDA_DOWNLOAD_DIR})
-	
-	# set up miniconda interpreter to be installed
-	install(DIRECTORY ${MINICONDA_INSTALL_DIR}/ DESTINATION miniconda USE_SOURCE_PERMISSIONS)
 	
 	# create "amber.*" symlinks
     if((HOST_OSX OR HOST_LINUX) AND (TARGET_OSX OR TARGET_LINUX))
@@ -225,7 +224,27 @@ function(download_and_use_miniconda)
 	
 	message(STATUS "Miniconda install successful!")
 	
-	file(WRITE ${MINICONDA_STAMP_FILE} "File created to mark that Miniconda has been downloaded")
+	file(WRITE ${MINICONDA_STAMP_FILE} "File created to mark that Miniconda has been downloaded and set up")
 	
 	
 endfunction(download_and_use_miniconda)
+
+
+# Sets up Miniconda to be installed to the install prefix.
+# Must be called after PREFIX_RELATIVE_PYTHONPATH has been determined.
+function(install_miniconda)
+
+	# set up miniconda interpreter to be installed
+	install(DIRECTORY ${MINICONDA_INSTALL_DIR}/ DESTINATION miniconda COMPONENT Python USE_SOURCE_PERMISSIONS)
+
+	# create an install rule to invoke FixCondaShebang.cmake
+	install(CODE "
+message(STATUS \"Fixing Miniconda script shebangs\")
+execute_process(COMMAND ${CMAKE_COMMAND} 
+	-DMINICONDA_INSTALL_DIR=${MINICONDA_INSTALL_DIR} 
+	-DAMBER_INSTALL_DIR=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}
+	-DPREFIX_RELATIVE_PYTHONPATH=${PREFIX_RELATIVE_PYTHONPATH}
+	-P ${CMAKE_CURRENT_LIST_DIR}/FixCondaShebang.cmake)
+		" COMPONENT Python)
+	
+endfunction(install_miniconda)

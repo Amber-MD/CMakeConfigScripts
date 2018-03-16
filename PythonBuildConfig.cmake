@@ -85,6 +85,7 @@ skip building Python packages, or set DOWNLOAD_MINICONDA to TRUE to create a pyt
 		set(FIX_BACKSLASHES_CMD [==[set(CMAKE_INSTALL_PREFIX_BS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/")]==])
 	endif()
 	
+	
 	# Amber's Python programs must be installed with the PYTHONPATH set to the install directory
 	# so determine the Python prefix relative to AMBERHOME
 	
@@ -121,9 +122,8 @@ skip building Python packages, or set DOWNLOAD_MINICONDA to TRUE to create a pyt
 		
 		set(PY_INTERP_FOR_RELATIVE_PYTHONPATH ${PYTHON_EXECUTABLE} CACHE INTERNAL "The python interpreter used to run the PREFIX_RELATIVE_PYTHONPATH check" FORCE)
 	endif()
-		
+			
 	set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}${PREFIX_RELATIVE_PYTHONPATH}\"")
-	
 	
 	# argument to force Python packages to get installed into the Amber install dir
 	set(PYTHON_PREFIX_ARG \"--prefix=\${CMAKE_INSTALL_PREFIX_BS}\")
@@ -172,6 +172,13 @@ skip building Python packages, or set DOWNLOAD_MINICONDA to TRUE to create a pyt
 		    COMPONENT Python)
 		    
 	endmacro(install_python_library)
+	
+	# --------------------------------------------------------------------
+	# miniconda installation setup
+	# If miniconda is being used and we are building Python programs, then we should
+	# set it up to be installed, now that we have PREFIX_RELATIVE_PYTHONPATH.
+	
+	install_miniconda()
 
 	
 else() # BUILD_PYTHON disabled

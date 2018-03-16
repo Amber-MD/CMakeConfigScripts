@@ -115,14 +115,16 @@ function(resolve_cmake_library_list LIB_PATH_OUTPUT)
 				# interface library -- but it will have dependencies that we need to get.
 				get_property(INTERFACE_LIB_DEPENDENCIES TARGET ${LIBRARY} PROPERTY INTERFACE_LINK_LIBRARIES)
 				
-				# avoid crashing CMake if somebody accidentally made an interface library depend on itself
-				list(REMOVE_ITEM INTERFACE_LIB_DEPENDENCIES "${LIBRARY}")
-								
-				# now parse those dependencies!
-				resolve_cmake_library_list(INTERFACE_DEPS_LIB_PATHS ${INTERFACE_LIB_DEPENDENCIES})
-
-				list(APPEND LIB_PATHS ${INTERFACE_DEPS_LIB_PATHS})
+				if(NOT "${INTERFACE_LIB_DEPENDENCIES}" STREQUAL "")
 				
+					# avoid crashing CMake if somebody accidentally made an interface library depend on itself
+					list(REMOVE_ITEM INTERFACE_LIB_DEPENDENCIES "${LIBRARY}")
+									
+					# now parse those dependencies!
+					resolve_cmake_library_list(INTERFACE_DEPS_LIB_PATHS ${INTERFACE_LIB_DEPENDENCIES})
+	
+					list(APPEND LIB_PATHS ${INTERFACE_DEPS_LIB_PATHS})
+				endif()				
 			else()
 				# must be either imported or an actual target
 				get_property(LIBRARY_HAS_IMPORTED_LOCATION TARGET ${LIBRARY} PROPERTY IMPORTED_LOCATION SET)

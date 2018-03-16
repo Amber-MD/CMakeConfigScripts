@@ -16,6 +16,8 @@ else()
 	endif()
 	
 	if(CUDA)
+	
+		set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 		
 		option(VOLTA "Build the CUDA version of pmemd with special optimizations for the Volta architecture (this will be deprecated as the optimizations become standardized in a later release)" FALSE)
 		if(VOLTA AND (${CUDA_VERSION} VERSION_LESS 9.0))
