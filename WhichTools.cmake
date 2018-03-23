@@ -84,7 +84,8 @@ pymsmt
 pysander
 pytraj
 pymdgx
-pdb4amber)
+pdb4amber
+packmol_memgen)
 
 if(NOT AMBER_RELEASE)
 	# these tools are in the git version of amber, but not in the released source
@@ -201,7 +202,7 @@ endif()
 
 #Python programs (controlled by BUILD_PYTHON option in PythonConfig.cmake)
 if(NOT BUILD_PYTHON)
-	disable_tools("Python programs are disabled" pysander pytraj pysmt mmpbsa_py parmed pymdgx)
+	disable_tools("Python programs are disabled" pysander pytraj pysmt mmpbsa_py parmed pymdgx packmol_memgen)
 endif()
 
 if(STATIC)
@@ -212,6 +213,9 @@ if(MPI AND mpi4py_DISABLED)
 	disable_tool(mmpbsa_py "mmpbsa_py requires mpi4py when MPI is enabled")
 endif()
 
+if(boost_DISABLED)
+	disable_tool(packmol_memgen "Requires boost")
+endif()
 
 # Perl programs
 if(NOT BUILD_PERL)

@@ -27,7 +27,8 @@ plumed
 libm
 mkl
 mpi4py
-perlmol)
+perlmol
+boost)
 
 set(3RDPARTY_TOOL_USES
 "for fundamental linear algebra calculations"                                     
@@ -51,7 +52,8 @@ set(3RDPARTY_TOOL_USES
 "for fundamental math routines if they are not contained in the C library"                                                                 
 "alternate implementation of lapack and blas that is tuned for speed"             
 "MPI support library for MMPBSA.py"                                               
-"chemistry library used by FEW")                                                  
+"chemistry library used by FEW"
+"C++ support library for packmol_memgen")                                                  
 
 # Logic to disable tools
 set(3RDPARTY_SUBDIRS "")
@@ -583,6 +585,23 @@ if(NEED_perlmol)
 	endif()
 endif()
 
+#------------------------------------------------------------------------------
+# Boost
+#------------------------------------------------------------------------------
+if(NEED_boost)
+	
+	set(Boost_DETAILED_FAILURE_MSG TRUE)
+	find_package(Boost COMPONENTS thread) # only memgen needs boost right now, and it only uses boost_thread.
+	
+	if(Boost_FOUND)
+		set_3rdparty(boost EXTERNAL)
+	else()
+		set_3rdparty(boost DISABLED)
+	endif()
+
+endif()
+
+
 # Apply user overrides
 # -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -978,4 +997,16 @@ elseif(perlmol_INTERNAL)
 		message(FATAL_ERROR "A perl-compatible make program (DMake on Windows) is required to build Chemistry::Mol")
 	endif()
 	list(APPEND 3RDPARTY_SUBDIRS PerlMol-0.3500)
+endif()
+
+#------------------------------------------------------------------------------
+#  boost
+#------------------------------------------------------------------------------
+
+if(boost_EXTERNAL)
+	if(NOT Boost_FOUND)
+		message(FATAL_ERROR "boost was set to be sourced externally, but it was not found.")
+	endif()
+	
+	import_libraries(boost LIBRARIES ${Boost_LIBRARIES} INCLUDES ${Boost_INCLUDE_DIRS})
 endif()
