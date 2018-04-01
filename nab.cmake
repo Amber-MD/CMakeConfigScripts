@@ -120,7 +120,7 @@ function(add_nab_executable EXE_NAME)
     
     add_executable(${EXE_NAME} ${${EXE_NAME}_COMPILED_NAB} ${ADD_NABEXE_C_SOURCES})
     
-    if(MPI)
+    if(ADD_NABEXE_MPI)
     	target_link_libraries(${EXE_NAME} libnab_mpi mpi_c)
     else()
     	target_link_libraries(${EXE_NAME} libnab)    
