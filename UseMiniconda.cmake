@@ -39,15 +39,6 @@ function(download_and_use_miniconda)
 	
 	file(MAKE_DIRECTORY ${MINICONDA_TEMP_DIR} ${MINICONDA_DOWNLOAD_DIR})
 	
-	# create "amber.*" symlinks
-    if((HOST_OSX OR HOST_LINUX) AND (TARGET_OSX OR TARGET_LINUX))
-    	installtime_create_symlink(miniconda/bin/python bin/amber.python Python)
-    	installtime_create_symlink(miniconda/bin/conda bin/amber.conda Python)
-    	installtime_create_symlink(miniconda/bin/ipython bin/amber.ipython Python)
-    	installtime_create_symlink(miniconda/bin/jupyter bin/amber.jupyter Python)
-    	installtime_create_symlink(miniconda/bin/pip bin/amber.pip Python)
-    endif()
-        
 	# check if we have already downloaded miniconda
 	if(EXISTS ${MINICONDA_STAMP_FILE})
 		proxy_python_version()
@@ -231,7 +222,7 @@ endfunction(download_and_use_miniconda)
 
 
 # Sets up Miniconda to be installed to the install prefix.
-# Must be called after PREFIX_RELATIVE_PYTHONPATH has been determined.
+# Must be called after all python programs have had their install rules created
 function(install_miniconda)
 
 	# set up miniconda interpreter to be installed
@@ -246,5 +237,18 @@ execute_process(COMMAND ${CMAKE_COMMAND}
 	-DPREFIX_RELATIVE_PYTHONPATH=${PREFIX_RELATIVE_PYTHONPATH}
 	-P ${CMAKE_CURRENT_LIST_DIR}/FixCondaShebang.cmake)
 		" COMPONENT Python)
+		
+	# create "amber.*" symlinks
+    if((HOST_OSX OR HOST_LINUX) AND (TARGET_OSX OR TARGET_LINUX))
+    	# make sure bin directory exists at this point in the install
+    	install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/bin)" COMPONENT Python)
+    	
+    	installtime_create_symlink(miniconda/bin/python bin/amber.python Python)
+    	installtime_create_symlink(miniconda/bin/conda bin/amber.conda Python)
+    	installtime_create_symlink(miniconda/bin/ipython bin/amber.ipython Python)
+    	installtime_create_symlink(miniconda/bin/jupyter bin/amber.jupyter Python)
+    	installtime_create_symlink(miniconda/bin/pip bin/amber.pip Python)
+    endif()
+        
 	
 endfunction(install_miniconda)

@@ -173,14 +173,6 @@ skip building Python packages, or set DOWNLOAD_MINICONDA to TRUE to create a pyt
 		    
 	endmacro(install_python_library)
 	
-	# --------------------------------------------------------------------
-	# miniconda installation setup
-	# If miniconda is being used and we are building Python programs, then we should
-	# set it up to be installed, now that we have PREFIX_RELATIVE_PYTHONPATH.
-	
-	if(DOWNLOAD_MINICONDA)
-		install_miniconda()
-	endif()
 	
 else() # BUILD_PYTHON disabled
 	
