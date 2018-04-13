@@ -16,7 +16,7 @@ endif()
 
 # It's likely that when crosscompiling, there will not be GUI libraries for the target, and we actually found the build system's libraries.
 # So, we disable BUILD_GUI by default.
-test(BUILD_GUI_DEFAULT X11_FOUND AND NOT CROSSCOMPILE)
+test(BUILD_GUI_DEFAULT X11_FOUND AND NOT CROSSCOMPILE AND EXISTS X11_SM_LIB AND EXISTS X11_Xt_LIB)
 
 option(BUILD_GUI "Build graphical interfaces to programs.  Currently affects only LEaP" ${BUILD_GUI_DEFAULT})
 
