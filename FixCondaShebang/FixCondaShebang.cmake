@@ -33,11 +33,11 @@ endforeach()
 # get one last script that needs fixing
 list(APPEND FILES_NEEDING_REPLACEMENT "${AMBER_INSTALL_DIR}/miniconda${PREFIX_RELATIVE_PYTHONPATH}/conda_build/convert.py")
 
-message("FILES_NEEDING_REPLACEMENT: ${FILES_NEEDING_REPLACEMENT}")
+#message("FILES_NEEDING_REPLACEMENT: ${FILES_NEEDING_REPLACEMENT}")
 
 # now call the replacer script
 # --------------------------------------------------------------------
-include(${CMAKE_CURRENT_LIST_DIR}/Replace-function.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../Replace-function.cmake)
 
 foreach(FILE ${FILES_NEEDING_REPLACEMENT})
 	configuretime_file_replace(${FILE} ${FILE} TO_REPLACE ${BUILD_TREE_SHEBANG} REPLACEMENT ${INSTALL_TREE_SHEBANG})

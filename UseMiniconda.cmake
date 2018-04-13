@@ -228,16 +228,6 @@ function(install_miniconda)
 	# set up miniconda interpreter to be installed
 	install(DIRECTORY ${MINICONDA_INSTALL_DIR}/ DESTINATION miniconda COMPONENT Python USE_SOURCE_PERMISSIONS)
 
-	# create an install rule to invoke FixCondaShebang.cmake
-	install(CODE "
-message(STATUS \"Fixing Miniconda script shebangs\")
-execute_process(COMMAND ${CMAKE_COMMAND} 
-	-DMINICONDA_INSTALL_DIR=${MINICONDA_INSTALL_DIR} 
-	-DAMBER_INSTALL_DIR=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}
-	-DPREFIX_RELATIVE_PYTHONPATH=${PREFIX_RELATIVE_PYTHONPATH}
-	-P ${CMAKE_CURRENT_LIST_DIR}/FixCondaShebang.cmake)
-		" COMPONENT Python)
-		
 	# create "amber.*" symlinks
     if((HOST_OSX OR HOST_LINUX) AND (TARGET_OSX OR TARGET_LINUX))
     	# make sure bin directory exists at this point in the install
@@ -250,5 +240,6 @@ execute_process(COMMAND ${CMAKE_COMMAND}
     	installtime_create_symlink(miniconda/bin/pip bin/amber.pip Python)
     endif()
         
-	
+	add_subdirectory(${CMAKE_SOURCE_DIR}/cmake/FixCondaShebang)
+			
 endfunction(install_miniconda)
