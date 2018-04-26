@@ -360,7 +360,7 @@ if(NEED_arpack)
 	#  ARPACK
 	find_package(ARPACK)
 	
-	if(ARPACK_LIBRARY)
+	if(ARPACK_FOUND)
 		set_3rdparty(arpack EXTERNAL)
 	else()
 		set_3rdparty(arpack INTERNAL)
