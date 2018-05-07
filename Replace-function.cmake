@@ -2,6 +2,8 @@
 #usage: file_replace_string(<input file> <output file> TO_REPLACE <item to replace 1> <item to replace 2> REPLACEMENT <replacement 1> <replacement 2>)
 # NOTE: replacements cannot be empty strings
 
+include(CMakeParseArguments)
+
 function(configuretime_file_replace INPUTFILE OUTPUTFILE)
 
 	cmake_parse_arguments(
