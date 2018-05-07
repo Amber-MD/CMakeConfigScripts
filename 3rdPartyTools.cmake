@@ -591,7 +591,7 @@ endif()
 if(NEED_boost)
 	
 	set(Boost_DETAILED_FAILURE_MSG TRUE)
-	find_package(Boost COMPONENTS thread) # only memgen needs boost right now, and it only uses boost_thread.
+	find_package(Boost COMPONENTS thread system) # only memgen needs boost right now, and it only uses boost_thread.
 	
 	if(Boost_FOUND)
 		set_3rdparty(boost EXTERNAL)
