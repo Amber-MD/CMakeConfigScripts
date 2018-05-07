@@ -5,48 +5,15 @@
 # with different symbols than the system versions, so CMake will complain that it can't generate a safe RPATH
 
 # --------------------------------------------------------------------
-# Detect system Anaconda
-
-find_program(CONDA conda)
-
-if(EXISTS "${CONDA}")
-	
-	get_filename_component(ANACONDA_BIN "${CONDA}" DIRECTORY)
-	get_filename_component(ANACONDA_ROOT "${ANACONDA_BIN}/.." REALPATH)
-	
-	set(USING_SYSTEM_ANACONDA TRUE)
-	
-	message(STATUS "Found system Anaconda at ${ANACONDA_ROOT}.  It will be used as a Python interpereter, and for additional shared libraries.")
-	message(STATUS "It is not possible to avoid using Anaconda if it is on the PATH.  To build Amber without using Anaconda, remove it from your PATH.")
-	message(STATUS "To use a different Anaconda install, just move it to the front of your PATH and rerun CMake.")
-	message(STATUS "To change the Python interpreter in use to a different one inside Anaconda, set the PYTHON_EXECUTABLE variable to point to it.")
-	
-	if(DEFINED DOWNLOAD_MINICONDA)
-		if(DOWNLOAD_MINICONDA)
-			message(FATAL_ERROR "DOWNLOAD_MINICONDA is TRUE, but this will be ignored because Anaconda was found on your path.  Please set DOWNLOAD_MINICONDA to FALSE, or remove Anaconda from your PATH.")
-		endif()
-	endif() 
-	
-	list(APPEND CMAKE_LIBRARY_PATH "${ANACONDA_ROOT}/lib")
-	list(APPEND CMAKE_INCLUDE_PATH "${ANACONDA_ROOT}/include")
-	list(APPEND CMAKE_PROGRAM_PATH "${ANACONDA_BIN}")
-	
-else()
-	set(USING_SYSTEM_ANACONDA FALSE)
-endif()
-
-# --------------------------------------------------------------------
 # Offer to download Miniconda
 
-if(NOT USING_SYSTEM_ANACONDA)
+if(NOT DEFINED DOWNLOAD_MINICONDA)
+	
+	# Stop the build to give the user a choice
+	option(DOWNLOAD_MINICONDA "If true, then Amber will download its own Miniconda distribution.  Recommended if you're having problems with the system Python interpereter." TRUE)
 
-	if(NOT DEFINED DOWNLOAD_MINICONDA)
-		
-		# Stop the build to give the user a choice
-		option(DOWNLOAD_MINICONDA "If true, then Amber will download its own Miniconda distribution.  Recommended if you're having problems with the system Python interpereter." TRUE)
-	
-	
-		message(FATAL_ERROR "We highly recommend letting AMBER install a Python environment with all prerequisites inside \
+
+	message(FATAL_ERROR "We highly recommend letting AMBER install a Python environment with all prerequisites inside \
 Amber's install location via a Continuum Miniconda distribution. \
 Miniconda is chosen because it comes with a great package manager, conda, which is \
 specially designed for numerical and scientific computing. This makes compiling \
@@ -57,14 +24,32 @@ It may take several minutes and downloads around a hundred megabytes of data. \
 Config variable DOWNLOAD_MINICONDA has been autoset to TRUE.  To accept and download Miniconda, just run cmake again. \
 If you do not want to download Miniconda, run cmake again with DOWNLOAD_MINICONDA set to FALSE.")
 
-	endif()
-	
 endif()
+	
+
+# --------------------------------------------------------------------
+# Detect system Anaconda
+
+find_program(CONDA conda)
+
 
 # --------------------------------------------------------------------
 # Find the actual interpreter
 
-if((NOT USING_SYSTEM_ANACONDA) AND DOWNLOAD_MINICONDA)
+if(DOWNLOAD_MINICONDA)
+
+	# get system Conda out of our PATH if it's there, so that the Miniconda install can proceed in an orderly fashion
+	if(EXISTS "${CONDA}")
+		get_filename_component(ANACONDA_BIN "${CONDA}" DIRECTORY)
+		remove_from_path("${ANACONDA_BIN}")
+		
+		# unset vars set by conda activate
+		unset(ENV{CONDA_DEFAULT_ENV})
+		unset(ENV{CONDA_PREFIX})
+		unset(ENV{CONDA_PATH_BACKUP})
+		unset(ENV{_CONDA_PYTHON2})
+	endif()
+		
 	set(MINICONDA_VERSION 4.3.21) 
 	option(MINICONDA_USE_PY3 "If true, Amber will download a Python 3 miniconda when DOWNLOAD_MINICONDA is enabled.  Otherwise, Python 2.7 Miniconda will get downloaded." FALSE)
 	
@@ -74,7 +59,38 @@ if((NOT USING_SYSTEM_ANACONDA) AND DOWNLOAD_MINICONDA)
 	set(PYTHON_EXECUTABLE ${MINICONDA_PYTHON})
 	set(HAS_PYTHON TRUE)
 	
+	# allow CMake to pull libraries such as MKL and bzip2 from Miniconda
+	list(APPEND CMAKE_LIBRARY_PATH "${MINICONDA_INSTALL_DIR}/lib")
+	list(APPEND CMAKE_INCLUDE_PATH "${MINICONDA_INSTALL_DIR}/include")
+	
+	if(HOST_WINDOWS)
+		list(APPEND CMAKE_PROGRAM_PATH "${MINICONDA_INSTALL_DIR}" "${MINICONDA_INSTALL_DIR}/Scripts")
+	else()
+		list(APPEND CMAKE_PROGRAM_PATH "${MINICONDA_INSTALL_DIR}/bin")
+	endif()
+		
 else()
+
+	if(EXISTS "${CONDA}")
+	
+		# tell cmake to use system Conda
+		get_filename_component(ANACONDA_BIN "${CONDA}" DIRECTORY)
+		get_filename_component(ANACONDA_ROOT "${ANACONDA_BIN}/.." REALPATH)
+		
+		set(USING_SYSTEM_ANACONDA TRUE)
+		
+		message(STATUS "Found system Anaconda at ${ANACONDA_ROOT}.  It will be used as a Python interpereter, and for additional shared libraries. \
+It is not possible to use the system Python if Anaconda is on the PATH.  To build Amber without using Anaconda, remove it from your PATH. \
+To use Amber's internal Minconda instead, set DOWNLOAD_MINICONDA to TRUE. \
+To use a different Anaconda install, just activate it and rerun CMake. \
+To change the Python interpreter in use to a different one inside Anaconda, set the PYTHON_EXECUTABLE variable to point to it.")
+		
+		# allow CMake to pull libraries such as MKL and bzip2 from Anaconda
+		list(APPEND CMAKE_LIBRARY_PATH "${ANACONDA_ROOT}/lib")
+		list(APPEND CMAKE_INCLUDE_PATH "${ANACONDA_ROOT}/include")
+		list(APPEND CMAKE_PROGRAM_PATH "${ANACONDA_BIN}")
+	endif()
+
 
 	#-------------------------------------------------------------------------------
 	# Find a system Python, or Anaconda's python if we are using external Anaconda

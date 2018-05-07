@@ -81,3 +81,40 @@ macro(append_compile_flags NEW_FLAGS) # SOURCE...
 		set_property(SOURCE ${SOURCE_FILE} PROPERTY COMPILE_FLAGS ${NEW_COMPILE_FLAGS})
 	endforeach()
 endmacro(append_compile_flags)
+
+# removes the given directory from cmake's PATH environment variable
+function(remove_from_path DIRECTORY)
+	
+	if(HOST_WINDOWS)
+		set(CONVERTED_PATH $ENV{PATH})
+	else()
+		string(REPLACE ":" ";" CONVERTED_PATH $ENV{PATH})
+	endif()
+	
+	get_filename_component(TO_REMOVE_REALPATH "${DIRECTORY}" REALPATH)
+	
+	set(NEW_PATH "")
+	
+	foreach(PATHCOMPONENT ${CONVERTED_PATH})
+		get_filename_component(PATHCOMPONENT_REALPATH "${PATHCOMPONENT}" REALPATH)
+		
+		#message("Comparing \"${TO_REMOVE_REALPATH}\" and \"${PATHCOMPONENT_REALPATH}\"")
+		
+		# make sure to compare their real paths, so we aren't folled by any path weirdness in PATH
+		if(NOT "${TO_REMOVE_REALPATH}" STREQUAL "${PATHCOMPONENT_REALPATH}")
+			list(APPEND NEW_PATH "${PATHCOMPONENT}")
+		endif()
+	endforeach()
+	
+	#printvar(ENV{PATH})
+	#printvar(NEW_PATH)
+	
+	# now set the new path
+	if(HOST_WINDOWS)
+		set($ENV{PATH} "${NEW_PATH}")
+	else()
+		string(REPLACE ";" ":" ENV{PATH} "${NEW_PATH}")
+	endif()
+	#printvar(ENV{PATH})
+	
+endfunction(remove_from_path)
