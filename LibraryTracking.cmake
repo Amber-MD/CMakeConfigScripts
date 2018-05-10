@@ -118,10 +118,10 @@ function(import_library NAME PATH) #3rd arg: INCLUDE_DIRS
 	#Try to figure out whether it is shared or static.
 	get_lib_type(${PATH} LIB_TYPE)
 
-	if("${LIB_TYPE}" STREQUAL "STATIC")
-		add_library(${NAME} STATIC IMPORTED GLOBAL)
-	else()
+	if("${LIB_TYPE}" STREQUAL "SHARED")
 		add_library(${NAME} SHARED IMPORTED GLOBAL)
+	else()
+		add_library(${NAME} STATIC IMPORTED GLOBAL)
 	endif()
 
 	set_property(TARGET ${NAME} PROPERTY IMPORTED_LOCATION ${PATH})
