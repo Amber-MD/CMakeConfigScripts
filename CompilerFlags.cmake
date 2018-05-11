@@ -227,7 +227,7 @@ endif()
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 if("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
-	add_flags(C /D_CRT_SECURE_NO_WARNINGS)
+	add_flags(C /D_CRT_SECURE_NO_WARNINGS /MP)
 	
 	set(OPT_CFLAGS "/Ox")
 	set(NO_OPT_CFLAGS "/Od")
@@ -235,7 +235,7 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_C_FLAGS_DEBUG "/Zi")
 endif()
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-	add_flags(CXX /D_CRT_SECURE_NO_WARNINGS)
+	add_flags(CXX /D_CRT_SECURE_NO_WARNINGS /MP)
 	
 	set(OPT_CXXFLAGS "/Ox")
 	set(NO_OPT_CFLAGS "/Od")
