@@ -23,7 +23,6 @@ function(nab_compile GENERATED_C_FILES)
 	endif()
 	
 	
-	
 	file(MAKE_DIRECTORY ${C_FILES_DIR})
 	
 	#turn include directories into preprocessor arguments
@@ -68,10 +67,7 @@ function(nab_compile GENERATED_C_FILES)
 		add_custom_command(OUTPUT ${GENERATED_C_FILE}
 			COMMAND ${NAB2C_EXECUTABLE} -nfname ${NAB_FILENAME} < ${PREPROCESSED_INTERMEDIATE}
 			VERBATIM
-			DEPENDS ${PREPROCESSED_INTERMEDIATE} 
-				# nab2c
-				# ^ commented out because there seems to be some strange dependency issue that causes nab2c to get rebuilt unnecessarily, and with this line, it would force
-				# all nab programs to get rebuilt too.  nab2c hasn't changed much lately, so this should be OK I hope
+			DEPENDS ${PREPROCESSED_INTERMEDIATE} ${NAB2C_EXECUTABLE}
 			COMMENT "[NAB] Compiling ${NAB_FILENAME}"
 			WORKING_DIRECTORY ${C_FILES_DIR})
 		

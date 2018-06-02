@@ -81,7 +81,7 @@ Accepts a semicolon-seperated list.")
 		set(WPT_LICENSE_PATH ${MINGW_BASE_DIR}/licenses/winpthreads/COPYING)
 		
 		if(EXISTS ${WPT_LICENSE_PATH})
-			install(FILES ${WPT_LICENSE_PATH} DESTINATION . RENAME COPYING-winpthread.txt)
+			install(FILES ${WPT_LICENSE_PATH} DESTINATION ${CMAKE_INSTALL_POSTFIX}. RENAME COPYING-winpthread.txt)
 		else()
 			message(WARNING "Couldn't find winpthreads license file to bundle with the installer.  This is required for mass distribution so as to be compliant with winpthread's license. \
 Looking for it at the following path: ${WPT_LICENSE_PATH}") 

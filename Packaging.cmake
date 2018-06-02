@@ -67,7 +67,7 @@ elseif(${PACKAGE_TYPE} STREQUAL WINDOWS_INSTALLER)
 	# Miniconda warning
 	# --------------------------------------------------------------------
 	if(DOWNLOAD_MINICONDA)
-		message(WARNING "You are using Miniconda and are trying to build a NSIS windows installer package.  Miniconda drives the installer over the 1GB limit and \
+		message(WARNING "You are using Miniconda and are trying to build a NSIS windows installer package.  Miniconda drives the installer over the ~1GB uncompressed size limit and \
 this will cause the packaging process to fail.  Please disable DOWNLOAD_MINICONDA  and use a system Python, or, if miniconda is absolutely required, switch to an ARCHIVE package.")
 	endif()
 	
@@ -76,7 +76,7 @@ this will cause the packaging process to fail.  Please disable DOWNLOAD_MINICOND
 	
 	if(DEFINED STARTUP_FILE)
 	
-		install(PROGRAMS ${STARTUP_FILE} DESTINATION .)
+		install(PROGRAMS ${STARTUP_FILE} DESTINATION ${CMAKE_INSTALL_POSTFIX}.)
 	
 		get_filename_component(STARTUP_FILE_NAME ${STARTUP_FILE} NAME)
 		
@@ -197,6 +197,10 @@ function(print_packaging_report)
 	if(DEFINED AMBER_INSTALL_COMPONENTS)
 		list_to_space_separated(AMBER_INSTALL_COMPONENTS_SPC ${AMBER_INSTALL_COMPONENTS})
 		colormsg("Packaging these components:" HIBLUE "${AMBER_INSTALL_COMPONENTS_SPC}")
+	endif()
+	
+	if(NOT "${CMAKE_INSTALL_POSTFIX}" STREQUAL "")
+		colormsg("Directory inside package:  " HIBLUE "${CMAKE_INSTALL_POSTFIX}")
 	endif()
 	
 	colormsg("")

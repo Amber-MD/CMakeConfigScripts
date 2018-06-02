@@ -226,18 +226,18 @@ endfunction(download_and_use_miniconda)
 function(install_miniconda)
 
 	# set up miniconda interpreter to be installed
-	install(DIRECTORY ${MINICONDA_INSTALL_DIR}/ DESTINATION miniconda COMPONENT Python USE_SOURCE_PERMISSIONS)
+	install(DIRECTORY ${MINICONDA_INSTALL_DIR}/ DESTINATION ${CMAKE_INSTALL_POSTFIX}miniconda COMPONENT Python USE_SOURCE_PERMISSIONS)
 
 	# create "amber.*" symlinks
     if((HOST_OSX OR HOST_LINUX) AND (TARGET_OSX OR TARGET_LINUX))
     	# make sure bin directory exists at this point in the install
-    	install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/bin)" COMPONENT Python)
+    	install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_POSTFIX}bin)" COMPONENT Python)
     	
-    	installtime_create_symlink(miniconda/bin/python bin/amber.python Python)
-    	installtime_create_symlink(miniconda/bin/conda bin/amber.conda Python)
-    	installtime_create_symlink(miniconda/bin/ipython bin/amber.ipython Python)
-    	installtime_create_symlink(miniconda/bin/jupyter bin/amber.jupyter Python)
-    	installtime_create_symlink(miniconda/bin/pip bin/amber.pip Python)
+    	installtime_create_symlink(${CMAKE_INSTALL_POSTFIX}miniconda/bin/python ${BINDIR}/amber.python Python)
+    	installtime_create_symlink(${CMAKE_INSTALL_POSTFIX}miniconda/bin/conda ${BINDIR}/amber.conda Python)
+    	installtime_create_symlink(${CMAKE_INSTALL_POSTFIX}miniconda/bin/ipython ${BINDIR}/amber.ipython Python)
+    	installtime_create_symlink(${CMAKE_INSTALL_POSTFIX}miniconda/bin/jupyter ${BINDIR}/amber.jupyter Python)
+    	installtime_create_symlink(${CMAKE_INSTALL_POSTFIX}miniconda/bin/pip ${BINDIR}/amber.pip Python)
     endif()
         
 	add_subdirectory(${CMAKE_SOURCE_DIR}/cmake/FixCondaShebang)

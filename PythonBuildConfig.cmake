@@ -55,7 +55,7 @@ skip building Python packages, or set DOWNLOAD_MINICONDA to TRUE to create a pyt
 		endif()
 		
 		# --------------------------------------------------------------------
-		# apparantly tkinter is not capitalized in some environments (???????)
+		# tkinter's capitalization changes based on the python version
 		check_python_package(tkinter HAVE_TKINTER)
 		check_python_package(Tkinter HAVE_TKINTER)
 		
@@ -80,9 +80,12 @@ skip building Python packages, or set DOWNLOAD_MINICONDA to TRUE to create a pyt
 	# I have NO IDEA why
 	# so we have to execute this bit of code in every Python program's cmake_install.cmake to create CMAKE_INSTALL_PREFIX_BS
 	if(WIN32)
-		set(FIX_BACKSLASHES_CMD [==[string(REPLACE "/" "\\" CMAKE_INSTALL_PREFIX_BS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/")]==])
+		# I am so sorry for this mess.
+		# I will tell you that of the below variable references, "$ENV{DESTDIR}" and "${CMAKE_INSTALL_PREFIX}" are escaped, and not evaluated until install time.
+		# "${CMAKE_INSTALL_POSTFIX}" is not escaped, so it is evaluated now.
+		set(FIX_BACKSLASHES_CMD "string(REPLACE \"/\" \"\\\\\" CMAKE_INSTALL_PREFIX_BS \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_POSTFIX}\")")
 	else()
-		set(FIX_BACKSLASHES_CMD [==[set(CMAKE_INSTALL_PREFIX_BS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/")]==])
+		set(FIX_BACKSLASHES_CMD "set(CMAKE_INSTALL_PREFIX_BS \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_POSTFIX}\")")
 	endif()
 	
 	
@@ -123,7 +126,7 @@ skip building Python packages, or set DOWNLOAD_MINICONDA to TRUE to create a pyt
 		set(PY_INTERP_FOR_RELATIVE_PYTHONPATH ${PYTHON_EXECUTABLE} CACHE INTERNAL "The python interpreter used to run the PREFIX_RELATIVE_PYTHONPATH check" FORCE)
 	endif()
 			
-	set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}${PREFIX_RELATIVE_PYTHONPATH}\"")
+	set(PYTHONPATH_SET_CMD "\"PYTHONPATH=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_POSTFIX}${PREFIX_RELATIVE_PYTHONPATH}\"")
 	
 	# argument to force Python packages to get installed into the Amber install dir
 	set(PYTHON_PREFIX_ARG \"--prefix=\${CMAKE_INSTALL_PREFIX_BS}\")
@@ -166,7 +169,7 @@ skip building Python packages, or set DOWNLOAD_MINICONDA to TRUE to create a pyt
 		     \"${PYTHON_EXECUTABLE}\"
 		    ./setup.py build -b \"${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/python-build\"
 		    install -f ${PYTHON_PREFIX_ARG}
-		    \"--install-scripts=\${CMAKE_INSTALL_PREFIX_BS}${BINDIR}\"
+		    \"--install-scripts=\${CMAKE_INSTALL_PREFIX_BS}bin\"
 		    ${ARGN_SPC}
 		    WORKING_DIRECTORY \"${CMAKE_CURRENT_SOURCE_DIR}\")"
 		    COMPONENT Python)

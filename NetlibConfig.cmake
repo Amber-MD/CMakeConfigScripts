@@ -1,4 +1,4 @@
-# This script sets up two targets based on the math libraries currently configured:
+# This script sets up a target based on the math libraries currently configured:
 # netlib -- linear algebra libraries (blas and lapack), arpack, and whatever supporting math libraries are necessary.
 # do NOT link any of the netlib libraries directly except through the netlib target.  That will not work when MKL is enabled.  
 # Also, make ABSOLUTELY sure that fftw is AHEAD OF netlib in the link order of any targets that use them together.

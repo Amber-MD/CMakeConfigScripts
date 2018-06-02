@@ -24,8 +24,11 @@ endif()
 if(BUILD_PERL)
 	
 	#relative to install prefix, must NOT begin with a slash
-	set(PERL_MODULE_DIR "lib/perl" CACHE STRING "Path relative to install prefix where perl modules are installed.  This path gets added to the startup script") 
+	set(PERL_MODULE_PATH "lib/perl" CACHE STRING "Path relative to install prefix where perl modules are installed.  This path gets added to the startup script") 
 	
-	message(STATUS "Perl modules well be installed to AMBERHOME/${PERL_MODULE_DIR}")
+	message(STATUS "Perl modules well be installed to AMBERHOME/${PERL_MODULE_PATH}")
+	
+	# create a version that is aware of CMAKE_INSTALL_POSTFIX
+	set(PERL_MODULE_INSTALL_DIR "${CMAKE_INSTALL_POSTFIX}${PERL_MODULE_PATH}")
 endif()
 

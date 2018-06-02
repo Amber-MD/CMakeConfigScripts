@@ -23,6 +23,7 @@ message(STATUS "    http://ambermd.org/pmwiki/pmwiki.php/Main/CMake")
 message(STATUS "For a list of important CMake variables, check here:")
 message(STATUS "    http://ambermd.org/pmwiki/pmwiki.php/Main/CMake-Common-Options")
 message(STATUS "**************************************************************************")
+
 # fix search path so that libraries from the install tree are not used
 # --------------------------------------------------------------------
 list(REMOVE_ITEM CMAKE_SYSTEM_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
@@ -44,37 +45,24 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}
 # --------------------------------------------------------------------
 
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-	message(FATAL_ERROR "You are building in the source directory.  Amber does not support this, since it would obliterate the Makefile build system.")
+	message(FATAL_ERROR "You are building in the source directory.  ${PROJECT_NAME} does not support this, since it would obliterate the Makefile build system.")
 endif()
 
 # includes
 # --------------------------------------------------------------------
 
-#Basic utilities.  These files CANNOT use any sort of compile checks, because AmberCompilerConfig needs to set that up.
+#Basic utilities.  These files CANNOT use any sort of compile checks or system introspection because no languages are enabled yet
 include(CMakeParseArguments)
 include(Utils)
 include(Shorthand)
 include(ColorMessage)
 include(Policies)
 
+# get install directories
+include(InstallDirs)
+
 #run manual compiler setter, if it is enabled
 include(AmberCompilerConfig)
-
-# install subdirectory setup
-# --------------------------------------------------------------------
-
-set(BINDIR "bin") #binary subdirectory in install location
-set(LIBDIR "lib") #shared library subdirectory in install location
-set(DATADIR "dat") #subdirectory for programs' data files
-set(DOCDIR "doc")
-set(INCDIR "include")
-
-#directory for runtime (shared) libraries
-if(WIN32)
-	set(DLLDIR ${BINDIR}) #put on PATH
-else()
-	set(DLLDIR ${LIBDIR})
-endif()
 
 #control default build type.
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
