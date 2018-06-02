@@ -154,7 +154,7 @@ function(download_and_use_miniconda)
 		execute_process(COMMAND ${CONDA} install -y nomkl)
 	endif()
 	
-	execute_process(COMMAND ${CONDA} install -y -q conda-build numpy scipy cython=0.25 ipython notebook RESULT_VARIABLE PACKAGE_INSTALLL_RETVAL)
+	execute_process(COMMAND ${CONDA} install -y -q conda-build numpy scipy cython=0.25 ipython notebook pytest RESULT_VARIABLE PACKAGE_INSTALL_RETVAL)
 	if(NOT ${PACKAGE_INSTALL_RETVAL} EQUAL 0)
 		message(FATAL_ERROR "Installation of packages failed!  Please fix what's wrong, or disable Miniconda.")
 	endif()
