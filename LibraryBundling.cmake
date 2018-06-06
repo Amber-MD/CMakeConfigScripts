@@ -93,6 +93,7 @@ endif()
 # --------------------------------------------------------------------	
 	
 if(TARGET_OSX)
+
 	set(LIBS_TO_BUNDLE "")
 
 	# filter libraries to remove frameworks (which can't be easily bundled)
