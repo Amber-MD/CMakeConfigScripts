@@ -14,6 +14,8 @@
 # * assumes that ${PACKAGE_PREFIX}/lib is, and should be, the rpath for all internal and external libraries
 # * does not handle @executable_path since Amber doesn't use it; only handles @rpath and @loader_path
 
+# This script was inspired by Hai Nguyen's similar script at https://github.com/Amber-MD/ambertools-binary-build/blob/master/conda_tools/update_gfortran_libs_osx.py
+
 # Returns true iff the given dependency library should be ignored and not copied to the prefix
 function(should_ignore_dep_library LIB_PATH OUTPUT_VARIABLE)
 	if("${LIB_PATH}" MATCHES ".framework")
@@ -25,6 +27,41 @@ function(should_ignore_dep_library LIB_PATH OUTPUT_VARIABLE)
 	endif()
 endfunction(should_ignore_dep_library)
 
+# Makes sure that the library named by LIB_PATH has the given RPATH location
+function(add_rpath LIB_PATH RPATH)
+
+	message(">>>> Adding RPATH of \"${RPATH}\" to ${LIB_PATH}")
+
+	execute_process(COMMAND install_name_tool
+		-add_rpath ${RPATH} ${LIB_PATH}
+		ERROR_VARIABLE INT_ERROR_OUTPUT
+		RESULT_VARIABLE INT_RESULT_CODE)
+	
+	# uhhh, I really hope the user has their language set to English...	
+	if("${INT_ERROR_OUTPUT}" MATCHES "would duplicate path")
+		# do nothing, it already exists which is OK
+	elseif(NOT ${INT_RESULT_CODE} EQUAL 0)
+		message("!! Failed to execute install_name_tool! Error message was: ${INT_ERROR_OUTPUT}")
+	endif()
+	
+endfunction(add_rpath)
+
+# Sets the install name (the name that other libraries save at link time, and use at runtime to find the library) of the given library to INSTALL_NAME
+function(set_install_name LIB_PATH INSTALL_NAME)
+
+	message(">> Setting install name of ${LIB_PATH} to \"${INSTALL_NAME}\"")
+
+	execute_process(COMMAND install_name_tool
+		-id ${INSTALL_NAME} ${LIB_PATH}
+		ERROR_VARIABLE INT_ERROR_OUTPUT
+		RESULT_VARIABLE INT_RESULT_CODE)
+	
+	if(NOT ${INT_RESULT_CODE} EQUAL 0)
+		message("!! Failed to execute install_name_tool! Error message was: ${INT_ERROR_OUTPUT}")
+	endif()
+	
+endfunction(set_install_name)
+
 include(GetPrerequisites)
 include(${CMAKE_CURRENT_LIST_DIR}/Shorthand.cmake)
 
@@ -34,7 +71,7 @@ file(GLOB PACKAGE_LIBRARIES LIST_DIRECTORIES FALSE "${PACKAGE_PREFIX}/lib/*${CMA
 file(GLOB PACKAGE_EXECUTABLES LIST_DIRECTORIES FALSE "${PACKAGE_PREFIX}/bin/*${CMAKE_EXECUTABLE_SUFFIX}")
 
 # items are taken from, and added to, this stack.
-# All files in this list are already in the installation prefix
+# All files in this list are already in the installation prefix, and already have correct RPATHs
 set(ITEMS_TO_PROCESS ${PACKAGE_LIBRARIES} ${PACKAGE_EXECUTABLES})
 
 
@@ -99,6 +136,9 @@ while(1)
 				get_filename_component(PREREQ_LIB_FILENAME "${PREREQ_LIB_REALPATH}" NAME)
 				set(NEW_PREREQ_PATH "${PACKAGE_PREFIX}/lib/${PREREQ_LIB_FILENAME}")
 				
+				# add correct RPATH
+				add_rpath(${NEW_PREREQ_PATH} "@loader_path/../${LIBDIR}")
+				
 				list(APPEND COPIED_EXTERNAL_DEPENDENCIES ${PREREQUISITE_LIB})
 				list(APPEND COPIED_EXTERNAL_DEPS_NEW_PATHS ${NEW_PREREQ_PATH})
 				list(APPEND ITEMS_TO_PROCESS ${NEW_PREREQ_PATH})
@@ -106,6 +146,14 @@ while(1)
 		endif()
 
 	endforeach()
+	
+	if("${CURRENT_ITEM}" MATCHES "${CMAKE_SHARED_LIBRARY_SUFFIX}$")
+	
+		# if it's a library, set its install name to refer to it on the RPATH (so anything can link to it as long as it uses the $AMBERHOME/lib RPATH)
+		get_filename_component(CURRENT_ITEM_FILENAME "${CURRENT_ITEM}" NAME)
+		set_install_name(${CURRENT_ITEM} "@rpath/${CURRENT_ITEM_FILENAME}")
+		
+	endif()
 	
 	list(REMOVE_AT ITEMS_TO_PROCESS 0)
 	list(APPEND PROCESSED_ITEMS_BY_NEW_PATH ${CURRENT_ITEM})

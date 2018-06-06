@@ -6,6 +6,7 @@ if(TARGET_OSX)
 	# recent macOS versions have disabled DYLD_LIBRARY_PATH for security reasons.
 	# so, we set the RPATH to '<executable path>/../lib'
 	
+	# NOTE: if you change this here, you also have to change BundleOSXDependencies.cmake to account for it
 	set(CMAKE_INSTALL_RPATH "@loader_path/../${LIBDIR}")
 	set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 else()
