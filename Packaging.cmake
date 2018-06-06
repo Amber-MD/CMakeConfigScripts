@@ -244,13 +244,17 @@ function(print_packaging_report)
 		endif()
 		colormsg("Please ensure that all libraries used by ${PROJECT_NAME} are included in this list.  If any more need to be added, list them in the variable EXTRA_LIBS_TO_BUNDLE.")
 	elseif(TARGET_OSX)
-		colormsg("This is an OS X application, so it needs to bundle the libraries it uses. Currently, the following libraries will be bundled:")
-		foreach(LIBRARY ${LIBS_TO_BUNDLE})
+		colormsg("This is an OS X application, so CMake should automatically find and bundle dependency libraries.")
+		colormsg("It will also automatically fix their install_names and RPATHs, so other programs can link to first- and third-party libraries as long as they use the linker flag \
+\"-Wl,-rpath,$AMBERHOME/lib\"")
+		colormsg("")
+		colormsg("If any additional libraries need to be bundled, please list them in the variable EXTRA_LIBS_TO_BUNDLE.")
+		colormsg("Currently, the following libraries will be bundled:")
+		foreach(LIBRARY ${EXTRA_LIBS_TO_BUNDLE})
 			colormsg(HIGREEN ${LIBRARY})
 		endforeach()
 		
-		colormsg("Please ensure that all libraries used by ${PROJECT_NAME}'s executables are included in this list.")
-		colormsg("If any libraries are missing, please list them in the variable EXTRA_LIBS_TO_BUNDLE")
+		
 	elseif(TARGET_LINUX)
 	
 		if("${PACKAGE_TYPE}" STREQUAL "RPM")

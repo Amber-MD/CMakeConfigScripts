@@ -9,12 +9,16 @@
 # PACKAGE_PREFIX -- root of a UNIX-structure package to operate on
 # CMAKE_SHARED_LIBRARY_SUFFIX -- pass this variable in from your CMake script
 # CMAKE_EXECUTABLE_SUFFIX -- pass this variable in from your CMake script
+# EXTRA_RPATH_SEARCH_DIRS -- list of extra directories to search in when trying to resolve @rpath references 
 
 # notes:
 # * assumes that ${PACKAGE_PREFIX}/lib is, and should be, the rpath for all internal and external libraries
 # * does not handle @executable_path since Amber doesn't use it; only handles @rpath and @loader_path
 
 # This script was inspired by Hai Nguyen's similar script at https://github.com/Amber-MD/ambertools-binary-build/blob/master/conda_tools/update_gfortran_libs_osx.py
+
+include(GetPrerequisites)
+include(${CMAKE_CURRENT_LIST_DIR}/../Shorthand.cmake)
 
 # Returns true iff the given dependency library should be ignored and not copied to the prefix
 function(should_ignore_dep_library LIB_PATH OUTPUT_VARIABLE)
@@ -46,6 +50,24 @@ function(add_rpath LIB_PATH RPATH)
 	
 endfunction(add_rpath)
 
+# Changes the install_name that the given library refers to a dependency by.
+# Does nothing if OLD_INSTNAME is not valid.
+function(change_dependency_instname LIB_PATH OLD_INSTNAME NEW_INSTNAME)
+
+	message(">>>> Changing dependency reference \"${OLD_INSTNAME}\" in ${LIB_PATH} to \"${NEW_INSTNAME}\"")
+
+	execute_process(COMMAND install_name_tool
+		-change ${OLD_INSTNAME} ${NEW_INSTNAME} ${LIB_PATH}
+		ERROR_VARIABLE INT_ERROR_OUTPUT
+		RESULT_VARIABLE INT_RESULT_CODE)
+	
+	# uhhh, I really hope the user has their language set to English...	
+	if(NOT ${INT_RESULT_CODE} EQUAL 0)
+		message("!! Failed to execute install_name_tool! Error message was: ${INT_ERROR_OUTPUT}")
+	endif()
+	
+endfunction(change_dependency_instname)
+
 # Sets the install name (the name that other libraries save at link time, and use at runtime to find the library) of the given library to INSTALL_NAME
 function(set_install_name LIB_PATH INSTALL_NAME)
 
@@ -61,9 +83,6 @@ function(set_install_name LIB_PATH INSTALL_NAME)
 	endif()
 	
 endfunction(set_install_name)
-
-include(GetPrerequisites)
-include(${CMAKE_CURRENT_LIST_DIR}/Shorthand.cmake)
 
 message("Bundling OSX dependencies for package rooted at: ${PACKAGE_PREFIX}")
 
@@ -85,6 +104,13 @@ set(COPIED_EXTERNAL_DEPENDENCIES "")
 # List that matches each index in the above list with the new path of the library
 set(COPIED_EXTERNAL_DEPS_NEW_PATHS "")
 
+if(NOT DEFINED EXTRA_RPATH_SEARCH_DIRS)
+	set(EXTRA_RPATH_SEARCH_DIRS "")
+endif()
+
+# always use the prefix lib folder as the first RPATH search dir
+set(RPATH_SEARCH_DIRS "${PACKAGE_PREFIX}/lib" ${EXTRA_RPATH_SEARCH_DIRS})
+
 while(1)
 
 	list(LENGTH ITEMS_TO_PROCESS NUM_ITEMS_LEFT)
@@ -100,50 +126,80 @@ while(1)
 	set(CURRENT_ITEM_PREREQUISITES "")
 	get_prerequisites(${CURRENT_ITEM} CURRENT_ITEM_PREREQUISITES 0 0 "" ${PACKAGE_PREFIX}/lib ${PACKAGE_PREFIX}/lib)
 	
-	foreach(PREREQUISITE_LIB ${CURRENT_ITEM_PREREQUISITES})
-		
-		# resolve RPATH references
-		string(REPLACE "@rpath" "${PACKAGE_PREFIX}/lib" PREREQUISITE_LIB "${PREREQUISITE_LIB}")
-		
-		if(NOT EXISTS "${PREREQUISITE_LIB}")
-			message("!! Unable to resolve library dependency ${PREREQUISITE_LIB} -- skipping")
-			break()
-		endif()
+	foreach(PREREQUISITE_LIB_REFERENCE ${CURRENT_ITEM_PREREQUISITES})
 		
 
-		should_ignore_dep_library(${PREREQUISITE_LIB} SHOULD_IGNORE_PREQUISITE)
+		should_ignore_dep_library(${PREREQUISITE_LIB_REFERENCE} SHOULD_IGNORE_PREREQUISITE)
 		
-		if(SHOULD_IGNORE_PREQUISITE)
-			message(">> Ignoring dependency: ${PREREQUISITE_LIB}")
+		if(SHOULD_IGNORE_PREREQUISITE)
+			message(">> Ignoring dependency: ${PREREQUISITE_LIB_REFERENCE}")
 		else()
-			# check if we already know about this library, and copy it here if we don't
-			list(FIND COPIED_EXTERNAL_DEPENDENCIES "${PREREQUISITE_LIB}" INDEX_IN_COPIED_DEPS)
-			list(FIND PACKAGE_LIBRARIES "${PREREQUISITE_LIB}" INDEX_IN_PACKAGE_LIBRARIES)
 			
-			if(NOT INDEX_IN_COPIED_DEPS EQUAL -1)
-				message(">> Already copied dependency: ${PREREQUISITE_LIB}")
-			elseif(NOT INDEX_IN_PACKAGE_LIBRARIES EQUAL -1)
-				message(">> Dependency is internal: ${PREREQUISITE_LIB}")
+			# resolve RPATH references
+			if("${PREREQUISITE_LIB_REFERENCE}" MATCHES "^@rpath")
+				
+				string(REPLACE "@rpath" "" RPATH_SUFFIX_PATH "${PREREQUISITE_LIB_REFERENCE}")
+				
+				# find the first folder in our RPATH search dirs that contains the library
+				set(PREREQUISITE_LIB "")
+				foreach(SEARCH_DIR ${RPATH_SEARCH_DIRS})
+					#message("Checking ${SEARCH_DIR}${RPATH_SUFFIX_PATH}")
+					if(EXISTS "${SEARCH_DIR}${RPATH_SUFFIX_PATH}")
+						set(PREREQUISITE_LIB ${SEARCH_DIR}${RPATH_SUFFIX_PATH})
+					endif()
+				endforeach()
 			else()
-				# previously unseen library -- copy to the prefix and queue for processing
-				message(">> Copy library dependency: ${PREREQUISITE_LIB}")
+				set(PREREQUISITE_LIB ${PREREQUISITE_LIB_REFERENCE})
+			endif()
+		
+			
+			if(NOT EXISTS "${PREREQUISITE_LIB}")
+				message("!! Unable to resolve library dependency ${PREREQUISITE_LIB_REFERENCE} -- skipping")
+			else()
 				
-				# resolve symlinks
-				get_filename_component(PREREQ_LIB_REALPATH ${PREREQUISITE_LIB} REALPATH)
-				file(COPY "${PREREQ_LIB_REALPATH}" DESTINATION ${PACKAGE_PREFIX}/lib FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ WORLD_READ)
+				# check if we already know about this library, and copy it here if we don't
+				list(FIND COPIED_EXTERNAL_DEPENDENCIES "${PREREQUISITE_LIB}" INDEX_IN_COPIED_DEPS)
+				list(FIND PACKAGE_LIBRARIES "${PREREQUISITE_LIB}" INDEX_IN_PACKAGE_LIBRARIES)
 				
-				# find new filename
-				get_filename_component(PREREQ_LIB_FILENAME "${PREREQ_LIB_REALPATH}" NAME)
-				set(NEW_PREREQ_PATH "${PACKAGE_PREFIX}/lib/${PREREQ_LIB_FILENAME}")
+				if(NOT INDEX_IN_COPIED_DEPS EQUAL -1)
 				
-				# add correct RPATH
-				add_rpath(${NEW_PREREQ_PATH} "@loader_path/../${LIBDIR}")
+					message(">> Already copied dependency: ${PREREQUISITE_LIB}")
+					list(GET COPIED_EXTERNAL_DEPS_NEW_PATHS ${INDEX_IN_COPIED_DEPS} PREREQ_LIB_REALPATH)
+					
+				elseif(NOT INDEX_IN_PACKAGE_LIBRARIES EQUAL -1)
 				
-				list(APPEND COPIED_EXTERNAL_DEPENDENCIES ${PREREQUISITE_LIB})
-				list(APPEND COPIED_EXTERNAL_DEPS_NEW_PATHS ${NEW_PREREQ_PATH})
-				list(APPEND ITEMS_TO_PROCESS ${NEW_PREREQ_PATH})
+					message(">> Dependency is internal: ${PREREQUISITE_LIB}")
+					set(PREREQ_LIB_REALPATH ${PREREQUISITE_LIB})
+					
+				else()
+					# previously unseen library -- copy to the prefix and queue for processing
+					message(">> Copy library dependency: ${PREREQUISITE_LIB}")
+					
+					# resolve symlinks
+					get_filename_component(PREREQ_LIB_REALPATH ${PREREQUISITE_LIB} REALPATH)
+					file(COPY "${PREREQ_LIB_REALPATH}" DESTINATION ${PACKAGE_PREFIX}/lib FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ WORLD_READ)
+					
+					# find new filename
+					get_filename_component(PREREQ_LIB_FILENAME "${PREREQ_LIB_REALPATH}" NAME)
+					set(NEW_PREREQ_PATH "${PACKAGE_PREFIX}/lib/${PREREQ_LIB_FILENAME}")
+					
+					# add correct RPATH
+					add_rpath(${NEW_PREREQ_PATH} "@loader_path/../lib")
+					
+					list(APPEND COPIED_EXTERNAL_DEPENDENCIES ${PREREQUISITE_LIB})
+					list(APPEND COPIED_EXTERNAL_DEPS_NEW_PATHS ${NEW_PREREQ_PATH})
+					list(APPEND ITEMS_TO_PROCESS ${NEW_PREREQ_PATH})
+				endif()
+				
+				# now, update how CURRENT_ITEM refers to this prerequisite
+				get_filename_component(PREREQUISITE_FILENAME "${PREREQ_LIB_REALPATH}" NAME)
+				if(NOT "${PREREQUISITE_LIB_REFERENCE}" STREQUAL "@rpath/${PREREQUISITE_FILENAME}")
+					change_dependency_instname(${CURRENT_ITEM} ${PREREQUISITE_LIB_REFERENCE} "@rpath/${PREREQUISITE_FILENAME}")
+				endif()
 			endif()
 		endif()
+		
+		
 
 	endforeach()
 	
