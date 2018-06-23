@@ -4,27 +4,26 @@
 #
 # Modified for AMBER
 #
-# GNU Readline library finder
-if(READLINE_INCLUDE_DIR AND READLINE_LIBRARY)
-  set(READLINE_FOUND TRUE)
+# GNU Readline library finder.
+#
+# Variables: 
+#   READLINE_INCLUDE_DIR - directory containing readline/readline.h
+
+find_path(READLINE_INCLUDE_DIR NAMES readline/readline.h DOC "directory containing readline/readline.h")
+
+find_library(READLINE_LIBRARY NAMES readline DOC "Path to readline library.")
+
+if(EXISTS "${READLINE_LIBRARY}")
+	# now check if the library we found actually works (certain versions of Anaconda ship with a broken 
+	# libreadline.so that uses functions from libtinfo, but does not declare a dynamic dependency on said library.)
+	set(CMAKE_REQUIRED_LIBRARIES ${READLINE_LIBRARY})
+	check_function_exists(rl_initialize READLINE_IS_LINKABLE)
+	mark_as_advanced(READLINE_IS_LINKABLE)
 else()
-	FIND_PATH(READLINE_INCLUDE_DIR readline/readline.h)
-
-# 2008-04-22 The next clause used to read like this:
-#
-#  		FIND_LIBRARY(READLINE_LIBRARY NAMES readline)
-#        FIND_LIBRARY(NCURSES_LIBRARY NAMES ncurses )
-#        include(FindPackageHandleStandardArgs)
-#        FIND_PACKAGE_HANDLE_STANDARD_ARGS(Readline DEFAULT_MSG NCURSES_LIBRARY READLINE_INCLUDE_DIR READLINE_LIBRARY )
-#
-# I was advised to modify it such that it will find an ncurses library if
-# required, but not if one was explicitly given, that is, it allows the
-# default to be overridden. PH 
-
-	FIND_LIBRARY(READLINE_LIBRARY NAMES readline)
-	include(FindPackageHandleStandardArgs)
-	FIND_PACKAGE_HANDLE_STANDARD_ARGS(Readline DEFAULT_MSG READLINE_INCLUDE_DIR READLINE_LIBRARY)
-
-	MARK_AS_ADVANCED(READLINE_INCLUDE_DIR READLINE_LIBRARY)
+	set(READLINE_IS_LINKABLE FALSE)
 endif()
 
+mark_as_advanced(READLINE_INCLUDE_DIR READLINE_LIBRARY)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(Readline DEFAULT_MSG READLINE_INCLUDE_DIR READLINE_LIBRARY READLINE_IS_LINKABLE)
