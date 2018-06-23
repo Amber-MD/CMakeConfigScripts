@@ -217,6 +217,10 @@ if(boost_DISABLED)
 	disable_tool(packmol_memgen "Requires boost")
 endif()
 
+if(PYTHON_VERSION_MAJOR GREATER 2)
+	disable_tool(packmol_memgen "Only compatible with python 2.7")
+endif()
+
 # Perl programs
 if(NOT BUILD_PERL)
 	disable_tools("Perl programs are disabled" FEW mm_pbsa)
