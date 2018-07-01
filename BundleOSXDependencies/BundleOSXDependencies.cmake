@@ -22,9 +22,9 @@ include(${CMAKE_CURRENT_LIST_DIR}/../Shorthand.cmake)
 
 # Returns true iff the given dependency library should be ignored and not copied to the prefix
 function(should_ignore_dep_library LIB_PATH OUTPUT_VARIABLE)
-	if("${LIB_PATH}" MATCHES ".framework")
+	if("${LIB_PATH}" MATCHES "\\.framework")
 		set(${OUTPUT_VARIABLE} 1 PARENT_SCOPE)
-	elseif("${LIB_PATH}" MATCHES "libSystem.B")
+	elseif("${LIB_PATH}" MATCHES "libSystem")
 		set(${OUTPUT_VARIABLE} 1 PARENT_SCOPE)
 	else()
 		set(${OUTPUT_VARIABLE} 0 PARENT_SCOPE)
@@ -34,7 +34,7 @@ endfunction(should_ignore_dep_library)
 # Makes sure that the library named by LIB_PATH has the given RPATH location
 function(add_rpath LIB_PATH RPATH)
 
-	message(">>>> Adding RPATH of \"${RPATH}\" to ${LIB_PATH}")
+	message(STATUS ">>>> Adding RPATH of \"${RPATH}\" to ${LIB_PATH}")
 
 	execute_process(COMMAND install_name_tool
 		-add_rpath ${RPATH} ${LIB_PATH}
@@ -54,7 +54,7 @@ endfunction(add_rpath)
 # Does nothing if OLD_INSTNAME is not valid.
 function(change_dependency_instname LIB_PATH OLD_INSTNAME NEW_INSTNAME)
 
-	message(">>>> Changing dependency reference \"${OLD_INSTNAME}\" in ${LIB_PATH} to \"${NEW_INSTNAME}\"")
+	message(STATUS ">>>> Changing dependency reference \"${OLD_INSTNAME}\" in ${LIB_PATH} to \"${NEW_INSTNAME}\"")
 
 	execute_process(COMMAND install_name_tool
 		-change ${OLD_INSTNAME} ${NEW_INSTNAME} ${LIB_PATH}
@@ -71,7 +71,7 @@ endfunction(change_dependency_instname)
 # Sets the install name (the name that other libraries save at link time, and use at runtime to find the library) of the given library to INSTALL_NAME
 function(set_install_name LIB_PATH INSTALL_NAME)
 
-	message(">> Setting install name of ${LIB_PATH} to \"${INSTALL_NAME}\"")
+	message(STATUS ">> Setting install name of ${LIB_PATH} to \"${INSTALL_NAME}\"")
 
 	execute_process(COMMAND install_name_tool
 		-id ${INSTALL_NAME} ${LIB_PATH}
@@ -79,7 +79,7 @@ function(set_install_name LIB_PATH INSTALL_NAME)
 		RESULT_VARIABLE INT_RESULT_CODE)
 	
 	if(NOT ${INT_RESULT_CODE} EQUAL 0)
-		message("!! Failed to execute install_name_tool! Error message was: ${INT_ERROR_OUTPUT}")
+		message(STATUS "!! Failed to execute install_name_tool! Error message was: ${INT_ERROR_OUTPUT}")
 	endif()
 	
 endfunction(set_install_name)
@@ -87,12 +87,23 @@ endfunction(set_install_name)
 message("Bundling OSX dependencies for package rooted at: ${PACKAGE_PREFIX}")
 
 file(GLOB PACKAGE_LIBRARIES LIST_DIRECTORIES FALSE "${PACKAGE_PREFIX}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}")
-file(GLOB PACKAGE_EXECUTABLES LIST_DIRECTORIES FALSE "${PACKAGE_PREFIX}/bin/*${CMAKE_EXECUTABLE_SUFFIX}")
+file(GLOB PACKAGE_EXECUTABLES LIST_DIRECTORIES FALSE "${PACKAGE_PREFIX}/bin/*")
 
 # items are taken from, and added to, this stack.
 # All files in this list are already in the installation prefix, and already have correct RPATHs
 set(ITEMS_TO_PROCESS ${PACKAGE_LIBRARIES} ${PACKAGE_EXECUTABLES})
 
+set(DISALLOWED_EXTENSIONS .py .pl)
+
+# remove items with disallowed extensions (like Python scripts)
+foreach(ITEM ${ITEMS_TO_PROCESS})
+	get_filename_component(ITEM_EXT ${ITEM} EXT)
+	list_contains(EXT_IS_DISALLOWED ${ITEM_EXT} ${DISALLOWED_EXTENSIONS})
+	
+	if(EXT_IS_DISALLOWED)
+		list(REMOVE_ITEM ITEMS_TO_PROCESS ${ITEM})
+	endif()
+endforeach()
 
 # lists of completed items (can skip if we see a dependency on these)
 # This always contains the path inside the prefix
@@ -121,7 +132,7 @@ while(1)
 	
 	list(GET ITEMS_TO_PROCESS 0 CURRENT_ITEM)
 	
-	message("Considering ${CURRENT_ITEM}")
+	message(STATUS "Considering ${CURRENT_ITEM}")
 	
 	set(CURRENT_ITEM_PREREQUISITES "")
 	get_prerequisites(${CURRENT_ITEM} CURRENT_ITEM_PREREQUISITES 0 0 "" ${PACKAGE_PREFIX}/lib ${PACKAGE_PREFIX}/lib)
@@ -132,7 +143,7 @@ while(1)
 		should_ignore_dep_library(${PREREQUISITE_LIB_REFERENCE} SHOULD_IGNORE_PREREQUISITE)
 		
 		if(SHOULD_IGNORE_PREREQUISITE)
-			message(">> Ignoring dependency: ${PREREQUISITE_LIB_REFERENCE}")
+			message(STATUS ">> Ignoring dependency: ${PREREQUISITE_LIB_REFERENCE}")
 		else()
 			
 			# resolve RPATH references
@@ -163,17 +174,17 @@ while(1)
 				
 				if(NOT INDEX_IN_COPIED_DEPS EQUAL -1)
 				
-					message(">> Already copied dependency: ${PREREQUISITE_LIB}")
+					message(STATUS ">> Already copied dependency: ${PREREQUISITE_LIB}")
 					list(GET COPIED_EXTERNAL_DEPS_NEW_PATHS ${INDEX_IN_COPIED_DEPS} PREREQ_LIB_REALPATH)
 					
 				elseif(NOT INDEX_IN_PACKAGE_LIBRARIES EQUAL -1)
 				
-					message(">> Dependency is internal: ${PREREQUISITE_LIB}")
+					message(STATUS ">> Dependency is internal: ${PREREQUISITE_LIB}")
 					set(PREREQ_LIB_REALPATH ${PREREQUISITE_LIB})
 					
 				else()
 					# previously unseen library -- copy to the prefix and queue for processing
-					message(">> Copy library dependency: ${PREREQUISITE_LIB}")
+					message(STATUS ">> Copy library dependency: ${PREREQUISITE_LIB}")
 					
 					# resolve symlinks
 					get_filename_component(PREREQ_LIB_REALPATH ${PREREQUISITE_LIB} REALPATH)
@@ -216,4 +227,4 @@ while(1)
 	
 endwhile()
 
-message("Dependency bundling done!")
+message(STATUS "Dependency bundling done!")
