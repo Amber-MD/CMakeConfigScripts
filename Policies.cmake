@@ -54,3 +54,9 @@ if(POLICY CMP0066)
 	#NEW: pass CMAKE_<lang>_FLAGS_<config> to try_compile() statements
 	cmake_policy(SET CMP0066 NEW)
 endif()
+
+if(POLICY CMP0073)
+	#NEW: don't generate xxx_LIB_DEPENDS cache entries (which screw up the build when switching between bundled and external libraries)
+	cmake_policy(SET CMP0073 NEW)
+endif()
+
