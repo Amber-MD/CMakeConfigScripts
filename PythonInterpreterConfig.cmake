@@ -59,10 +59,6 @@ if(DOWNLOAD_MINICONDA)
 	set(PYTHON_EXECUTABLE ${MINICONDA_PYTHON})
 	set(HAS_PYTHON TRUE)
 	
-	# allow CMake to pull libraries such as MKL and bzip2 from Miniconda
-	list(APPEND CMAKE_LIBRARY_PATH "${MINICONDA_INSTALL_DIR}/lib")
-	list(APPEND CMAKE_INCLUDE_PATH "${MINICONDA_INSTALL_DIR}/include")
-	
 	if(HOST_WINDOWS)
 		list(APPEND CMAKE_PROGRAM_PATH "${MINICONDA_INSTALL_DIR}" "${MINICONDA_INSTALL_DIR}/Scripts")
 	else()
@@ -85,10 +81,19 @@ To use Amber's internal Minconda instead, set DOWNLOAD_MINICONDA to TRUE. \
 To use a different Anaconda install, just activate it and rerun CMake. \
 To change the Python interpreter in use to a different one inside Anaconda, set the PYTHON_EXECUTABLE variable to point to it.")
 		
-		# allow CMake to pull libraries such as MKL and bzip2 from Anaconda
+		# allow CMake to pull libraries such as MKL and bzip2 from Anaconda, but keep the old paths so that we can disable this if we want
+		set(CMAKE_LIBRARY_PATH_NO_ANACONDA ${CMAKE_LIBRARY_PATH})
+		set(CMAKE_INCLUDE_PATH_NO_ANACONDA ${CMAKE_INCLUDE_PATH})
+		set(CMAKE_PROGRAM_PATH_NO_ANACONDA ${CMAKE_PROGRAM_PATH})
+		
 		list(APPEND CMAKE_LIBRARY_PATH "${ANACONDA_ROOT}/lib")
 		list(APPEND CMAKE_INCLUDE_PATH "${ANACONDA_ROOT}/include")
 		list(APPEND CMAKE_PROGRAM_PATH "${ANACONDA_BIN}")
+		
+		set(CMAKE_LIBRARY_PATH_ANACONDA ${CMAKE_LIBRARY_PATH})
+		set(CMAKE_INCLUDE_PATH_ANACONDA ${CMAKE_INCLUDE_PATH})
+		set(CMAKE_PROGRAM_PATH_ANACONDA ${CMAKE_PROGRAM_PATH})
+		
 	endif()
 
 
