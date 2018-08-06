@@ -206,7 +206,9 @@ if(NOT BUILD_PYTHON)
 endif()
 
 if(STATIC)
-	disable_tools("Python programs cannot link to static libsander" pysander pytraj)
+	disable_tool(pysander "Python programs cannot link to static libsander")
+	
+	disable_tool(pytraj "Python programs cannot link to static libcpptraj")
 endif()
 
 if(MPI AND mpi4py_DISABLED)
@@ -244,6 +246,10 @@ endif()
 
 if(NOT BUILD_SANDER_API)
 	disable_tool(pysander "The Sander API is disabled")
+endif()
+
+if(NOT BUILD_SANDER_LES)
+	disable_tool(pysander "Requires sander.LES")
 endif()
 
 if(CROSSCOMPILE)
