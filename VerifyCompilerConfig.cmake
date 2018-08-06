@@ -18,14 +18,3 @@ CMAKE_C_COMPILER and CMAKE_CXX_COMPILER to point to gcc and g++.
 		endif()
 	endforeach()
 endif()
-
-# on Unix systems, check that we have write permissions to install directory
-if(HOST_LINUX OR HOST_OSX)
-	install(CODE "
-execute_process(COMMAND mkdir -p \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX} || true
-	COMMAND test -w \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX} 
-	RESULT_VARIABLE TEST_WRITABLE_RESULT)
-if(NOT TEST_WRITABLE_RESULT EQUAL 0)
-	message(FATAL_ERROR \"Cannot write to the installation directory \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}.  Please run the installation as superuser, or change CMAKE_INSTALL_PREFIX to point to a directory that you have write access to.\")
-endif()" COMPONENT Serial)
-endif()

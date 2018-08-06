@@ -46,10 +46,9 @@ macro(validate_configuration_enum VARIABLE) #2nd argument: VALID_VALUES...
 	  set_property(CACHE ${VARIABLE} PROPERTY STRINGS ${ARGN})
 endmacro(validate_configuration_enum)
 
-#Remove the last file extension from a filename.
+# Remove the last file extension from a filename.
 # foo.bar.s > foo.bar
-
-#different from get_filename_component(.. NAME_WE), where foo.bar.s > foo
+# This is different from get_filename_component(.. NAME_WE), where foo.bar.s > foo
 macro(strip_last_extension OUTPUT_VAR FILENAME)
     #from http://stackoverflow.com/questions/30049180/strip-filename-shortest-extension-by-cmake-get-filename-removing-the-last-ext
     string(REGEX REPLACE "\\.[^.]*$" "" ${OUTPUT_VAR} ${FILENAME})

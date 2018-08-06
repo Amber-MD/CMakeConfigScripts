@@ -60,3 +60,7 @@ if(POLICY CMP0073)
 	cmake_policy(SET CMP0073 NEW)
 endif()
 
+if(POLICY CMP0075)
+	#NEW: when compliling header check executables, link them to the contents of CMAKE_REQUIRED_LIBRARIES
+	cmake_policy(SET CMP0073 NEW)
+endif()
