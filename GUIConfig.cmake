@@ -1,9 +1,22 @@
 # Configuration file for GUI libraries and the programs that use them.
+# Must be included after PythonBuildConfig.cmake
 
 #-----------------------------------
 # X for XLeap
 #-----------------------------------
+
+# temporarily disable searching in Anaconda, sonce it can contain conflicting X11 libraries
+if(USING_SYSTEM_ANACONDA)
+	set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH_NO_ANACONDA})
+	set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH_NO_ANACONDA})
+endif()
+
 find_package(X11)
+
+if(USING_SYSTEM_ANACONDA)
+	set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH_ANACONDA})
+	set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH_ANACONDA})
+endif()
 
 if((NOT X11_FOUND) AND (${CMAKE_SYSTEM_NAME} STREQUAL Linux))
 	message("Couldn't find the X11 development libraries!")
