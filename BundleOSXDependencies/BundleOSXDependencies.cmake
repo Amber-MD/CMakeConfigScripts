@@ -93,7 +93,7 @@ file(GLOB PACKAGE_EXECUTABLES LIST_DIRECTORIES FALSE "${PACKAGE_PREFIX}/bin/*")
 # All files in this list are already in the installation prefix, and already have correct RPATHs
 set(ITEMS_TO_PROCESS ${PACKAGE_LIBRARIES} ${PACKAGE_EXECUTABLES})
 
-set(DISALLOWED_EXTENSIONS .py .pl)
+set(DISALLOWED_EXTENSIONS .py .pl .py.MPI .py.OMP .pl.MPI .pl.OMP .sh)
 
 # remove items with disallowed extensions (like Python scripts)
 foreach(ITEM ${ITEMS_TO_PROCESS})
