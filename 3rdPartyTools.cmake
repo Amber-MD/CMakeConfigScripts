@@ -551,7 +551,7 @@ if(NEED_mpi4py)
 
 	if(MPI AND (BUILD_PYTHON AND NOT CROSSCOMPILE))
 		check_python_package(mpi4py MPI4PY_FOUND)
-		if(MPI4MPY_FOUND)
+		if(MPI4PY_FOUND)
 			set_3rdparty(mpi4py EXTERNAL)
 		else()
 			set_3rdparty(mpi4py INTERNAL)
