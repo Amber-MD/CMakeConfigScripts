@@ -21,7 +21,7 @@ if(BUILD_PYTHON)
 
 	option(SKIP_PYTHON_PACKAGE_CHECKS "If true, the buildscript will not verify that you have the needed Python packages to run Amber's Python programs." FALSE)
 	
-	if(NOT SKIP_PYTHON_PACKAGECHECKS)
+	if(NOT SKIP_PYTHON_PACKAGE_CHECKS)
 		
 		# check "normal" packages
 		# --------------------------------------------------------------------
